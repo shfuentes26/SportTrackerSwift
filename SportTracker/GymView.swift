@@ -13,32 +13,35 @@ struct GymView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(sessions) { s in
-                    VStack(alignment: .leading) {
-                        HStack {
-                            Text(SummaryView.formatDate(s.date)).font(.headline)
-                            Spacer()
-                            Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                if sessions.isEmpty {
+                    ContentUnavailableView(
+                        "There are no gym trainings yet",
+                        systemImage: "dumbbell"
+                    )
+                } else {
+                    ForEach(sessions) { s in
+                        VStack(alignment: .leading) {
+                            HStack {
+                                Text(SummaryView.formatDate(s.date)).font(.headline)
+                                Spacer()
+                                Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                            }
+                            Text("\(s.sets.count) set(s)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
-                        Text("\(s.sets.count) set(s)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            delete(session: s)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-
-                        Button {
-                            editingSession = s
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) { delete(session: s) } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            Button { editingSession = s } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
                         }
                     }
                 }
             }
+
             .navigationTitle("Gym")
         }
         .sheet(item: $editingSession) { sess in

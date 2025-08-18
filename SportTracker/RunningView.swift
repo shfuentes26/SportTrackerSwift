@@ -13,28 +13,30 @@ struct RunningView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(runs) { r in
-                    VStack(alignment: .leading) {
-                        HStack {
-                            Text(SummaryView.formatDate(r.date)).font(.headline)
-                            Spacer()
-                            Text("\(Int(r.totalPoints)) pts").foregroundStyle(.secondary)
+                if runs.isEmpty {
+                    ContentUnavailableView(
+                        "There are no running trainings yet",
+                        systemImage: "figure.run"
+                    )
+                } else {
+                    ForEach(runs) { r in
+                        VStack(alignment: .leading) {
+                            HStack {
+                                Text(SummaryView.formatDate(r.date)).font(.headline)
+                                Spacer()
+                                Text("\(Int(r.totalPoints)) pts").foregroundStyle(.secondary)
+                            }
+                            Text("\(SummaryView.formatNumber(r.distanceKm)) km • \(SummaryView.formatPace(r.paceSecondsPerKm)) • \(r.durationSeconds/60) min")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
-                        Text("\(SummaryView.formatNumber(r.distanceKm)) km • \(SummaryView.formatPace(r.paceSecondsPerKm)) • \(r.durationSeconds/60) min")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            delete(run: r)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-
-                        Button {
-                            editingRun = r
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) { delete(run: r) } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            Button { editingRun = r } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
                         }
                     }
                 }
