@@ -9,19 +9,69 @@ struct GymView: View {
 
     @Query(sort: [SortDescriptor(\StrengthSession.date, order: .reverse)])
     private var sessions: [StrengthSession]
+    
+    private enum GymCategory: String, CaseIterable, Identifiable {
+        case all = "All"
+        case core = "Core"
+        case chestBack = "Chest/Back"
+        case arms = "Arms"
+        case legs = "Legs"
+        var id: String { rawValue }
+    }
+    
+    private var filteredSessions: [StrengthSession] {
+        sessions.filter { s in
+            selectedCategory == .all || session(s, matches: selectedCategory)
+        }
+    }
+    
+    // Devuelve true si la sesión tiene al menos un set cuyo ejercicio
+    // pertenece a la categoría seleccionada.
+    private func session(_ s: StrengthSession, matches cat: GymCategory) -> Bool {
+        let cats = Set(s.sets.compactMap { mapGroup($0.exercise.muscleGroup) })
+        return cats.contains(cat)
+    }
+    
+    // Mapea tu enum MuscleGroup a las categorías del filtro.
+    // Ajusta los cases según tu enum real si tienes más (ej. .shoulders).
+    private func mapGroup(_ g: MuscleGroup) -> GymCategory? {
+        switch g {
+        case .core:
+            return .core
+        case .chestBack:
+            return .chestBack
+        case .arms:
+            return .arms
+        case .legs:
+            return .legs
+        default:
+            return nil
+        }
+    }
 
+    @State private var selectedCategory: GymCategory = .all
+    
     init() {} // evita el init(sessions:) sintetizado por @Query
 
     var body: some View {
         NavigationStack {
+            Picker("Category", selection: $selectedCategory) {
+                ForEach(GymCategory.allCases) { c in
+                    Text(c.rawValue).tag(c)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
             List {
-                if sessions.isEmpty {
-                    ContentUnavailableView(
-                        "There are no gym trainings yet",
-                        systemImage: "dumbbell"
-                    )
+                if filteredSessions.isEmpty {
+                        ContentUnavailableView(
+                            selectedCategory == .all
+                                ? "There are no gym trainings yet"
+                                : "No sessions for \(selectedCategory.rawValue)",
+                            systemImage: "dumbbell"
+                        )
                 } else {
-                    ForEach(sessions) { s in
+                    ForEach(filteredSessions) { s in
                         VStack(alignment: .leading) {
                             HStack {
                                 Text(SummaryView.formatDate(s.date)).font(.headline)

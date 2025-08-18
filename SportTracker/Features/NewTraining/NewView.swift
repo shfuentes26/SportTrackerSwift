@@ -8,6 +8,14 @@ enum TrainingType: String, CaseIterable, Identifiable {
     case gym = "Gym"
     var id: String { rawValue }
 }
+private enum GymCategory: String, CaseIterable, Identifiable {
+    case core = "Core"
+    case chestBack = "Chest/Back"
+    case arms = "Arms"
+    case legs = "Legs"
+    var id: String { rawValue }
+}
+
 
 struct NewView: View {
     @Environment(\.modelContext) private var context
@@ -16,6 +24,9 @@ struct NewView: View {
 
     // Picker de tipo
     @State private var selectedType: TrainingType = .running
+    
+    @State private var selectedGymCategory: GymCategory = .core
+
 
     // --- Running inputs ---
     @State private var runDate: Date = Date()
@@ -120,10 +131,17 @@ struct NewView: View {
     private var gymForm: some View {
         Form {
             DatePicker("Date", selection: $gymDate, displayedComponents: [.date, .hourAndMinute])
-
+            Section("Category") {
+                Picker("Category", selection: $selectedGymCategory) {
+                    ForEach(GymCategory.allCases) { c in
+                        Text(c.rawValue).tag(c)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
             Section("Sets") {
                 ForEach($setInputs) { $input in
-                    SetRow(input: $input, allExercises: exercises)
+                    SetRow(input: $input, allExercises: filteredExercises)
                 }
                 .onDelete { idx in
                     setInputs.remove(atOffsets: idx)
@@ -177,7 +195,7 @@ struct NewView: View {
                 let reps = Int(input.reps) ?? 0
                 guard reps > 0 else { return nil }
                 let weight = Double(input.weight.replacingOccurrences(of: ",", with: ".")) // opcional
-                let exercise = input.exercise ?? exercises.first
+                let exercise = input.exercise ?? filteredExercises.first ?? exercises.first
                 guard let ex = exercise else { return nil }
                 return .init(exercise: ex, order: idx + 1, reps: reps, weightKg: weight)
             }
@@ -200,102 +218,31 @@ struct NewView: View {
             }
         }
     }
-
-    private func settingsOrCreate() -> Settings {
-        if let s = try? context.fetch(FetchDescriptor<Settings>()).first {
-            return s
-        } else {
-            let s = Settings()
-            context.insert(s)
-            return s
+    
+    private func mapGroup(_ g: MuscleGroup) -> GymCategory? {
+        switch g {
+        case .core:            return .core
+        case .chestBack:    return .chestBack
+        case .arms:            return .arms
+        case .legs:            return .legs
+        default:               return nil   // ajusta si tu enum tiene más casos
         }
     }
 
-    private func parseDouble(_ s: String) -> Double? {
-        Double(s.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespacesAndNewlines))
-    }
-
-    private func totalSeconds(h: String, m: String, s: String) -> Int? {
-        let hh = Int(h) ?? 0
-        let mm = Int(m) ?? 0
-        let ss = Int(s) ?? 0
-        let total = hh*3600 + mm*60 + ss
-        return total > 0 ? total : nil
-    }
-
-    private func saveRunning() {
-        guard let distanceKm = parseDouble(runDistanceKm), distanceKm > 0,
-              let seconds = totalSeconds(h: runH, m: runM, s: runS) else {
-            errorMsg = "Please enter a positive distance and a duration in hh:mm:ss."
-            return
-        }
-
-        let session = RunningSession(
-            date: runDate,
-            durationSeconds: seconds,
-            distanceMeters: distanceKm * 1000.0,
-            notes: runNotes.isEmpty ? nil : runNotes
-        )
-
-        let s = settingsOrCreate()
-        session.totalPoints = PointsCalculator.score(running: session, settings: s)
-
-        context.insert(session)
-        do {
-            try context.save()
-            // reset
-            runDistanceKm = ""
-            runH = ""; runM = ""; runS = ""
-            runNotes = ""
-            showSaved = true
-        } catch {
-            errorMsg = "Could not save: \(error.localizedDescription)"
+    private var filteredExercises: [Exercise] {
+        exercises.filter { ex in
+            mapGroup(ex.muscleGroup) == selectedGymCategory
         }
     }
 
-    private func saveGym() {
-        // Si no hay ejercicios, crea uno por defecto
-        let defaultExercise: Exercise = {
-            if let first = exercises.first { return first }
-            let ex = Exercise(name: "Custom", muscleGroup: .core, isWeighted: false, isCustom: true)
-            context.insert(ex)
-            return ex
-        }()
+   
 
-        // Valida y crea sets
-        let validSets: [StrengthSet] = setInputs.enumerated().compactMap { (idx, input) in
-            let ex = input.exercise ?? defaultExercise
-            let reps = Int(input.reps) ?? 0
-            guard reps > 0 else { return nil }
-            let weight = Double(input.weight.replacingOccurrences(of: ",", with: "."))
-            return StrengthSet(exercise: ex, order: idx + 1, reps: reps, weightKg: weight)
-        }
+   
 
-        guard !validSets.isEmpty else {
-            errorMsg = "Add at least one set with reps."
-            return
-        }
+    
 
-        let session = StrengthSession(date: gymDate, notes: gymNotes.isEmpty ? nil : gymNotes)
-        for s in validSets {
-            s.session = session
-            session.sets.append(s)
-        }
 
-        let st = settingsOrCreate()
-        session.totalPoints = PointsCalculator.score(strength: session, settings: st)
-
-        context.insert(session)
-        do {
-            try context.save()
-            // reset
-            setInputs = [SetInput()]
-            gymNotes = ""
-            showSaved = true
-        } catch {
-            errorMsg = "Could not save: \(error.localizedDescription)"
-        }
-    }
+   
 }
 
 // MARK: - TimeBox (cajitas hh:mm:ss)
@@ -340,12 +287,18 @@ struct SetRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Picker("Exercise", selection: Binding(
-                get: { input.exercise ?? allExercises.first },
-                set: { input.exercise = $0 }
-            )) {
-                ForEach(allExercises, id: \.id) { ex in
-                    Text(ex.name).tag(Optional(ex))
+            if allExercises.isEmpty {
+                HStack {
+                    Text("No exercises in this category").foregroundStyle(.secondary)
+                    Spacer()
+                }
+            } else {
+                Picker("Exercise", selection: Binding(get: {
+                    input.exercise ?? allExercises.first
+                }, set: { input.exercise = $0 })) {
+                    ForEach(allExercises, id: \.id) { ex in
+                        Text(ex.name).tag(Optional(ex))
+                    }
                 }
             }
 
