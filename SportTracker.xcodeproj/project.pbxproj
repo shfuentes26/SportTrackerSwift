@@ -7,32 +7,38 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		23BE56B22E53702300600875 /* NewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B12E53702300600875 /* NewView.swift */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56B82E5370A300600875 /* PointsCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B72E5370A300600875 /* PointsCalculator.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
+		23BE56C02E53931500600875 /* GymViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56BB2E53931500600875 /* GymViewModel.swift */; };
+		23BE56C12E53931500600875 /* RunningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56BD2E53931500600875 /* RunningViewModel.swift */; };
+		23BE56C62E53932000600875 /* RunningRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56C22E53932000600875 /* RunningRepository.swift */; };
+		23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56C32E53932000600875 /* StrengthRepository.swift */; };
+		23BE56C92E53996A00600875 /* NewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56C82E53996A00600875 /* NewView.swift */; };
 		A000001 /* SportTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000101 /* SportTrackerApp.swift */; };
 		A000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000102 /* ContentView.swift */; };
 		A000003 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000103 /* SummaryView.swift */; };
 		A000004 /* GymView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000104 /* GymView.swift */; };
-		A000005 /* NewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000105 /* NewView.swift */; };
 		A000006 /* RunningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000106 /* RunningView.swift */; };
 		A000007 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000107 /* SettingsView.swift */; };
 		A000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A000200 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		23BE56B12E53702300600875 /* NewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewView.swift; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B72E5370A300600875 /* PointsCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointsCalculator.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
+		23BE56BB2E53931500600875 /* GymViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymViewModel.swift; sourceTree = "<group>"; };
+		23BE56BD2E53931500600875 /* RunningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningViewModel.swift; sourceTree = "<group>"; };
+		23BE56C22E53932000600875 /* RunningRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningRepository.swift; sourceTree = "<group>"; };
+		23BE56C32E53932000600875 /* StrengthRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrengthRepository.swift; sourceTree = "<group>"; };
+		23BE56C82E53996A00600875 /* NewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewView.swift; sourceTree = "<group>"; };
 		A000101 /* SportTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SportTrackerApp.swift; sourceTree = "<group>"; };
 		A000102 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A000103 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		A000104 /* GymView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymView.swift; sourceTree = "<group>"; };
-		A000105 /* NewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewView.swift; sourceTree = "<group>"; };
 		A000106 /* RunningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningView.swift; sourceTree = "<group>"; };
 		A000107 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A000200 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -51,6 +57,48 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		23BE56BC2E53931500600875 /* Gym */ = {
+			isa = PBXGroup;
+			children = (
+				23BE56BB2E53931500600875 /* GymViewModel.swift */,
+			);
+			path = Gym;
+			sourceTree = "<group>";
+		};
+		23BE56BE2E53931500600875 /* Running */ = {
+			isa = PBXGroup;
+			children = (
+				23BE56BD2E53931500600875 /* RunningViewModel.swift */,
+			);
+			path = Running;
+			sourceTree = "<group>";
+		};
+		23BE56BF2E53931500600875 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				23BE56BC2E53931500600875 /* Gym */,
+				23BE56BE2E53931500600875 /* Running */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		23BE56C42E53932000600875 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				23BE56C22E53932000600875 /* RunningRepository.swift */,
+				23BE56C32E53932000600875 /* StrengthRepository.swift */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		23BE56C52E53932000600875 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				23BE56C42E53932000600875 /* Repositories */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
 		A002000 = {
 			isa = PBXGroup;
 			children = (
@@ -62,7 +110,8 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
-				23BE56B12E53702300600875 /* NewView.swift */,
+				23BE56C52E53932000600875 /* Data */,
+				23BE56BF2E53931500600875 /* Features */,
 				A000101 /* SportTrackerApp.swift */,
 				23BE56B52E53708D00600875 /* Models.swift */,
 				23BE56B72E5370A300600875 /* PointsCalculator.swift */,
@@ -71,8 +120,8 @@
 				A000102 /* ContentView.swift */,
 				A000103 /* SummaryView.swift */,
 				A000104 /* GymView.swift */,
-				A000105 /* NewView.swift */,
 				A000106 /* RunningView.swift */,
+				23BE56C82E53996A00600875 /* NewView.swift */,
 				A000107 /* SettingsView.swift */,
 				A000200 /* Assets.xcassets */,
 				A000300 /* Info.plist */,
@@ -160,11 +209,14 @@
 				A000001 /* SportTrackerApp.swift in Sources */,
 				23BE56B82E5370A300600875 /* PointsCalculator.swift in Sources */,
 				A000002 /* ContentView.swift in Sources */,
+				23BE56C02E53931500600875 /* GymViewModel.swift in Sources */,
+				23BE56C12E53931500600875 /* RunningViewModel.swift in Sources */,
 				A000003 /* SummaryView.swift in Sources */,
 				A000004 /* GymView.swift in Sources */,
-				A000005 /* NewView.swift in Sources */,
-				23BE56B22E53702300600875 /* NewView.swift in Sources */,
 				A000006 /* RunningView.swift in Sources */,
+				23BE56C62E53932000600875 /* RunningRepository.swift in Sources */,
+				23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */,
+				23BE56C92E53996A00600875 /* NewView.swift in Sources */,
 				A000007 /* SettingsView.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
 			);

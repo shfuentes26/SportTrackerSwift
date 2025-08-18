@@ -4,6 +4,8 @@ import SwiftData
 struct GymView: View {
     @Environment(\.modelContext) private var context
     @State private var editingSession: StrengthSession? = nil
+    
+    @State private var vm: GymViewModel? = nil
 
     @Query(sort: [SortDescriptor(\StrengthSession.date, order: .reverse)])
     private var sessions: [StrengthSession]
@@ -31,7 +33,7 @@ struct GymView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) { delete(session: s) } label: {
+                            Button(role: .destructive) { vm?.delete(s) } label: {
                                 Label("Delete", systemImage: "trash")
                             }
                             Button { editingSession = s } label: {
@@ -43,6 +45,15 @@ struct GymView: View {
             }
 
             .navigationTitle("Gym")
+        }
+        .task {
+            if vm == nil {
+                vm = GymViewModel(
+                    repo: SwiftDataStrengthRepository(context: context),
+                    context: context
+                )
+                vm?.load()
+            }
         }
         .sheet(item: $editingSession) { sess in
             EditGymSheet(session: sess)

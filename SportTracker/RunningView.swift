@@ -4,6 +4,9 @@ import SwiftData
 struct RunningView: View {
     @Environment(\.modelContext) private var context
     @State private var editingRun: RunningSession? = nil
+    
+    @State private var vm: RunningViewModel? = nil
+  
 
     @Query(sort: [SortDescriptor(\RunningSession.date, order: .reverse)])
     private var runs: [RunningSession]
@@ -31,7 +34,7 @@ struct RunningView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) { delete(run: r) } label: {
+                            Button(role: .destructive) { vm?.delete(r) } label: {
                                 Label("Delete", systemImage: "trash")
                             }
                             Button { editingRun = r } label: {
@@ -43,6 +46,15 @@ struct RunningView: View {
             }
             .navigationTitle("Running")
         }
+        .task {
+                    if vm == nil {
+                        vm = RunningViewModel(
+                            repo: SwiftDataRunningRepository(context: context),
+                            context: context
+                        )
+                        vm?.load()
+                    }
+                }
         .sheet(item: $editingRun) { run in
             EditRunningSheet(run: run)
         }
