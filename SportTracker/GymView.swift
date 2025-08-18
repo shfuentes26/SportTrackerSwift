@@ -1,14 +1,33 @@
 import SwiftUI
+import SwiftData
 
 struct GymView: View {
+    @Query(sort: [SortDescriptor(\StrengthSession.date, order: .reverse)])
+    private var sessions: [StrengthSession]
+
+    init() {}
+
     var body: some View {
         NavigationStack {
-            Text("Gym")
-                .font(.title)
-                .fontWeight(.semibold)
+            List {
+                ForEach(sessions) { s in
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text(SummaryView.formatDate(s.date)).font(.headline)
+                            Spacer()
+                            Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                        }
+                        Text("\(s.sets.count) set(s)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .navigationTitle("Gym")
         }
-        .navigationTitle("Gym")
     }
 }
 
-#Preview { GymView() }
+#Preview {
+    GymView().modelContainer(try! Persistence.shared.makeModelContainer(inMemory: true))
+}
