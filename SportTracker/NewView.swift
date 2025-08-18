@@ -66,7 +66,9 @@ struct NewView: View {
                 .padding(.bottom)
             }
             .navigationTitle("New")
-            .alert("Saved!", isPresented: $showSaved) { Button("OK", role: .cancel) { } }
+            .alert("Training saved successfully", isPresented: $showSaved) {
+                Button("OK", role: .cancel) { }
+            }
             .alert("Validation", isPresented: .constant(errorMsg != nil), actions: {
                 Button("OK", role: .cancel) { errorMsg = nil }
             }, message: { Text(errorMsg ?? "") })

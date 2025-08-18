@@ -12,16 +12,21 @@ struct SummaryView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Past Trainings") {
-                    ForEach(pastItems) { item in
-                        HStack {
-                            Image(systemName: item.icon)
-                            VStack(alignment: .leading) {
-                                Text(item.title).font(.headline)
-                                Text(item.subtitle).font(.subheadline).foregroundStyle(.secondary)
+                if pastItems.isEmpty {
+                    // iOS 17: placeholder nativo
+                    ContentUnavailableView("There are no trainings yet", systemImage: "calendar.badge.clock")
+                } else {
+                    Section("Past Trainings") {
+                        ForEach(pastItems) { item in
+                            HStack {
+                                Image(systemName: item.icon)
+                                VStack(alignment: .leading) {
+                                    Text(item.title).font(.headline)
+                                    Text(item.subtitle).font(.subheadline).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Text(item.trailing).font(.subheadline).foregroundStyle(.secondary)
                             }
-                            Spacer()
-                            Text(item.trailing).font(.subheadline).foregroundStyle(.secondary)
                         }
                     }
                 }
