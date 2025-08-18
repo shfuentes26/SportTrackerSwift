@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 
+
 // Selector de tipo de entrenamiento
 enum TrainingType: String, CaseIterable, Identifiable {
     case running = "Running"
@@ -10,6 +11,8 @@ enum TrainingType: String, CaseIterable, Identifiable {
 
 struct NewView: View {
     @Environment(\.modelContext) private var context
+    
+    @State private var vm: NewViewModel? = nil
 
     // Picker de tipo
     @State private var selectedType: TrainingType = .running
@@ -73,6 +76,14 @@ struct NewView: View {
             .alert("Validation", isPresented: .constant(errorMsg != nil), actions: {
                 Button("OK", role: .cancel) { errorMsg = nil }
             }, message: { Text(errorMsg ?? "") })
+        }.task {
+            if vm == nil {
+                vm = NewViewModel(
+                    context: context,
+                    runningRepo: SwiftDataRunningRepository(context: context),
+                    strengthRepo: SwiftDataStrengthRepository(context: context)
+                )
+            }
         }
     }
 
@@ -134,11 +145,59 @@ struct NewView: View {
     // MARK: - Save
 
     private func saveTapped() {
+        guard let vm else { return }
+
         switch selectedType {
         case .running:
-            saveRunning()
+            guard
+                let km = vm.validateDistance(runDistanceKm),       // "12,3" o "12.3"
+                let seconds = vm.validateDuration(h: runH, m: runM, s: runS) // hh:mm:ss
+            else {
+                errorMsg = "Please enter a positive distance and a duration in hh:mm:ss."
+                return
+            }
+
+            do {
+                try vm.saveRunning(date: runDate,
+                                   km: km,
+                                   seconds: seconds,
+                                   notes: runNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : runNotes)
+                // reset UI
+                runDistanceKm = ""
+                runH = ""; runM = ""; runS = ""
+                runNotes = ""
+                showSaved = true
+            } catch {
+                errorMsg = "Could not save: \(error.localizedDescription)"
+            }
+
         case .gym:
-            saveGym()
+            // Mapea tus SetInput de la vista a un DTO del VM
+            let mapped: [NewViewModel.NewTrainingSet] = setInputs.enumerated().compactMap { (idx, input) in
+                let reps = Int(input.reps) ?? 0
+                guard reps > 0 else { return nil }
+                let weight = Double(input.weight.replacingOccurrences(of: ",", with: ".")) // opcional
+                let exercise = input.exercise ?? exercises.first
+                guard let ex = exercise else { return nil }
+                return .init(exercise: ex, order: idx + 1, reps: reps, weightKg: weight)
+            }
+
+            guard !mapped.isEmpty else {
+                errorMsg = "Add at least one set with reps."
+                return
+            }
+
+            do {
+                try vm.saveGym(date: gymDate,
+                               notes: gymNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : gymNotes,
+                               sets: mapped)
+                // reset UI
+                setInputs = [SetInput()]
+                gymNotes = ""
+                showSaved = true
+            } catch {
+                errorMsg = "Could not save: \(error.localizedDescription)"
+            }
         }
     }
 

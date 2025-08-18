@@ -107,6 +107,7 @@
 			isa = PBXGroup;
 			children = (
 				23BE56B32E53706C00600875 /* Persistence.swift */,
+				23BE56B52E53708D00600875 /* Models.swift */,
 				23BE56C42E53932000600875 /* Repositories */,
 			);
 			path = Data;
@@ -129,7 +130,6 @@
 				23BE56CA2E53A53800600875 /* Domain */,
 				23BE56C52E53932000600875 /* Data */,
 				23BE56BF2E53931500600875 /* Features */,
-				23BE56B52E53708D00600875 /* Models.swift */,
 				23BE56B92E5370B700600875 /* README_LOCAL_DB.md */,
 				A000102 /* ContentView.swift */,
 				A000107 /* SettingsView.swift */,
