@@ -26,7 +26,7 @@ struct NewView: View {
     @State private var selectedType: TrainingType = .running
     
     @State private var selectedGymCategory: GymCategory = .core
-
+    @State private var showAddExercise: Bool = false
 
     // --- Running inputs ---
     @State private var runDate: Date = Date()
@@ -138,6 +138,12 @@ struct NewView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+
+                Button {
+                    showAddExercise = true
+                } label: {
+                    Label("Add Exercise", systemImage: "plus.circle.fill")
+                }
             }
             Section("Sets") {
                 ForEach($setInputs) { $input in
@@ -157,6 +163,8 @@ struct NewView: View {
             Section("Notes") {
                 TextField("Optional", text: $gymNotes, axis: .vertical)
             }
+        }.sheet(isPresented: $showAddExercise) {
+            AddExerciseSheet(selectedCategory: $selectedGymCategory)
         }
     }
 
@@ -293,9 +301,10 @@ struct SetRow: View {
                     Spacer()
                 }
             } else {
-                Picker("Exercise", selection: Binding(get: {
-                    input.exercise ?? allExercises.first
-                }, set: { input.exercise = $0 })) {
+                Picker("Exercise", selection: Binding(
+                    get: { input.exercise ?? allExercises.first },
+                    set: { input.exercise = $0 }
+                )) {
                     ForEach(allExercises, id: \.id) { ex in
                         Text(ex.name).tag(Optional(ex))
                     }
@@ -311,7 +320,83 @@ struct SetRow: View {
             }
         }
     }
+    
 }
+
+private struct AddExerciseSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+
+    @Binding var selectedCategory: GymCategory
+
+    @State private var name: String = ""
+    @State private var weighted: Bool = false
+    @State private var chestBackChoice: ChestBack = .chest
+
+    private enum ChestBack: String, CaseIterable, Identifiable {
+        case chest = "Chest"
+        case back  = "Back"
+        var id: String { rawValue }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Info") {
+                    TextField("Name", text: $name)
+                    Toggle("Weighted (kg)", isOn: $weighted)
+                }
+
+                if selectedCategory == .chestBack {
+                    Section("Group") {
+                        Picker("Group", selection: $chestBackChoice) {
+                            ForEach(ChestBack.allCases) { c in
+                                Text(c.rawValue).tag(c)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                }
+
+                Section {
+                    Text("Will be added to \(selectedCategory.rawValue)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("Add Exercise")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        let group: MuscleGroup = {
+            switch selectedCategory {
+            case .core:       return .core
+            case .arms:       return .arms
+            case .legs:       return .legs
+            case .chestBack:  return .chestBack
+            }
+        }()
+
+        let ex = Exercise(name: name.trimmingCharacters(in: .whitespaces),
+                          muscleGroup: group,
+                          isWeighted: weighted,
+                          isCustom: true)
+        context.insert(ex)
+        do { try context.save() } catch { print("Save exercise error: \(error)") }
+        dismiss()
+    }
+}
+
 
 // MARK: - Preview
 
