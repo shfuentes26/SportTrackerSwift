@@ -14,6 +14,7 @@ struct ExercisesListScreen: View {
         NavigationStack {
             ExercisesListView()      // usa tu vista existente
                 .navigationTitle("Exercises")
+                .navigationBarTitleDisplayMode(.inline) 
         }
         .brandNavBar()
         .brandHeaderSpacer()

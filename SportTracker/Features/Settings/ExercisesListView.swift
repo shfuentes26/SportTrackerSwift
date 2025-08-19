@@ -68,7 +68,8 @@ struct ExercisesListView: View {
                 }
             }
         }
-        .searchable(text: $search)
+        .searchable(text: $search,
+            placement: .navigationBarDrawer(displayMode: .always))
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
