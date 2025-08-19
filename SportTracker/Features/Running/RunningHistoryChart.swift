@@ -151,23 +151,27 @@ struct RunningHistoryChart: View {
         case .month:
             // Semanas que intersectan el mes [start, end)
             var weekStarts: [Date] = []
-            var w = start.startOfWeek
-            while w < end {
-                weekStarts.append(w)
-                w = Calendar.current.date(byAdding: .day, value: 7, to: w)!
+            var ws = start.startOfWeek
+            while ws < end {
+                weekStarts.append(ws)
+                ws = Calendar.current.date(byAdding: .day, value: 7, to: ws)!
             }
 
-            // Suma km por cada semana, recortando los límites al mes
+            // Suma por semana (recortada a los límites del mes) y etiqueta "d1–d2"
             var result: [Bucket] = []
-            for (i, ws) in weekStarts.enumerated() {
-                let we = min(Calendar.current.date(byAdding: .day, value: 7, to: ws)!, end)
-                let from = max(ws, start)   // recorte por la izquierda (día 1)
-                let to   = we               // recorte por la derecha  (fin de mes)
+            for ws in weekStarts {
+                let we   = min(Calendar.current.date(byAdding: .day, value: 7, to: ws)!, end)
+                let from = max(ws, start)   // dentro del mes
+                let to   = we               // exclusivo; recorta al final del mes
 
                 let sum = runs.reduce(0.0) { acc, r in
-                    (r.date >= from && r.date < to) ? acc + r.distanceKm : acc
+                    (r.date >= from && r.date < to)
+                    ? acc + r.distanceKm         
+                    : acc
                 }
-                result.append(Bucket(label: "W\(i+1)", value: sum)) 
+
+                let label = weekRangeLabel(from: from, to: to)
+                result.append(Bucket(label: label, value: sum))
             }
 
             await MainActor.run {
@@ -233,5 +237,13 @@ private extension DateFormatter {
         let i = max(0, min(11, m - 1))
         return Calendar.current.shortMonthSymbols[i]
     }
+}
+private func weekRangeLabel(from: Date, to: Date) -> String {
+    let cal = Calendar.current
+    let startDay = cal.component(.day, from: from)
+    // 'to' es exclusivo → restamos 1 día para mostrar el último incluido
+    let inclusiveEnd = cal.date(byAdding: .day, value: -1, to: to) ?? to
+    let endDay = cal.component(.day, from: inclusiveEnd)
+    return "\(startDay)–\(endDay)"
 }
 
