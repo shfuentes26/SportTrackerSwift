@@ -19,6 +19,7 @@ struct RunningView: View {
 
     var body: some View {
         NavigationStack {
+            RunningHistoryChart() 
             List {
                 if runs.isEmpty {
                     ContentUnavailableView(
