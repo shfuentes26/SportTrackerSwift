@@ -10,6 +10,7 @@ struct SummaryView: View {
     private var useMiles: Bool { settingsList.first?.prefersMiles ?? false }
 
 
+
     init() {}
 
     var body: some View {
@@ -44,7 +45,7 @@ struct SummaryView: View {
                      date: r.date,
                      icon: "figure.run",
                      title: "Running • \(Self.formatDate(r.date))",
-                     subtitle: "\(distString(r.distanceKm)) • \(paceString(r.paceSecondsPerKm))",
+                     subtitle: "\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles))", 
                      trailing: "\(Int(r.totalPoints)) pts")
         }
         let gymItems = gyms.map { s in
