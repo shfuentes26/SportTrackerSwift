@@ -9,6 +9,9 @@ struct GymView: View {
 
     @Query(sort: [SortDescriptor(\StrengthSession.date, order: .reverse)])
     private var sessions: [StrengthSession]
+    @Query private var settingsList: [Settings]
+    private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
+
     
     private enum GymCategory: String, CaseIterable, Identifiable {
         case all = "All"
@@ -17,6 +20,23 @@ struct GymView: View {
         case arms = "Arms"
         case legs = "Legs"
         var id: String { rawValue }
+    }
+    
+    private func gymDetails(_ s: StrengthSession) -> String {
+        if s.sets.isEmpty { return "No sets" }
+        let items = s.sets
+            .sorted(by: { $0.order < $1.order })
+            .prefix(3)
+            .map { set in
+                let reps = "\(set.reps)"
+                let w = (set.weightKg ?? 0) > 0
+                    ? " @ " + UnitFormatters.weight(set.weightKg!, usePounds: usePounds)
+                    : ""
+                return "\(set.exercise.name) \(reps)\(w)"
+            }
+        var line = items.joined(separator: " • ")
+        if s.sets.count > 3 { line += " …" }
+        return line
     }
     
     private var filteredSessions: [StrengthSession] {
@@ -78,7 +98,7 @@ struct GymView: View {
                                 Spacer()
                                 Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
                             }
-                            Text("\(s.sets.count) set(s)")
+                            Text(gymDetails(s))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }

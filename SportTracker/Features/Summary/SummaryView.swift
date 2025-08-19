@@ -8,6 +8,7 @@ struct SummaryView: View {
     private var gyms: [StrengthSession]
     @Query private var settingsList: [Settings]
     private var useMiles: Bool { settingsList.first?.prefersMiles ?? false }
+    private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
 
 
 
@@ -38,6 +39,24 @@ struct SummaryView: View {
             .navigationTitle("Summary")
         }
     }
+    
+    private func gymDetails(_ s: StrengthSession) -> String {
+        if s.sets.isEmpty { return "No sets" }
+        let items = s.sets
+            .sorted(by: { $0.order < $1.order })
+            .prefix(3)
+            .map { set in
+                let reps = "\(set.reps)"
+                let w = (set.weightKg ?? 0) > 0
+                    ? " @ " + UnitFormatters.weight(set.weightKg!, usePounds: usePounds)
+                    : ""
+                return "\(set.exercise.name) \(reps)\(w)"
+            }
+        var line = items.joined(separator: " • ")
+        if s.sets.count > 3 { line += " …" }
+        return line
+    }
+
 
     private var pastItems: [PastItem] {
         let runItems = runs.map { r in
@@ -45,7 +64,7 @@ struct SummaryView: View {
                      date: r.date,
                      icon: "figure.run",
                      title: "Running • \(Self.formatDate(r.date))",
-                     subtitle: "\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles))", 
+                     subtitle: "\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles))",
                      trailing: "\(Int(r.totalPoints)) pts")
         }
         let gymItems = gyms.map { s in
@@ -53,7 +72,7 @@ struct SummaryView: View {
                      date: s.date,
                      icon: "dumbbell.fill",
                      title: "Gym • \(Self.formatDate(s.date))",
-                     subtitle: "\(s.sets.count) set(s)",
+                     subtitle: gymDetails(s),
                      trailing: "\(Int(s.totalPoints)) pts")
         }
         return (runItems + gymItems).sorted { $0.date > $1.date }
