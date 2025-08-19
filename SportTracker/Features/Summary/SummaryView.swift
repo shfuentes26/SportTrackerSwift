@@ -6,6 +6,9 @@ struct SummaryView: View {
     private var runs: [RunningSession]
     @Query(sort: [SortDescriptor(\StrengthSession.date, order: .reverse)])
     private var gyms: [StrengthSession]
+    @Query private var settingsList: [Settings]
+    private var useMiles: Bool { settingsList.first?.prefersMiles ?? false }
+
 
     init() {}
 
@@ -41,7 +44,7 @@ struct SummaryView: View {
                      date: r.date,
                      icon: "figure.run",
                      title: "Running • \(Self.formatDate(r.date))",
-                     subtitle: "\(Self.formatNumber(r.distanceKm)) km • pace \(Self.formatPace(r.paceSecondsPerKm))",
+                     subtitle: "\(distString(r.distanceKm)) • \(paceString(r.paceSecondsPerKm))",
                      trailing: "\(Int(r.totalPoints)) pts")
         }
         let gymItems = gyms.map { s in
@@ -85,7 +88,25 @@ struct SummaryView: View {
         let s = Int(secPerKm) % 60
         return String(format: "%d:%02d min/km", m, s)
     }
+    
+    private func distString(_ km: Double) -> String {
+        let value = useMiles ? (km / 1.60934) : km
+        let unit  = useMiles ? "mi" : "km"
+        return "\(SummaryView.formatNumber(value)) \(unit)"
+    }
+
+    private func paceString(_ secondsPerKm: Double) -> String {
+        // si mostramos millas, convertir ritmo por km → ritmo por milla
+        let secsDouble = useMiles ? (secondsPerKm * 1.60934) : secondsPerKm
+        let secs = Int(round(secsDouble))    // redondea a segundos enteros
+        let mm = secs / 60
+        let ss = secs % 60
+        return String(format: "%d:%02d %@", mm, ss, useMiles ? "/mi" : "/km")
+    }
+
 }
+
+
 
 #Preview {
     SummaryView()

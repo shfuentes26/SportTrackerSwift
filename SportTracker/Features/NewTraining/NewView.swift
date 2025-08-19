@@ -46,6 +46,11 @@ struct NewView: View {
     // --- Alerts ---
     @State private var showSaved: Bool = false
     @State private var errorMsg: String? = nil
+    
+    @Query private var settingsList: [Settings]
+    private var useMiles: Bool  { settingsList.first?.prefersMiles  ?? false }
+    private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
+
 
     init() {} // evita init(exercises:) sintetizado por @Query
 
@@ -104,9 +109,9 @@ struct NewView: View {
         Form {
             DatePicker("Date", selection: $runDate, displayedComponents: [.date, .hourAndMinute])
             HStack {
-                TextField("Distance (km)", text: $runDistanceKm)
+                TextField("Distance (\(useMiles ? "mi" : "km"))", text: $runDistanceKm)
                     .keyboardType(.decimalPad)
-                Text("km").foregroundStyle(.secondary)
+                Text(useMiles ? "mi" : "km").foregroundStyle(.secondary)
             }
             Section("Duration (hh:mm:ss)") {
                 HStack(spacing: 6) {
@@ -147,7 +152,8 @@ struct NewView: View {
             }
             Section("Sets") {
                 ForEach($setInputs) { $input in
-                    SetRow(input: $input, allExercises: filteredExercises)
+                    // donde haces ForEach($setInputs):
+                    SetRow(input: $input, allExercises: filteredExercises, usePounds: usePounds)
                 }
                 .onDelete { idx in
                     setInputs.remove(atOffsets: idx)
@@ -176,17 +182,15 @@ struct NewView: View {
         switch selectedType {
         case .running:
             guard
-                let km = vm.validateDistance(runDistanceKm),       // "12,3" o "12.3"
-                let seconds = vm.validateDuration(h: runH, m: runM, s: runS) // hh:mm:ss
-            else {
-                errorMsg = "Please enter a positive distance and a duration in hh:mm:ss."
-                return
-            }
+                let raw = vm.validateDistance(runDistanceKm),
+                let seconds = vm.validateDuration(h: runH, m: runM, s: runS)
+            else { errorMsg = "Please enter a positive distance and a duration in hh:mm:ss."; return }
+
+            // si el usuario escribe millas, conviértelo a km para la BD
+            let km = useMiles ? (raw * 1.60934) : raw
 
             do {
-                try vm.saveRunning(date: runDate,
-                                   km: km,
-                                   seconds: seconds,
+                try vm.saveRunning(date: runDate, km: km, seconds: seconds,
                                    notes: runNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : runNotes)
                 // reset UI
                 runDistanceKm = ""
@@ -202,10 +206,11 @@ struct NewView: View {
             let mapped: [NewViewModel.NewTrainingSet] = setInputs.enumerated().compactMap { (idx, input) in
                 let reps = Int(input.reps) ?? 0
                 guard reps > 0 else { return nil }
-                let weight = Double(input.weight.replacingOccurrences(of: ",", with: ".")) // opcional
+                let entered = Double(input.weight.replacingOccurrences(of: ",", with: "."))
+                let weightKg = entered.map { usePounds ? ($0 / 2.20462) : $0 }    // <-- convierte lb→kg 
                 let exercise = input.exercise ?? filteredExercises.first ?? exercises.first
                 guard let ex = exercise else { return nil }
-                return .init(exercise: ex, order: idx + 1, reps: reps, weightKg: weight)
+                return .init(exercise: ex, order: idx + 1, reps: reps, weightKg: weightKg)
             }
 
             guard !mapped.isEmpty else {
@@ -292,6 +297,7 @@ struct SetInput: Identifiable, Hashable {
 struct SetRow: View {
     @Binding var input: SetInput
     var allExercises: [Exercise]
+    var usePounds: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -313,10 +319,10 @@ struct SetRow: View {
 
             HStack {
                 TextField("Reps", text: $input.reps)
-                    .keyboardType(.numberPad)
-                Divider()
-                TextField("Weight (kg)", text: $input.weight)
-                    .keyboardType(.decimalPad)
+                                    .keyboardType(.numberPad)
+                                Divider()
+                                TextField("Weight (\(usePounds ? "lb" : "kg"))", text: $input.weight)
+                                    .keyboardType(.decimalPad)
             }
         }
     }

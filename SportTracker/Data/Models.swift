@@ -86,6 +86,8 @@ public final class Settings: SyncTracked {
         self.createdAt = Date()
         self.updatedAt = Date()
     }
+    var prefersMiles: Bool = false     // false = km; true = miles
+    var prefersPounds: Bool = false    // false = kg; true = lb
 }
 
 // MARK: - Exercise Library

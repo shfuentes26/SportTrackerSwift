@@ -29,7 +29,7 @@ struct RunningView: View {
                                 Spacer()
                                 Text("\(Int(r.totalPoints)) pts").foregroundStyle(.secondary)
                             }
-                            Text("\(SummaryView.formatNumber(r.distanceKm)) km • \(SummaryView.formatPace(r.paceSecondsPerKm)) • \(r.durationSeconds/60) min")
+                            Text("\(formatDistance(r.distanceKm)) • \(formatPace(r.paceSecondsPerKm)) • \(r.durationSeconds/60) min")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -173,6 +173,26 @@ private struct EditRunningSheet: View {
         dismiss()
     }
 }
+
+@Query private var settingsList: [Settings]
+private var useMiles: Bool { settingsList.first?.prefersMiles ?? false }
+
+private func formatDistance(_ km: Double) -> String {
+    let value = useMiles ? (km / 1.60934) : km
+    let unit = useMiles ? "mi" : "km"
+    return "\(SummaryView.formatNumber(value)) \(unit)"
+}
+
+private func formatPace(_ secondsPerKm: Double) -> String {
+    // Si mostramos millas: ritmo por milla = ritmo por km * 1.60934
+    let secsDouble = useMiles ? (secondsPerKm * 1.60934) : secondsPerKm
+    let secs = Int(round(secsDouble))   // redondea a segundos
+    let mm = secs / 60
+    let ss = secs % 60
+    let unit = useMiles ? "/mi" : "/km"
+    return String(format: "%d:%02d %@", mm, ss, unit)
+}
+
 
 #Preview {
     RunningView()
