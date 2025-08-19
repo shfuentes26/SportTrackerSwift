@@ -80,6 +80,7 @@ struct GymView: View {
                     Text(c.rawValue).tag(c)
                 }
             }
+            .brandHeaderSpacer()
             .pickerStyle(.segmented)
             .padding(.horizontal)
             List {
@@ -113,7 +114,6 @@ struct GymView: View {
                     }
                 }
             }
-
             .navigationTitle("Gym")
         }
         .task {

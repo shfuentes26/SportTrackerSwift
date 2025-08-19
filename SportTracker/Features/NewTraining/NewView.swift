@@ -76,6 +76,7 @@ struct NewView: View {
                 .padding(.bottom)
             }
             .navigationTitle("New")
+            .brandHeaderSpacer()
             .alert("Training saved successfully", isPresented: $showSaved) {
                 Button("OK", role: .cancel) { }
             }
@@ -83,6 +84,7 @@ struct NewView: View {
                 Button("OK", role: .cancel) { errorMsg = nil }
             }, message: { Text(errorMsg ?? "") })
         }
+        .brandNavBar()
         .task {
             if vm == nil {
                 vm = NewViewModel(

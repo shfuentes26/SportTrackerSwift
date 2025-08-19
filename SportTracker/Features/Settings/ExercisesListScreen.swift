@@ -15,5 +15,7 @@ struct ExercisesListScreen: View {
             ExercisesListView()      // usa tu vista existente
                 .navigationTitle("Exercises")
         }
+        .brandNavBar()
+        .brandHeaderSpacer()
     }
 }

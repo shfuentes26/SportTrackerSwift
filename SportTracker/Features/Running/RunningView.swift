@@ -49,6 +49,8 @@ struct RunningView: View {
                 }
             }
             .navigationTitle("Running")
+            .brandHeaderSpacer()
+            
         }
         .task {
                     if vm == nil {
@@ -150,6 +152,7 @@ private struct EditRunningSheet: View {
                     Button("Save") { save() }
                 }
             }
+            .brandHeaderSpacer()
         }
     }
 

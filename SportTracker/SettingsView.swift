@@ -30,5 +30,6 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .brandHeaderSpacer()
     }
 }
