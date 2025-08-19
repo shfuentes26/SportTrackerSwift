@@ -133,9 +133,10 @@ struct NewView: View {
 
             Section("Category") {
                 Picker("Category", selection: $selectedGymCategory) {
-                    ForEach(ExerciseCategory.allCases) { c in
-                        Text(c.rawValue).tag(c)
-                    }
+                    Text("Core").tag(ExerciseCategory.core)
+                    Text("Chest/Back").tag(ExerciseCategory.chestBack)
+                    Text("Arms").tag(ExerciseCategory.arms)
+                    Text("Legs").tag(ExerciseCategory.legs)
                 }
                 .pickerStyle(.segmented)
 
