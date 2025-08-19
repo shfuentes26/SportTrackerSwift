@@ -19,6 +19,11 @@ struct SettingsView: View {
         @Bindable var sb = s                  // para editarlo con bindings
 
         Form {
+            // 👇 Nueva opción de Exercises
+            Section {
+                NavigationLink("Exercises") { ExercisesListScreen() }
+            }
+
             Section("Units") {
                 Toggle("Show miles (min/mi)", isOn: $sb.prefersMiles)
                 Toggle("Show pounds (lb)",    isOn: $sb.prefersPounds)

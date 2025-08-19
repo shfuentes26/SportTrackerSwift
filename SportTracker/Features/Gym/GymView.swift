@@ -13,7 +13,7 @@ struct GymView: View {
     private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
 
     
-    private enum GymCategory: String, CaseIterable, Identifiable {
+    private enum GymFilterCategory: String, CaseIterable, Identifiable {
         case all = "All"
         case core = "Core"
         case chestBack = "Chest/Back"
@@ -47,14 +47,14 @@ struct GymView: View {
     
     // Devuelve true si la sesión tiene al menos un set cuyo ejercicio
     // pertenece a la categoría seleccionada.
-    private func session(_ s: StrengthSession, matches cat: GymCategory) -> Bool {
+    private func session(_ s: StrengthSession, matches cat: GymFilterCategory) -> Bool {
         let cats = Set(s.sets.compactMap { mapGroup($0.exercise.muscleGroup) })
         return cats.contains(cat)
     }
     
     // Mapea tu enum MuscleGroup a las categorías del filtro.
     // Ajusta los cases según tu enum real si tienes más (ej. .shoulders).
-    private func mapGroup(_ g: MuscleGroup) -> GymCategory? {
+    private func mapGroup(_ g: MuscleGroup) -> GymFilterCategory? {
         switch g {
         case .core:
             return .core
@@ -69,14 +69,14 @@ struct GymView: View {
         }
     }
 
-    @State private var selectedCategory: GymCategory = .all
+    @State private var selectedCategory: GymFilterCategory = .all
     
     init() {} // evita el init(sessions:) sintetizado por @Query
 
     var body: some View {
         NavigationStack {
             Picker("Category", selection: $selectedCategory) {
-                ForEach(GymCategory.allCases) { c in
+                ForEach(GymFilterCategory.allCases) { c in
                     Text(c.rawValue).tag(c)
                 }
             }

@@ -108,8 +108,9 @@ public final class Exercise: SyncTracked {
     public var iconSystemName: String?   // SF Symbol name if any
     public var imageData: Data?          // Optional user photo/icon
     public var isCustom: Bool = true
+    public var notes: String = ""
 
-    public init(id: UUID = UUID(), name: String, muscleGroup: MuscleGroup, isWeighted: Bool, exerciseDescription: String? = nil, iconSystemName: String? = nil, imageData: Data? = nil, isCustom: Bool = true) {
+    public init(id: UUID = UUID(), name: String, muscleGroup: MuscleGroup, isWeighted: Bool, exerciseDescription: String? = nil, iconSystemName: String? = nil, imageData: Data? = nil, isCustom: Bool = true,notes: String = "") {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -120,6 +121,7 @@ public final class Exercise: SyncTracked {
         self.iconSystemName = iconSystemName
         self.imageData = imageData
         self.isCustom = isCustom
+        self.notes = notes
     }
 }
 

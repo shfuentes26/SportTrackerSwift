@@ -1,31 +1,22 @@
 import SwiftUI
 import SwiftData
 
-
 // Selector de tipo de entrenamiento
 enum TrainingType: String, CaseIterable, Identifiable {
     case running = "Running"
     case gym = "Gym"
     var id: String { rawValue }
 }
-private enum GymCategory: String, CaseIterable, Identifiable {
-    case core = "Core"
-    case chestBack = "Chest/Back"
-    case arms = "Arms"
-    case legs = "Legs"
-    var id: String { rawValue }
-}
-
 
 struct NewView: View {
     @Environment(\.modelContext) private var context
-    
     @State private var vm: NewViewModel? = nil
 
     // Picker de tipo
     @State private var selectedType: TrainingType = .running
-    
-    @State private var selectedGymCategory: GymCategory = .core
+
+    // Categoría del selector de Gym (tipo compartido)
+    @State private var selectedGymCategory: ExerciseCategory = .core
     @State private var showAddExercise: Bool = false
 
     // --- Running inputs ---
@@ -46,11 +37,10 @@ struct NewView: View {
     // --- Alerts ---
     @State private var showSaved: Bool = false
     @State private var errorMsg: String? = nil
-    
+
     @Query private var settingsList: [Settings]
     private var useMiles: Bool  { settingsList.first?.prefersMiles  ?? false }
     private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
-
 
     init() {} // evita init(exercises:) sintetizado por @Query
 
@@ -92,7 +82,8 @@ struct NewView: View {
             .alert("Validation", isPresented: .constant(errorMsg != nil), actions: {
                 Button("OK", role: .cancel) { errorMsg = nil }
             }, message: { Text(errorMsg ?? "") })
-        }.task {
+        }
+        .task {
             if vm == nil {
                 vm = NewViewModel(
                     context: context,
@@ -108,11 +99,13 @@ struct NewView: View {
     private var runningForm: some View {
         Form {
             DatePicker("Date", selection: $runDate, displayedComponents: [.date, .hourAndMinute])
+
             HStack {
                 TextField("Distance (\(useMiles ? "mi" : "km"))", text: $runDistanceKm)
                     .keyboardType(.decimalPad)
                 Text(useMiles ? "mi" : "km").foregroundStyle(.secondary)
             }
+
             Section("Duration (hh:mm:ss)") {
                 HStack(spacing: 6) {
                     TimeBox(placeholder: "hh", text: $runH)
@@ -125,6 +118,7 @@ struct NewView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+
             Section("Notes") {
                 TextField("Optional", text: $runNotes, axis: .vertical)
             }
@@ -136,9 +130,10 @@ struct NewView: View {
     private var gymForm: some View {
         Form {
             DatePicker("Date", selection: $gymDate, displayedComponents: [.date, .hourAndMinute])
+
             Section("Category") {
                 Picker("Category", selection: $selectedGymCategory) {
-                    ForEach(GymCategory.allCases) { c in
+                    ForEach(ExerciseCategory.allCases) { c in
                         Text(c.rawValue).tag(c)
                     }
                 }
@@ -150,10 +145,14 @@ struct NewView: View {
                     Label("Add Exercise", systemImage: "plus.circle.fill")
                 }
             }
+
             Section("Sets") {
                 ForEach($setInputs) { $input in
-                    // donde haces ForEach($setInputs):
-                    SetRow(input: $input, allExercises: filteredExercises, usePounds: usePounds)
+                    SetRow(
+                        input: $input,
+                        allExercises: filteredExercises,
+                        usePounds: usePounds
+                    )
                 }
                 .onDelete { idx in
                     setInputs.remove(atOffsets: idx)
@@ -169,7 +168,8 @@ struct NewView: View {
             Section("Notes") {
                 TextField("Optional", text: $gymNotes, axis: .vertical)
             }
-        }.sheet(isPresented: $showAddExercise) {
+        }
+        .sheet(isPresented: $showAddExercise) {
             AddExerciseSheet(selectedCategory: $selectedGymCategory)
         }
     }
@@ -184,14 +184,21 @@ struct NewView: View {
             guard
                 let raw = vm.validateDistance(runDistanceKm),
                 let seconds = vm.validateDuration(h: runH, m: runM, s: runS)
-            else { errorMsg = "Please enter a positive distance and a duration in hh:mm:ss."; return }
+            else {
+                errorMsg = "Please enter a positive distance and a duration in hh:mm:ss."
+                return
+            }
 
             // si el usuario escribe millas, conviértelo a km para la BD
             let km = useMiles ? (raw * 1.60934) : raw
 
             do {
-                try vm.saveRunning(date: runDate, km: km, seconds: seconds,
-                                   notes: runNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : runNotes)
+                try vm.saveRunning(
+                    date: runDate,
+                    km: km,
+                    seconds: seconds,
+                    notes: runNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : runNotes
+                )
                 // reset UI
                 runDistanceKm = ""
                 runH = ""; runM = ""; runS = ""
@@ -202,14 +209,20 @@ struct NewView: View {
             }
 
         case .gym:
-            // Mapea tus SetInput de la vista a un DTO del VM
+            // Mapea tus SetInput a DTO del VM
             let mapped: [NewViewModel.NewTrainingSet] = setInputs.enumerated().compactMap { (idx, input) in
                 let reps = Int(input.reps) ?? 0
                 guard reps > 0 else { return nil }
+
                 let entered = Double(input.weight.replacingOccurrences(of: ",", with: "."))
-                let weightKg = entered.map { usePounds ? ($0 / 2.20462) : $0 }    // <-- convierte lb→kg 
-                let exercise = input.exercise ?? filteredExercises.first ?? exercises.first
+                let weightKg = entered.map { usePounds ? ($0 / 2.20462) : $0 } // lb → kg si procede
+
+                let exercise = filteredExercises.first(where: { $0.id == input.exerciseId })
+                    ?? filteredExercises.first
+                    ?? exercises.first
+
                 guard let ex = exercise else { return nil }
+
                 return .init(exercise: ex, order: idx + 1, reps: reps, weightKg: weightKg)
             }
 
@@ -219,9 +232,11 @@ struct NewView: View {
             }
 
             do {
-                try vm.saveGym(date: gymDate,
-                               notes: gymNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : gymNotes,
-                               sets: mapped)
+                try vm.saveGym(
+                    date: gymDate,
+                    notes: gymNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : gymNotes,
+                    sets: mapped
+                )
                 // reset UI
                 setInputs = [SetInput()]
                 gymNotes = ""
@@ -231,14 +246,16 @@ struct NewView: View {
             }
         }
     }
-    
-    private func mapGroup(_ g: MuscleGroup) -> GymCategory? {
+
+    // MARK: - Helpers
+
+    private func mapGroup(_ g: MuscleGroup) -> ExerciseCategory? {
         switch g {
-        case .core:            return .core
-        case .chestBack:    return .chestBack
-        case .arms:            return .arms
-        case .legs:            return .legs
-        default:               return nil   // ajusta si tu enum tiene más casos
+        case .core:       return .core
+        case .chestBack:  return .chestBack
+        case .arms:       return .arms
+        case .legs:       return .legs
+        default:          return nil   // ajusta si tu enum tiene más casos
         }
     }
 
@@ -247,15 +264,6 @@ struct NewView: View {
             mapGroup(ex.muscleGroup) == selectedGymCategory
         }
     }
-
-   
-
-   
-
-    
-
-
-   
 }
 
 // MARK: - TimeBox (cajitas hh:mm:ss)
@@ -289,15 +297,22 @@ private struct TimeBox: View {
 
 struct SetInput: Identifiable, Hashable {
     let id = UUID()
-    var exercise: Exercise? = nil
+    var exerciseId: UUID? = nil     // <-- usar UUID?, no Exercise?
     var reps: String = ""
-    var weight: String = "" // kg (opcional)
+    var weight: String = ""         // kg (opcional)
 }
 
 struct SetRow: View {
     @Binding var input: SetInput
     var allExercises: [Exercise]
     var usePounds: Bool = false
+
+    private var selectionBinding: Binding<UUID?> {
+        Binding(
+            get: { input.exerciseId ?? allExercises.first?.id },
+            set: { input.exerciseId = $0 }
+        )
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -307,102 +322,105 @@ struct SetRow: View {
                     Spacer()
                 }
             } else {
-                Picker("Exercise", selection: Binding(
-                    get: { input.exercise ?? allExercises.first },
-                    set: { input.exercise = $0 }
-                )) {
+                Picker("Exercise", selection: selectionBinding) {
                     ForEach(allExercises, id: \.id) { ex in
-                        Text(ex.name).tag(Optional(ex))
+                        Text(ex.name).tag(Optional(ex.id))
                     }
                 }
             }
 
             HStack {
                 TextField("Reps", text: $input.reps)
-                                    .keyboardType(.numberPad)
-                                Divider()
-                                TextField("Weight (\(usePounds ? "lb" : "kg"))", text: $input.weight)
-                                    .keyboardType(.decimalPad)
+                    .keyboardType(.numberPad)
+                Divider()
+                TextField("Weight (\(usePounds ? "lb" : "kg"))", text: $input.weight)
+                    .keyboardType(.decimalPad)
             }
         }
     }
-    
 }
 
-private struct AddExerciseSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var context
+// MARK: - AddExerciseSheet (anidada) ----------------------------------------
 
-    @Binding var selectedCategory: GymCategory
+extension NewView {
+    struct AddExerciseSheet: View {
+        @Environment(\.dismiss) private var dismiss
+        @Environment(\.modelContext) private var context
 
-    @State private var name: String = ""
-    @State private var weighted: Bool = false
-    @State private var chestBackChoice: ChestBack = .chest
+        @Binding var selectedCategory: ExerciseCategory
 
-    private enum ChestBack: String, CaseIterable, Identifiable {
-        case chest = "Chest"
-        case back  = "Back"
-        var id: String { rawValue }
-    }
+        @State private var name: String = ""
+        @State private var weighted: Bool = false
+        @State private var chestBackChoice: ChestBack = .chest
 
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Info") {
-                    TextField("Name", text: $name)
-                    Toggle("Weighted (kg)", isOn: $weighted)
-                }
+        private enum ChestBack: String, CaseIterable, Identifiable {
+            case chest = "Chest"
+            case back  = "Back"
+            var id: String { rawValue }
+        }
 
-                if selectedCategory == .chestBack {
-                    Section("Group") {
-                        Picker("Group", selection: $chestBackChoice) {
-                            ForEach(ChestBack.allCases) { c in
-                                Text(c.rawValue).tag(c)
+        var body: some View {
+            NavigationStack {
+                Form {
+                    Section("Info") {
+                        TextField("Name", text: $name)
+                        Toggle("Weighted (kg)", isOn: $weighted)
+                    }
+
+                    if selectedCategory == .chestBack {
+                        Section("Group") {
+                            Picker("Group", selection: $chestBackChoice) {
+                                ForEach(ChestBack.allCases) { c in
+                                    Text(c.rawValue).tag(c)
+                                }
                             }
+                            .pickerStyle(.segmented)
                         }
-                        .pickerStyle(.segmented)
+                    }
+
+                    Section {
+                        Text("Will be added to \(selectedCategory.rawValue)")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
                 }
-
-                Section {
-                    Text("Will be added to \(selectedCategory.rawValue)")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .navigationTitle("Add Exercise")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                .navigationTitle("Add Exercise")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") { save() }
+                            .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
                 }
             }
         }
-    }
 
-    private func save() {
-        let group: MuscleGroup = {
-            switch selectedCategory {
-            case .core:       return .core
-            case .arms:       return .arms
-            case .legs:       return .legs
-            case .chestBack:  return .chestBack
-            }
-        }()
+        private func save() {
+            // Mapear ExerciseCategory -> MuscleGroup del modelo
+            let group: MuscleGroup = {
+                switch selectedCategory {
+                case .core:      return .core
+                case .arms:      return .arms
+                case .legs:      return .legs
+                case .chestBack: return .chestBack
+                case .all:       return .chestBack // no debería llegar, pero asignamos algo sensato
+                }
+            }()
 
-        let ex = Exercise(name: name.trimmingCharacters(in: .whitespaces),
-                          muscleGroup: group,
-                          isWeighted: weighted,
-                          isCustom: true)
-        context.insert(ex)
-        do { try context.save() } catch { print("Save exercise error: \(error)") }
-        dismiss()
+            let ex = Exercise(
+                name: name.trimmingCharacters(in: .whitespaces),
+                muscleGroup: group,
+                isWeighted: weighted,
+                isCustom: true
+            )
+            context.insert(ex)
+            do { try context.save() } catch { print("Save exercise error: \(error)") }
+            dismiss()
+        }
     }
 }
-
 
 // MARK: - Preview
 

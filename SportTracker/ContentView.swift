@@ -11,7 +11,7 @@ struct ContentView: View {
                 .tabItem { Image(systemName: "plus.circle.fill"); Text("New") }
             RunningView()
                 .tabItem { Image(systemName: "figure.run"); Text("Running") }
-            SettingsView()
+            NavigationStack { SettingsView() }  
                 .tabItem { Image(systemName: "gearshape.fill"); Text("Settings") }
         }
         .tint(.blue)
