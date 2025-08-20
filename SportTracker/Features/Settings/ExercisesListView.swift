@@ -93,7 +93,7 @@ struct ExercisesListView: View {
                 } label: { Label("Add", systemImage: "plus") }
             }
         }
-        .navigationTitle("Exercises")
+        .navigationTitle("Manage trainings")
         .sheet(isPresented: $showingForm) {
             NavigationStack {
                 ExerciseFormView(

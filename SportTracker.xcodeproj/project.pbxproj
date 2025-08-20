@@ -20,7 +20,6 @@
 		A000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000102 /* ContentView.swift */; };
 		A000004 /* GymView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000104 /* GymView.swift */; };
 		A000006 /* RunningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000106 /* RunningView.swift */; };
-		A000007 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000107 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,7 +37,6 @@
 		A000102 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A000104 /* GymView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymView.swift; sourceTree = "<group>"; };
 		A000106 /* RunningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningView.swift; sourceTree = "<group>"; };
-		A000107 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A000400 /* SportTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = SportTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -145,7 +143,6 @@
 				23BE56BF2E53931500600875 /* Features */,
 				23BE56B92E5370B700600875 /* README_LOCAL_DB.md */,
 				A000102 /* ContentView.swift */,
-				A000107 /* SettingsView.swift */,
 			);
 			path = SportTracker;
 			sourceTree = "<group>";
@@ -245,7 +242,6 @@
 				23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
 				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
-				A000007 /* SettingsView.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

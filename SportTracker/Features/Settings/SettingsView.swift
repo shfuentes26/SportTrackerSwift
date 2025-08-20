@@ -42,7 +42,7 @@ struct SettingsView: View {
             }
             // Nueva opción de Exercises
             Section {
-                NavigationLink("Exercises") { ExercisesListScreen() }
+                NavigationLink("Manage trainings") { ExercisesListScreen() }
             }
 
             Section("Units") {
