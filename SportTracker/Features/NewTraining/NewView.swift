@@ -97,6 +97,10 @@ struct NewView: View {
     }
 
     // MARK: - Running form
+    
+    @State private var hh = ""
+    @State private var mm = ""
+    @State private var ss = ""
 
     private var runningForm: some View {
         Form {
@@ -109,14 +113,8 @@ struct NewView: View {
             }
 
             Section("Duration (hh:mm:ss)") {
-                HStack(spacing: 6) {
-                    TimeBox(placeholder: "hh", text: $runH)
-                    Text(":").monospacedDigit()
-                    TimeBox(placeholder: "mm", text: $runM)
-                    Text(":").monospacedDigit()
-                    TimeBox(placeholder: "ss", text: $runS)
-                }
-                Text("Ejemplo: 1:02:30 → 1 hora, 2 minutos, 30 segundos")
+                DurationFields(hours: $hh, minutes: $mm, seconds: $ss)
+                Text("Example: 1:02:30 → 1 hour, 2 minutes, 30 seconds")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -184,31 +182,32 @@ struct NewView: View {
 
         switch selectedType {
         case .running:
+            // ✅ valida distancia y duración (usa hh/mm/ss de los nuevos campos)
             guard
                 let raw = vm.validateDistance(runDistanceKm),
-                let seconds = vm.validateDuration(h: runH, m: runM, s: runS)
+                let seconds = vm.validateDuration(h: hh, m: mm, s: ss)
             else {
                 errorMsg = "Please enter a positive distance and a duration in hh:mm:ss."
                 return
             }
 
-            // si el usuario escribe millas, conviértelo a km para la BD
+            // ✅ si el usuario ha escrito millas, conviértelas a km para la BD
             let km = useMiles ? (raw * 1.60934) : raw
 
             do {
                 try vm.saveRunning(
                     date: runDate,
                     km: km,
-                    seconds: seconds,
+                    seconds: seconds, // ← ya es Int (desenvuelto en el guard)
                     notes: runNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : runNotes
                 )
-                // reset UI
+
+                // reset UI (resetea los campos NUEVOS)
                 runDistanceKm = ""
-                runH = ""; runM = ""; runS = ""
+                hh = ""; mm = ""; ss = ""
                 runNotes = ""
-                showSaved = true
             } catch {
-                errorMsg = "Could not save: \(error.localizedDescription)"
+                errorMsg = error.localizedDescription
             }
 
         case .gym:
