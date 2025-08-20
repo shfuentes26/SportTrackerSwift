@@ -14,6 +14,8 @@ struct SummaryView: View {
 
     init() {}
 
+    private let rowIconWidth: CGFloat = 22
+    
     var body: some View {
         NavigationStack {
             List {
@@ -23,14 +25,26 @@ struct SummaryView: View {
                 } else {
                     Section("Past Trainings") {
                         ForEach(pastItems) { item in
-                            HStack {
+                            HStack(alignment: .top, spacing: 12) {
                                 Image(systemName: item.icon)
-                                VStack(alignment: .leading) {
-                                    Text(item.title).font(.headline)
-                                    Text(item.subtitle).font(.subheadline).foregroundStyle(.secondary)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                    .frame(width: rowIconWidth, alignment: .leading)   // ✅ fija la columna de texto
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.title)
+                                        .font(.headline)
+                                    Text(item.subtitle)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
                                 }
+
                                 Spacer()
-                                Text(item.trailing).font(.subheadline).foregroundStyle(.secondary)
+
+                                Text(item.trailing)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .monospacedDigit()
                             }
                         }
                     }
