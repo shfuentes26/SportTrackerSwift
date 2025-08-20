@@ -87,7 +87,7 @@ struct GymView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
 
                 // Segmented control (igual que tenías)
                 Picker("Category", selection: $selectedCategory) {

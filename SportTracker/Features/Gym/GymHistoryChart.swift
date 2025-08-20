@@ -72,7 +72,7 @@ struct GymHistoryChart: View {
             .frame(height: 160)
             .frame(maxWidth: .infinity)      // ⬅️ fuerza el ancho
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 4)
         // .padding(.horizontal)
         .onAppear { reload() }
         .onChange(of: mode) { _ in reload() }
@@ -105,8 +105,8 @@ struct GymHistoryChart: View {
                 .buttonStyle(.plain)
                 .disabled(isCurrentPeriod)
         }
-        .padding(.horizontal, 16)   // ⬅️ igual que Running
-        .padding(.top, 2)           // opcional: un pelín de aire extra
+        .padding(.horizontal, 16)   // ✅ igual que Running
+        // ⛔️ quita cualquier `.padding(.top, ...)` aquí
     }
 
 
