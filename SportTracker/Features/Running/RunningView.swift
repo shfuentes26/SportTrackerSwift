@@ -1,6 +1,12 @@
 import SwiftUI
 import SwiftData
 
+enum RunningTab: String, CaseIterable, Identifiable {
+    case progress = "Progress"
+    case records  = "Records"
+    var id: String { rawValue }
+}
+
 struct RunningView: View {
     @Environment(\.modelContext) private var context
     @State private var editingRun: RunningSession? = nil
@@ -14,54 +20,73 @@ struct RunningView: View {
     @Query private var settingsList: [Settings]
     private var useMiles: Bool { settingsList.first?.prefersMiles ?? false }
 
+    @State private var selectedTab: RunningTab = .progress
 
     init() {} // evita init(runs:) sintetizado por @Query
 
     var body: some View {
         NavigationStack {
-            RunningHistoryChart() 
-            List {
-                if runs.isEmpty {
-                    ContentUnavailableView(
-                        "There are no running trainings yet",
-                        systemImage: "figure.run"
-                    )
-                } else {
-                    ForEach(runs) { r in
-                        VStack(alignment: .leading) {
-                            HStack {
-                                Text(SummaryView.formatDate(r.date)).font(.headline)
-                                Spacer()
-                                Text("\(Int(r.totalPoints)) pts").foregroundStyle(.secondary)
-                            }
-                            Text("\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles)) • \(r.durationSeconds/60) min")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) { vm?.delete(r) } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                            Button { editingRun = r } label: {
-                                Label("Edit", systemImage: "pencil")
+            VStack(spacing: 12) {
+
+                // Segmented control bajo la cabecera verde
+                Picker("", selection: $selectedTab) {
+                    Text("Progress").tag(RunningTab.progress)
+                    Text("Records").tag(RunningTab.records)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+
+                // Contenido de cada tab
+                if selectedTab == .progress {
+                    // ✅ Tu vista actual intacta
+                    RunningHistoryChart()
+
+                    List {
+                        if runs.isEmpty {
+                            ContentUnavailableView(
+                                "There are no running trainings yet",
+                                systemImage: "figure.run"
+                            )
+                        } else {
+                            ForEach(runs) { r in
+                                VStack(alignment: .leading) {
+                                    HStack {
+                                        Text(SummaryView.formatDate(r.date)).font(.headline)
+                                        Spacer()
+                                        Text("\(Int(r.totalPoints)) pts").foregroundStyle(.secondary)
+                                    }
+                                    Text("\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles)) • \(r.durationSeconds/60) min")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) { vm?.delete(r) } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    Button { editingRun = r } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                }
                             }
                         }
                     }
+                } else {
+                    // ✅ Nueva vista de records
+                    RunningRecordsView(runs: runs, useMiles: useMiles)
                 }
             }
+            .brandHeaderSpacer()          // mantiene el espacio bajo tu cabecera verde
             .navigationTitle("Running")
-            .brandHeaderSpacer()
-            
         }
         .task {
-                    if vm == nil {
-                        vm = RunningViewModel(
-                            repo: SwiftDataRunningRepository(context: context),
-                            context: context
-                        )
-                        vm?.load()
-                    }
-                }
+            if vm == nil {
+                vm = RunningViewModel(
+                    repo: SwiftDataRunningRepository(context: context),
+                    context: context
+                )
+                vm?.load()
+            }
+        }
         .sheet(item: $editingRun) { run in
             EditRunningSheet(run: run)
         }
