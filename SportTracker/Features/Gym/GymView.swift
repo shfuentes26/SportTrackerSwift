@@ -87,74 +87,54 @@ struct GymView: View {
 
     var body: some View {
         NavigationStack {
-            Picker("Category", selection: $selectedCategory) {
-                ForEach(GymFilterCategory.allCases) { c in
-                    Text(c.rawValue).tag(c)
-                }
-            }
-            .brandHeaderSpacer()
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            List {
-                // Bloque de navegación semanal + chart
-                Section {
-                    HStack {
-                        Button {
-                            if let prev = Calendar.iso8601Monday.date(byAdding: .day, value: -7, to: weekStart) {
-                                weekStart = prev
-                            }
-                        } label: {
-                            Image(systemName: "chevron.left")
-                        }
-                        Spacer()
-                        Text(currentWeekLabel).font(.subheadline).bold()
-                        Spacer()
-                        Button {
-                            if let next = Calendar.iso8601Monday.date(byAdding: .day, value: 7, to: weekStart) {
-                                weekStart = next
-                            }
-                        } label: {
-                            Image(systemName: "chevron.right")
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.primary)
+            VStack(spacing: 12) {
 
-                    WeeklyGymStackedBarChart(
-                        sessions: filteredSessions, // reutilizamos tu filtro de categoría
-                        weekStart: weekStart
-                    )
+                // Segmented control (igual que tenías)
+                Picker("Category", selection: $selectedCategory) {
+                    ForEach(GymFilterCategory.allCases) { c in
+                        Text(c.rawValue).tag(c)
+                    }
                 }
-                if filteredSessions.isEmpty {
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+
+                // ⬇️ La gráfica ahora va FUERA de la List y ocupa todo el ancho
+                GymHistoryChart(sessions: filteredSessions)
+
+                // ⬇️ Tu lista de sesiones, tal cual la tenías
+                List {
+                    if filteredSessions.isEmpty {
                         ContentUnavailableView(
                             selectedCategory == .all
-                                ? "There are no gym trainings yet"
-                                : "No sessions for \(selectedCategory.rawValue)",
+                            ? "There are no gym trainings yet"
+                            : "No sessions for \(selectedCategory.rawValue)",
                             systemImage: "dumbbell"
                         )
-                } else {
-                    ForEach(filteredSessions) { s in
-                        VStack(alignment: .leading) {
-                            HStack {
-                                Text(SummaryView.formatDate(s.date)).font(.headline)
-                                Spacer()
-                                Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                    } else {
+                        ForEach(filteredSessions) { s in
+                            VStack(alignment: .leading) {
+                                HStack {
+                                    Text(SummaryView.formatDate(s.date)).font(.headline)
+                                    Spacer()
+                                    Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                                }
+                                Text(gymDetails(s))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
                             }
-                            Text(gymDetails(s))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) { vm?.delete(s) } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                            Button { editingSession = s } label: {
-                                Label("Edit", systemImage: "pencil")
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) { vm?.delete(s) } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                Button { editingSession = s } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
                             }
                         }
                     }
                 }
             }
+            .brandHeaderSpacer()          // como en Running
             .navigationTitle("Gym")
         }
         .task {
@@ -170,6 +150,7 @@ struct GymView: View {
             EditGymSheet(session: sess)
         }
     }
+
 
     // MARK: - Actions
 
