@@ -17,6 +17,7 @@
 		23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE57572E5522B800600875 /* RunningHistoryChart.swift */; };
 		23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE575A2E55466D00600875 /* HealthKitManager.swift */; };
 		23BE57602E55FFD100600875 /* RunningRecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE575F2E55FFC200600875 /* RunningRecordsView.swift */; };
+		23BE57B02E56331100600875 /* WeeklyGymStackedBarChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE57AF2E56330D00600875 /* WeeklyGymStackedBarChart.swift */; };
 		A000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000102 /* ContentView.swift */; };
 		A000004 /* GymView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000104 /* GymView.swift */; };
 		A000006 /* RunningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000106 /* RunningView.swift */; };
@@ -34,6 +35,7 @@
 		23BE57592E5545BF00600875 /* SportTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SportTracker.entitlements; sourceTree = "<group>"; };
 		23BE575A2E55466D00600875 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		23BE575F2E55FFC200600875 /* RunningRecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningRecordsView.swift; sourceTree = "<group>"; };
+		23BE57AF2E56330D00600875 /* WeeklyGymStackedBarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyGymStackedBarChart.swift; sourceTree = "<group>"; };
 		A000102 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A000104 /* GymView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymView.swift; sourceTree = "<group>"; };
 		A000106 /* RunningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningView.swift; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 		23BE56BC2E53931500600875 /* Gym */ = {
 			isa = PBXGroup;
 			children = (
+				23BE57AF2E56330D00600875 /* WeeklyGymStackedBarChart.swift */,
 				23BE56BB2E53931500600875 /* GymViewModel.swift */,
 				A000104 /* GymView.swift */,
 			);
@@ -241,6 +244,7 @@
 				23BE56C62E53932000600875 /* RunningRepository.swift in Sources */,
 				23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
+				23BE57B02E56331100600875 /* WeeklyGymStackedBarChart.swift in Sources */,
 				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
 			);

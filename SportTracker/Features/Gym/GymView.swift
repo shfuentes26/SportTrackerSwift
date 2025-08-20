@@ -5,6 +5,18 @@ struct GymView: View {
     @Environment(\.modelContext) private var context
     @State private var editingSession: StrengthSession? = nil
     
+    @State private var weekStart: Date = Calendar.iso8601Monday.startOfWeek(for: Date())
+
+    private var currentWeekLabel: String {
+        let cal = Calendar.iso8601Monday
+        let end = cal.date(byAdding: .day, value: 6, to: weekStart)!
+        let fmt = DateFormatter()
+        fmt.calendar = cal
+        fmt.locale = Locale.current
+        fmt.dateFormat = "d MMM"
+        return "\(fmt.string(from: weekStart)) – \(fmt.string(from: end))"
+    }
+    
     @State private var vm: GymViewModel? = nil
 
     @Query(sort: [SortDescriptor(\StrengthSession.date, order: .reverse)])
@@ -84,6 +96,35 @@ struct GymView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
             List {
+                // Bloque de navegación semanal + chart
+                Section {
+                    HStack {
+                        Button {
+                            if let prev = Calendar.iso8601Monday.date(byAdding: .day, value: -7, to: weekStart) {
+                                weekStart = prev
+                            }
+                        } label: {
+                            Image(systemName: "chevron.left")
+                        }
+                        Spacer()
+                        Text(currentWeekLabel).font(.subheadline).bold()
+                        Spacer()
+                        Button {
+                            if let next = Calendar.iso8601Monday.date(byAdding: .day, value: 7, to: weekStart) {
+                                weekStart = next
+                            }
+                        } label: {
+                            Image(systemName: "chevron.right")
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.primary)
+
+                    WeeklyGymStackedBarChart(
+                        sessions: filteredSessions, // reutilizamos tu filtro de categoría
+                        weekStart: weekStart
+                    )
+                }
                 if filteredSessions.isEmpty {
                         ContentUnavailableView(
                             selectedCategory == .all
@@ -323,6 +364,19 @@ private struct SetEditorRow: View {
                 .keyboardType(.decimalPad)
             }
         }
+    }
+}
+
+fileprivate extension Calendar {
+    static var iso8601Monday: Calendar {
+        var cal = Calendar(identifier: .iso8601)
+        cal.firstWeekday = 2
+        cal.minimumDaysInFirstWeek = 4
+        return cal
+    }
+    func startOfWeek(for date: Date) -> Date {
+        let comps = dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+        return self.date(from: comps) ?? startOfDay(for: date)
     }
 }
 
