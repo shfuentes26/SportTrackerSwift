@@ -75,24 +75,39 @@ struct RunRecord {
 func bestRecord(for dist: RecordDistance, from runs: [RunningSession]) -> RunRecord? {
     let target = dist.targetKm
     let tolerance = 0.03 // ±3%
-    let minKm = target * (1.0 - tolerance)
-    let maxKm = target * (1.0 + tolerance)
 
-    let candidates = runs.filter { run in
+    // 1) Preferir marcas con distancia "exacta" (±3%)
+    let exactCandidates = runs.filter { run in
         let km = run.distanceMeters / 1000.0
-        return km >= minKm && km <= maxKm && run.durationSeconds > 0
+        return km >= target * (1.0 - tolerance)
+            && km <= target * (1.0 + tolerance)
+            && run.durationSeconds > 0
+    }
+    if let bestExact = exactCandidates.min(by: { $0.durationSeconds < $1.durationSeconds }) {
+        let km = max(bestExact.distanceMeters / 1000.0, 0.001)
+        let pace = TimeInterval(bestExact.durationSeconds) / km
+        return RunRecord(totalTime: TimeInterval(bestExact.durationSeconds),
+                         pacePerKm: pace,
+                         date: bestExact.date)
     }
 
-    guard let best = candidates.min(by: { $0.durationSeconds < $1.durationSeconds }) else {
+    // 2) Si no hay exactas, estimar con el ritmo medio de runs que cubren la distancia
+    let eligible = runs.filter { run in
+        (run.distanceMeters / 1000.0) >= target && run.durationSeconds > 0
+    }
+    guard let bestEst = eligible.min(by: { a, b in
+        let paceA = Double(a.durationSeconds) / max(a.distanceMeters / 1000.0, 0.001)
+        let paceB = Double(b.durationSeconds) / max(b.distanceMeters / 1000.0, 0.001)
+        return (paceA * target) < (paceB * target)
+    }) else {
         return nil
     }
 
-    let km = max(best.distanceMeters / 1000.0, 0.001)
-    let pace = TimeInterval(best.durationSeconds) / km
-    return RunRecord(totalTime: TimeInterval(best.durationSeconds),
-                     pacePerKm: pace,
-                     date: best.date)
+    let pace = TimeInterval(Double(bestEst.durationSeconds) / max(bestEst.distanceMeters / 1000.0, 0.001))
+    let estimatedTime = pace * target
+    return RunRecord(totalTime: estimatedTime, pacePerKm: pace, date: bestEst.date)
 }
+
 
 /// Formateadores
 func formatDuration(_ seconds: TimeInterval) -> String {
