@@ -37,6 +37,7 @@ struct SummaryView: View {
                 }
             }
             .navigationTitle("Summary")
+            .brandHeaderSpacer()      
         }
     }
     
