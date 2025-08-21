@@ -214,6 +214,8 @@ struct NewView: View {
                 runDistanceKm = ""
                 hh = ""; mm = ""; ss = ""
                 runNotes = ""
+                
+                showSaved = true
             } catch {
                 errorMsg = error.localizedDescription
             }
