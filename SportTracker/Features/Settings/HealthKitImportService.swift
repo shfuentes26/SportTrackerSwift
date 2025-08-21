@@ -16,11 +16,19 @@ enum HealthKitImportService {
                             context: ModelContext) throws -> Int {
 
         var inserted = 0
+        var skippedNotRunning = 0
+        var skippedNoDistance = 0
 
         for wk in workouts {
             // Solo running
-            guard wk.activity == .running,
-                  let distM = wk.distanceMeters, distM > 0 else { continue }
+            guard wk.activity == .running else {
+                skippedNotRunning += 1
+                continue
+            }
+            guard let distM = wk.distanceMeters, distM > 0 else {
+                skippedNoDistance += 1
+                continue
+            }
 
             let run = RunningSession(
                 date: wk.start,
@@ -34,6 +42,12 @@ enum HealthKitImportService {
         }
 
         try context.save()
+
+        // ---- LOG RESUMEN
+        print("[HK] saveToLocal -> total:\(workouts.count) insertados:\(inserted) " +
+              "saltados_no_running:\(skippedNotRunning) " +
+              "saltados_sin_distancia:\(skippedNoDistance)")
+
         return inserted
     }
     
