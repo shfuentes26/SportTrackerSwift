@@ -74,7 +74,7 @@ struct RunRecord {
 /// - Si no hay candidatos, devuelve `nil` → "No record yet".
 func bestRecord(for dist: RecordDistance, from runs: [RunningSession]) -> RunRecord? {
     let target = dist.targetKm
-    let tolerance = 0.03 // ±3%
+    let tolerance = 0.00 // ±3%
 
     // 1) Preferir marcas con distancia "exacta" (±3%)
     let exactCandidates = runs.filter { run in
