@@ -75,7 +75,7 @@ struct NewView: View {
                 }
                 .padding(.bottom)
             }
-            .navigationTitle("New")
+            .navigationTitle("New Training")
             .brandHeaderSpacer()
             .alert("Training saved successfully", isPresented: $showSaved) {
                 Button("OK", role: .cancel) { }
@@ -94,6 +94,14 @@ struct NewView: View {
                 )
             }
         }
+    }
+    
+    // Cerrar teclado (UIKit)
+    private func dismissKeyboard() {
+    #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
+    #endif
     }
 
     // MARK: - Running form
@@ -122,7 +130,7 @@ struct NewView: View {
             Section("Notes") {
                 TextField("Optional", text: $runNotes, axis: .vertical)
             }
-        }
+        }.onTapGesture { dismissKeyboard() }
     }
 
     // MARK: - Gym form
