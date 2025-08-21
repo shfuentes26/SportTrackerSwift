@@ -48,23 +48,25 @@ struct RunningView: View {
                                 systemImage: "figure.run"
                             )
                         } else {
-                            ForEach(runs) { r in
-                                VStack(alignment: .leading) {
-                                    HStack {
-                                        Text(SummaryView.formatDate(r.date)).font(.headline)
-                                        Spacer()
-                                        Text("\(Int(r.totalPoints)) pts").foregroundStyle(.secondary)
+                            Section("Past Trainings") {
+                                ForEach(runs) { r in
+                                    VStack(alignment: .leading) {
+                                        HStack {
+                                            Text(SummaryView.formatDate(r.date)).font(.headline)
+                                            Spacer()
+                                            Text("\(Int(r.totalPoints)) pts").foregroundStyle(.secondary)
+                                        }
+                                        Text("\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles)) • \(r.durationSeconds/60) min")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
                                     }
-                                    Text("\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles)) • \(r.durationSeconds/60) min")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) { vm?.delete(r) } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                    Button { editingRun = r } label: {
-                                        Label("Edit", systemImage: "pencil")
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) { vm?.delete(r) } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                        Button { editingRun = r } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
                                     }
                                 }
                             }

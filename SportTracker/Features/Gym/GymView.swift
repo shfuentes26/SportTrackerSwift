@@ -111,23 +111,25 @@ struct GymView: View {
                             systemImage: "dumbbell"
                         )
                     } else {
-                        ForEach(filteredSessions) { s in
-                            VStack(alignment: .leading) {
-                                HStack {
-                                    Text(SummaryView.formatDate(s.date)).font(.headline)
-                                    Spacer()
-                                    Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                        Section("Past Trainings") {
+                            ForEach(filteredSessions) { s in
+                                VStack(alignment: .leading) {
+                                    HStack {
+                                        Text(SummaryView.formatDate(s.date)).font(.headline)
+                                        Spacer()
+                                        Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                                    }
+                                    Text(gymDetails(s))
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
                                 }
-                                Text(gymDetails(s))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) { vm?.delete(s) } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                                Button { editingSession = s } label: {
-                                    Label("Edit", systemImage: "pencil")
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) { vm?.delete(s) } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    Button { editingSession = s } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
                                 }
                             }
                         }
