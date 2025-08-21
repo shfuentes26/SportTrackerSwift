@@ -12,7 +12,9 @@ struct SummaryView: View {
     @Query private var runningGoals: [RunningGoal]
     @Query private var gymGoals: [GymGoal]
 
-    @State private var showGoalsSettings = false   // navegación sin chevron
+    // Deep-link a cada pestaña del editor
+    @State private var goToRunningGoal = false
+    @State private var goToGymGoal = false
 
     init() {}
 
@@ -49,9 +51,17 @@ struct SummaryView: View {
                         }
                     }
                 }
-            }.background(
-                NavigationLink("", isActive: $showGoalsSettings) { GoalsSettingsView() }
-                    .hidden()
+            }
+            // Links ocultos para navegar sin chevron y hacia la pestaña adecuada
+            .background(
+                Group {
+                    NavigationLink("", isActive: $goToRunningGoal) {
+                        GoalsSettingsView(selectedTab: .running)
+                    }.hidden()
+                    NavigationLink("", isActive: $goToGymGoal) {
+                        GoalsSettingsView(selectedTab: .gym)
+                    }.hidden()
+                }
             )
             .navigationTitle("Summary")
             .brandHeaderSpacer()
@@ -68,9 +78,7 @@ struct SummaryView: View {
         // No goals todavía → tarjeta "Create a goal"
         if (rg?.weeklyKilometers ?? 0) <= 0 && (gg?.totalWeeklyTarget ?? 0) <= 0 {
             Section {
-                Button {
-                    showGoalsSettings = true
-                } label: {
+                Button { goToRunningGoal = true } label: {   // abrimos en pestaña Running por defecto
                     HStack(spacing: 12) {
                         Image(systemName: "target").font(.title2)
                         VStack(alignment: .leading) {
@@ -87,7 +95,7 @@ struct SummaryView: View {
             }
         } else {
             Section("Goals") {
-                // Ambos objetivos → anillos en paralelo y alineados arriba
+                // Ambos objetivos → dos anillos clicables (cada uno navega a su detalle)
                 if let rg = rg, rg.weeklyKilometers > 0,
                    let gg = gg, gg.totalWeeklyTarget > 0 {
 
@@ -103,32 +111,36 @@ struct SummaryView: View {
                     let gymProgress = Double(met) / Double(total)
                     let legend = "CB \(counts.chestBack)/\(gg.targetChestBack) • Arms \(counts.arms)/\(gg.targetArms) • Legs \(counts.legs)/\(gg.targetLegs) • Core \(counts.core)/\(gg.targetCore)"
 
-                    Button { showGoalsSettings = true } label: {
-                        HStack(alignment: .top, spacing: 16) {
+                    HStack(alignment: .top, spacing: 16) {
+                        Button { goToRunningGoal = true } label: {
                             GoalRingView(
                                 title: "Running",
                                 progress: runningProgress,
                                 subtitle: "\(Self.formatNumber(kmThisWeek)) / \(Self.formatNumber(rg.weeklyKilometers)) km"
                             )
                             .frame(maxWidth: .infinity, alignment: .top)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
 
+                        Button { goToGymGoal = true } label: {
                             GoalRingView(
                                 title: "Gym",
                                 progress: gymProgress,
                                 subtitle: legend
                             )
                             .frame(maxWidth: .infinity, alignment: .top)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.vertical, 6)
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                    .padding(.vertical, 6)
 
                 } else if let rg = rg, rg.weeklyKilometers > 0 {
                     // Solo Running
                     let kmThisWeek = runningKilometersThisWeek
                     let p = min(kmThisWeek / rg.weeklyKilometers, 1)
-                    Button { showGoalsSettings = true } label: {
+                    Button { goToRunningGoal = true } label: {
                         GoalRingView(
                             title: "Running",
                             progress: p,
@@ -151,7 +163,7 @@ struct SummaryView: View {
                     let p = Double(met) / Double(total)
                     let legend = "CB \(counts.chestBack)/\(gg.targetChestBack) • Arms \(counts.arms)/\(gg.targetArms) • Legs \(counts.legs)/\(gg.targetLegs) • Core \(counts.core)/\(gg.targetCore)"
 
-                    Button { showGoalsSettings = true } label: {
+                    Button { goToGymGoal = true } label: {
                         GoalRingView(title: "Gym", progress: p, subtitle: legend)
                             .frame(maxWidth: .infinity, alignment: .top)
                             .padding(.vertical, 6)
