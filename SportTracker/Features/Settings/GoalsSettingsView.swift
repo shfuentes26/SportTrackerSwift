@@ -47,7 +47,7 @@ struct GoalsSettingsView: View {
 
             // ===== Franja blanca bajo los tabs (acolchado visual) =====
             Color(.systemBackground)          // ← banda blanca
-                .frame(height: 2)            // ajusta 8–12 si quieres
+                .frame(height: 4)            // ajusta 8–12 si quieres
                 .padding(.horizontal)          // mismo inset que los cards
                 .padding(.top, 4)              // micro separación del Picker
                 .allowsHitTesting(false)
