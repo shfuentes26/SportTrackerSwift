@@ -92,6 +92,10 @@ struct SummaryView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .listRowBackground(                      // <— fondo amarillo claro SOLO para esta tarjeta
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.yellow.opacity(0.18))
+                    )
             }
         } else {
             Section("Goals") {

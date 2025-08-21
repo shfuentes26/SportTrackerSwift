@@ -36,7 +36,6 @@ struct GoalsSettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Tabs FUERA del Form (igual que en New Training)
             Picker("Goal type", selection: $selectedTab) {
                 ForEach(GoalTab.allCases) { tab in
                     Text(tab.rawValue).tag(tab)
@@ -45,14 +44,12 @@ struct GoalsSettingsView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
 
-            // ===== Franja blanca bajo los tabs (acolchado visual) =====
-            Color(.systemBackground)          // ← banda blanca
-                .frame(height: 4)            // ajusta 8–12 si quieres
-                .padding(.horizontal)          // mismo inset que los cards
-                .padding(.top, 4)              // micro separación del Picker
+            Color(.systemBackground)
+                .frame(height: 4)
+                .padding(.horizontal)
+                .padding(.top, 4)
                 .allowsHitTesting(false)
 
-            // Form: primera fila sin Section (como en New)
             Form {
                 if selectedTab == .running {
                     let rg = ensureRunningGoal()
@@ -71,24 +68,6 @@ struct GoalsSettingsView: View {
                         }
                     }
 
-                    Section {
-                        Button {
-                            do {
-                                try context.save()
-                                savedMessage = "Running goal saved ✅"
-                                showSaved = true
-                                #if canImport(UIKit)
-                                UINotificationFeedbackGenerator().notificationOccurred(.success)
-                                #endif
-                            } catch {
-                                savedMessage = "Error saving goal: \(error.localizedDescription)"
-                                showSaved = true
-                            }
-                        } label: {
-                            Label("Save running goal", systemImage: "checkmark.circle.fill")
-                        }
-                    }
-
                 } else {
                     let gg = ensureGymGoal()
                     @Bindable var bgg = gg
@@ -97,24 +76,6 @@ struct GoalsSettingsView: View {
                     Stepper("Arms: \(bgg.targetArms)", value: $bgg.targetArms, in: 0...14)
                     Stepper("Legs: \(bgg.targetLegs)", value: $bgg.targetLegs, in: 0...14)
                     Stepper("Core: \(bgg.targetCore)", value: $bgg.targetCore, in: 0...14)
-
-                    Section {
-                        Button {
-                            do {
-                                try context.save()
-                                savedMessage = "Gym goal saved ✅"
-                                showSaved = true
-                                #if canImport(UIKit)
-                                UINotificationFeedbackGenerator().notificationOccurred(.success)
-                                #endif
-                            } catch {
-                                savedMessage = "Error saving goal: \(error.localizedDescription)"
-                                showSaved = true
-                            }
-                        } label: {
-                            Label("Save gym goal", systemImage: "checkmark.circle.fill")
-                        }
-                    }
                 }
             }
             .scrollDismissesKeyboard(.interactively)
@@ -124,5 +85,37 @@ struct GoalsSettingsView: View {
         .alert("Saved", isPresented: $showSaved) {
             Button("OK", role: .cancel) { }
         } message: { Text(savedMessage) }
+
+        // === Botón CTA abajo (igual que en New Training) ===
+        .safeAreaInset(edge: .bottom) {
+            Button {
+                do {
+                    try context.save()
+                    savedMessage = selectedTab == .running
+                        ? "Running goal saved ✅"
+                        : "Gym goal saved ✅"
+                    showSaved = true
+                    #if canImport(UIKit)
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    #endif
+                } catch {
+                    savedMessage = "Error saving goal: \(error.localizedDescription)"
+                    showSaved = true
+                }
+            } label: {
+                Text(selectedTab == .running ? "Save running goal" : "Save gym goal")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .foregroundStyle(.white)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.blue)
+            )
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 8)
+        }
     }
 }
