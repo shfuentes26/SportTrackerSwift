@@ -18,6 +18,8 @@
 		23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE575A2E55466D00600875 /* HealthKitManager.swift */; };
 		23BE57602E55FFD100600875 /* RunningRecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE575F2E55FFC200600875 /* RunningRecordsView.swift */; };
 		23BE57B22E563CA700600875 /* GymHistoryChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE57B12E563C8E00600875 /* GymHistoryChart.swift */; };
+		23BE57BD2E57C38300600875 /* RunningLiveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE57BC2E57C38000600875 /* RunningLiveManager.swift */; };
+		23BE57BF2E57C3AC00600875 /* LiveRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE57BE2E57C3A100600875 /* LiveRunView.swift */; };
 		A000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000102 /* ContentView.swift */; };
 		A000004 /* GymView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000104 /* GymView.swift */; };
 		A000006 /* RunningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000106 /* RunningView.swift */; };
@@ -36,6 +38,8 @@
 		23BE575A2E55466D00600875 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		23BE575F2E55FFC200600875 /* RunningRecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningRecordsView.swift; sourceTree = "<group>"; };
 		23BE57B12E563C8E00600875 /* GymHistoryChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymHistoryChart.swift; sourceTree = "<group>"; };
+		23BE57BC2E57C38000600875 /* RunningLiveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningLiveManager.swift; sourceTree = "<group>"; };
+		23BE57BE2E57C3A100600875 /* LiveRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRunView.swift; sourceTree = "<group>"; };
 		A000102 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A000104 /* GymView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymView.swift; sourceTree = "<group>"; };
 		A000106 /* RunningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningView.swift; sourceTree = "<group>"; };
@@ -86,6 +90,8 @@
 		23BE56BE2E53931500600875 /* Running */ = {
 			isa = PBXGroup;
 			children = (
+				23BE57BE2E57C3A100600875 /* LiveRunView.swift */,
+				23BE57BC2E57C38000600875 /* RunningLiveManager.swift */,
 				23BE575F2E55FFC200600875 /* RunningRecordsView.swift */,
 				23BE57572E5522B800600875 /* RunningHistoryChart.swift */,
 				23BE56BD2E53931500600875 /* RunningViewModel.swift */,
@@ -238,6 +244,7 @@
 				23BE56B42E53706C00600875 /* Persistence.swift in Sources */,
 				A000002 /* ContentView.swift in Sources */,
 				23BE56C02E53931500600875 /* GymViewModel.swift in Sources */,
+				23BE57BF2E57C3AC00600875 /* LiveRunView.swift in Sources */,
 				23BE57B22E563CA700600875 /* GymHistoryChart.swift in Sources */,
 				23BE56C12E53931500600875 /* RunningViewModel.swift in Sources */,
 				A000004 /* GymView.swift in Sources */,
@@ -247,6 +254,7 @@
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
 				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
+				23BE57BD2E57C38300600875 /* RunningLiveManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

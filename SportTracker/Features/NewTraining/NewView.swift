@@ -112,6 +112,32 @@ struct NewView: View {
 
     private var runningForm: some View {
         Form {
+            // NUEVO: acceso a Live Run
+            Section {
+                NavigationLink {
+                    LiveRunView() // ← ya lo tienes en el proyecto
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "dot.radiowaves.left.and.right").font(.title2)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Start live run").font(.headline)
+                            Text("Record with GPS & Health")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue.opacity(0.12))
+                )
+            }
+
+            // ——— Registro manual (igual que antes)
             DatePicker("Date", selection: $runDate, displayedComponents: [.date, .hourAndMinute])
 
             HStack {
@@ -123,14 +149,14 @@ struct NewView: View {
             Section("Duration (hh:mm:ss)") {
                 DurationFields(hours: $hh, minutes: $mm, seconds: $ss)
                 Text("Example: 1:02:30 → 1 hour, 2 minutes, 30 seconds")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.footnote).foregroundStyle(.secondary)
             }
 
             Section("Notes") {
                 TextField("Optional", text: $runNotes, axis: .vertical)
             }
-        }.onTapGesture { dismissKeyboard() }
+        }
+        .onTapGesture { dismissKeyboard() }
     }
 
     // MARK: - Gym form

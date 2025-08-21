@@ -20,11 +20,23 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>This app reads your running workouts from Apple Health to import them into SportTracker.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>App saves your workouts to Health.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>App uses your location to record your route while the app runs in the background.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>App uses your location to record your running route during workouts.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UILaunchStoryboardName</key>
@@ -33,7 +45,5 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>NSHealthShareUsageDescription</key>
-	<string>This app reads your running workouts from Apple Health to import them into SportTracker.</string>
 </dict>
 </plist>
