@@ -21,7 +21,9 @@ final class Persistence {
             Exercise.self,
             StrengthSet.self,
             StrengthSession.self,
-            RunningSession.self
+            RunningSession.self,
+            RunningGoal.self,
+            GymGoal.self
         ])
 
         let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)

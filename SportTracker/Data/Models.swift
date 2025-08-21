@@ -229,3 +229,53 @@ public final class RunningSession: SyncTracked {
         return distanceMeters / 1000.0
     }
 }
+
+// MARK: - Goals
+
+@Model
+public final class RunningGoal {
+    public var id: UUID
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    /// Objetivo de kilómetros por semana
+    public var weeklyKilometers: Double
+
+    public init(id: UUID = UUID(), weeklyKilometers: Double = 0) {
+        self.id = id
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.weeklyKilometers = weeklyKilometers
+    }
+}
+
+@Model
+public final class GymGoal {
+    public var id: UUID
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    /// Objetivos por grupo muscular: nº de entrenos/semana
+    public var targetChestBack: Int
+    public var targetArms: Int
+    public var targetLegs: Int
+    public var targetCore: Int
+
+    public init(id: UUID = UUID(),
+                targetChestBack: Int = 0,
+                targetArms: Int = 0,
+                targetLegs: Int = 0,
+                targetCore: Int = 0) {
+        self.id = id
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.targetChestBack = targetChestBack
+        self.targetArms = targetArms
+        self.targetLegs = targetLegs
+        self.targetCore = targetCore
+    }
+
+    public var totalWeeklyTarget: Int {
+        targetChestBack + targetArms + targetLegs + targetCore
+    }
+}

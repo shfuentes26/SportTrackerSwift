@@ -45,8 +45,11 @@ struct SettingsView: View {
             }
 
             // Navegación a gestión de ejercicios (mantengo el nombre de tu pantalla)
-            Section {
+            Section ("Training") {
                 NavigationLink("Manage trainings") { ExercisesListScreen() }
+            }
+            Section ("Goals") {
+                NavigationLink("Manage goals") { GoalsSettingsView() }
             }
 
             // Preferencias de unidades
