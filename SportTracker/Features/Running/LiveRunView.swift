@@ -13,6 +13,7 @@ struct LiveRunView: View {
     @StateObject private var manager = RunningLiveManager()
     @Environment(\.dismiss) private var dismiss
     @State private var showSaved = false
+    @State private var navigateToSummaryAfterDismiss = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -65,12 +66,16 @@ struct LiveRunView: View {
         .brandHeaderSpacer()
         .alert("Workout saved", isPresented: $showSaved) {
             Button("OK") {
-                // cierra y navega a Summary
-                NotificationCenter.default.post(name: .navigateToSummary, object: nil)
-                dismiss()
+                navigateToSummaryAfterDismiss = true   // 1) marcar
+                dismiss()                               // 2) cerrar primero
             }
         } message: {
             Text("Your run has been saved.")
+        }.onDisappear {                       // ⬅️ AÑADE ESTO AQUÍ
+            if navigateToSummaryAfterDismiss {
+                NotificationCenter.default.post(name: .navigateToSummary, object: nil)
+                navigateToSummaryAfterDismiss = false
+            }
         }
         .task {
             do {
@@ -122,7 +127,7 @@ struct LiveRunView: View {
             durationSeconds: duration,
             distanceMeters: distance,
             notes: nil,
-            routePolyline: nil // TODO: si expones la polyline desde el manager, asígnala aquí
+            routePolyline: manager.exportedPolyline() 
         )
 
         // Puntuación usando Settings (distancia + tiempo + bonus por ritmo vs baseline)

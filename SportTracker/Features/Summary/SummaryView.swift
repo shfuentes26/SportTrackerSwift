@@ -64,8 +64,10 @@ struct SummaryView: View {
                 }
             )
             .navigationTitle("Summary")
+            .navigationBarTitleDisplayMode(.large)
             .brandHeaderSpacer()
         }
+        .brandNavBar()
     }
 
     // MARK: - GOALS CARD

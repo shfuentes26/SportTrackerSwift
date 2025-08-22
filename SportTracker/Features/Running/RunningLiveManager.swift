@@ -166,3 +166,72 @@ extension RunningLiveManager: CLLocationManagerDelegate {
         }
     }
 }
+
+import CoreLocation
+
+extension RunningLiveManager {
+    /// Devuelve la ruta codificada como Google Encoded Polyline (o nil si no hay datos)
+    func exportedPolyline() -> String? {
+        guard !locations.isEmpty else { return nil }
+        let coords = locations.map { $0.coordinate }
+        return Polyline.encode(coords)
+    }
+}
+
+/// Helper para codificar/decodificar polylines (Google Encoded Polyline)
+enum Polyline {
+    static func encode(_ coords: [CLLocationCoordinate2D]) -> String {
+        guard !coords.isEmpty else { return "" }
+        var lastLat = 0, lastLon = 0
+        var out = ""
+        for c in coords {
+            let lat = Int(round(c.latitude * 1e5))
+            let lon = Int(round(c.longitude * 1e5))
+            out += encodeDelta(lat - lastLat)
+            out += encodeDelta(lon - lastLon)
+            lastLat = lat
+            lastLon = lon
+        }
+        return out
+    }
+
+    private static func encodeDelta(_ delta: Int) -> String {
+        var v = delta << 1
+        if delta < 0 { v = ~v }
+        var chunk = ""
+        while v >= 0x20 {
+            let c = (0x20 | (v & 0x1f)) + 63
+            chunk.append(Character(UnicodeScalar(c)!))
+            v >>= 5
+        }
+        chunk.append(Character(UnicodeScalar(v + 63)!))
+        return chunk
+    }
+
+    // (Opcional) para reconstruir y dibujar la ruta después
+    static func decode(_ str: String) -> [CLLocationCoordinate2D] {
+        let bytes = Array(str.utf8)
+        var idx = 0
+        var lat = 0, lon = 0
+        var coords: [CLLocationCoordinate2D] = []
+
+        func nextValue() -> Int {
+            var result = 0, shift = 0, b = 0
+            repeat {
+                b = Int(bytes[idx]) - 63; idx += 1
+                result |= (b & 0x1f) << shift
+                shift += 5
+            } while b >= 0x20 && idx < bytes.count
+            return (result & 1) != 0 ? ~(result >> 1) : (result >> 1)
+        }
+
+        while idx < bytes.count {
+            lat += nextValue()
+            guard idx < bytes.count else { break }
+            lon += nextValue()
+            coords.append(.init(latitude: Double(lat) / 1e5, longitude: Double(lon) / 1e5))
+        }
+        return coords
+    }
+}
+

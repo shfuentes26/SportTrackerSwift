@@ -77,9 +77,12 @@ struct RunningView: View {
                     RunningRecordsView(runs: runs, useMiles: useMiles)
                 }
             }
-            .brandHeaderSpacer()          // mantiene el espacio bajo tu cabecera verde
             .navigationTitle("Running")
+            .navigationBarTitleDisplayMode(.large)          // ← nuevo
+            //.toolbarBackground(.visible, for: .navigationBar) // ← nuevo
+            .brandHeaderSpacer()         // mantiene el espacio bajo tu cabecera verde
         }
+        .brandNavBar()
         .task {
             if vm == nil {
                 vm = RunningViewModel(
