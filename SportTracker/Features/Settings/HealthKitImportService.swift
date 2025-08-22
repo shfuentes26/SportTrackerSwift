@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import HealthKit
+import CoreLocation
 
 enum HealthKitImportService {
 
@@ -126,4 +127,81 @@ enum HealthKitImportService {
         }
         return sessions
     }
+    
+    /// Lee la(s) rutas GPS asociadas a un HKWorkout y devuelve una polyline (o nil si no hay).
+    private static func fetchRoutePolyline(for workout: HKWorkout,
+                                           healthStore: HKHealthStore) async -> String? {
+        let routeType = HKSeriesType.workoutRoute()
+        // 1) Buscar todas las HKWorkoutRoute del workout
+        let predicate = HKQuery.predicateForObjects(from: workout)
+        return await withCheckedContinuation { cont in
+            let q = HKSampleQuery(sampleType: routeType,
+                                  predicate: predicate,
+                                  limit: HKObjectQueryNoLimit,
+                                  sortDescriptors: nil) { _, samples, error in
+                guard error == nil,
+                      let routes = samples as? [HKWorkoutRoute],
+                      !routes.isEmpty else {
+                    cont.resume(returning: nil)
+                    return
+                }
+
+                var allCoords: [CLLocationCoordinate2D] = []
+                let group = DispatchGroup()
+
+                for route in routes {
+                    group.enter()
+                    var routeLocs: [CLLocation] = []
+                    let rq = HKWorkoutRouteQuery(route: route) { _, locs, done, _ in
+                        if let locs { routeLocs.append(contentsOf: locs) }
+                        if done {
+                            routeLocs.sort { $0.timestamp < $1.timestamp }
+                            allCoords.append(contentsOf: routeLocs.map { $0.coordinate })
+                            group.leave()
+                        }
+                    }
+                    healthStore.execute(rq)
+                }
+
+                group.notify(queue: .main) {
+                    guard !allCoords.isEmpty else { cont.resume(returning: nil); return }
+                    // Usa tu encoder ya existente (enum Polyline de tu proyecto)
+                    cont.resume(returning: Polyline.encode(allCoords))
+                }
+            }
+        }
+    }
+    
+    /// Guarda en SwiftData entrenamientos de running leídos como HKWorkout,
+    /// incluyendo la ruta GPS si existe. Devuelve cuántos insertó.
+    static func saveHKWorkoutsToLocal(_ workouts: [HKWorkout],
+                                      context: ModelContext,
+                                      healthStore: HKHealthStore = HKHealthStore()) async throws -> Int {
+        var inserted = 0
+
+        for wk in workouts {
+            guard wk.workoutActivityType == .running else { continue }
+            let distM = wk.totalDistance?.doubleValue(for: .meter()) ?? 0
+            guard distM > 0 else { continue }
+
+            // Ruta (si Apple Health la tiene)
+            let poly = await fetchRoutePolyline(for: wk, healthStore: healthStore)
+
+            let run = RunningSession(
+                date: wk.startDate,
+                durationSeconds: Int(wk.duration.rounded()),
+                distanceMeters: distM,
+                notes: "Imported from Apple Health",
+                routePolyline: poly
+            )
+            context.insert(run)
+            inserted += 1
+        }
+
+        try context.save()
+        if inserted > 0 { print("[HK][SAVE+ROUTE] inserted: \(inserted)") }
+        return inserted
+    }
+
+
 }
