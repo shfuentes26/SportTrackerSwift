@@ -18,21 +18,16 @@ struct LiveRunView: View {
     var body: some View {
         VStack(spacing: 16) {
             // Métricas principales
-            HStack {
+            // Métricas principales (centradas verticalmente)
+            Spacer(minLength: 0)
+
+            VStack(spacing: 26) {
                 metric(title: "Distance", value: manager.distanceFormatted)
-                Spacer()
                 metric(title: "Time", value: formatElapsed(manager.elapsed))
-                Spacer()
                 metric(title: "Pace", value: manager.paceFormatted)
             }
-            .padding(.horizontal)
-
-            if let hr = manager.currentHeartRate {
-                Text("HR \(Int(hr)) bpm").font(.headline)
-            }
-
-            Spacer()
-
+            .multilineTextAlignment(.center)
+            Spacer(minLength: 0)
             // Controles
             HStack(spacing: 12) {
                 if manager.isRunning {
@@ -50,10 +45,9 @@ struct LiveRunView: View {
                         controlLabel("Resume", systemImage: "play.fill")
                     }
                 }
-
                 Button(role: .destructive) {
                     manager.end { workout in
-                            saveToAppModel(workout: workout)   // ⬅️ ahora le pasamos el HKWorkout
+                            saveToAppModel(workout: workout)
                             showSaved = true
                         }
                 } label: {
@@ -88,11 +82,18 @@ struct LiveRunView: View {
     }
 
     private func metric(title: String, value: String) -> some View {
-        VStack {
-            Text(value).font(.system(size: 28, weight: .semibold, design: .rounded)).monospacedDigit()
-            Text(title).foregroundStyle(.secondary)
+        VStack(spacing: 6) {
+            Text(title)                          // ← primero el literal
+                .font(.title3)
+                .foregroundStyle(.secondary)
+            Text(value)                           // ← luego el valor
+                .font(.system(size: 36, weight: .semibold, design: .rounded))
+                .monospacedDigit()
         }
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.center)
     }
+
 
     private func controlLabel(_ text: String, systemImage: String) -> some View {
         Label(text, systemImage: systemImage)
