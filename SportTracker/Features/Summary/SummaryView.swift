@@ -114,7 +114,7 @@ struct SummaryView: View {
                 EditRunningSheet(run: run)
             }
             .sheet(item: $editingGym) { session in
-                EditStrengthNotesSheet(session: session)
+                EditGymSheet(session: session)
             }
         }
         .brandNavBar()
