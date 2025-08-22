@@ -113,15 +113,19 @@ struct GymView: View {
                     } else {
                         Section("Past Trainings") {
                             ForEach(filteredSessions) { s in
-                                VStack(alignment: .leading) {
-                                    HStack {
-                                        Text(SummaryView.formatDate(s.date)).font(.headline)
-                                        Spacer()
-                                        Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                                NavigationLink {
+                                    TrainingDetailView(item: .gym(s))
+                                } label: {
+                                    VStack(alignment: .leading) {
+                                        HStack {
+                                            Text(SummaryView.formatDate(s.date)).font(.headline)
+                                            Spacer()
+                                            Text("\(Int(s.totalPoints)) pts").foregroundStyle(.secondary)
+                                        }
+                                        Text(gymDetails(s))
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
                                     }
-                                    Text(gymDetails(s))
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
                                 }
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) { vm?.delete(s) } label: {
