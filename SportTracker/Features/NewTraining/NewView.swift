@@ -94,7 +94,9 @@ struct NewView: View {
             .navigationTitle("New Training")
             .brandHeaderSpacer()
             .alert("Training saved successfully", isPresented: $showSaved) {
-                Button("OK", role: .cancel) { }
+                Button("OK") {
+                    NotificationCenter.default.post(name: .navigateToSummary, object: nil)
+                }
             }
             .alert("Validation", isPresented: .constant(errorMsg != nil), actions: {
                 Button("OK", role: .cancel) { errorMsg = nil }

@@ -12,6 +12,7 @@ struct LiveRunView: View {
     @Environment(\.modelContext) private var context
     @StateObject private var manager = RunningLiveManager()
     @Environment(\.dismiss) private var dismiss
+    @State private var showSaved = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -52,7 +53,7 @@ struct LiveRunView: View {
                 Button(role: .destructive) {
                     manager.end { _ in
                         saveToAppModel()
-                        dismiss()
+                        showSaved = true   // ← mostramos confirmación
                     }
                 } label: {
                     controlLabel("Finish", systemImage: "stop.fill")
@@ -62,6 +63,15 @@ struct LiveRunView: View {
         }
         .navigationTitle("Live Run")
         .brandHeaderSpacer()
+        .alert("Workout saved", isPresented: $showSaved) {
+            Button("OK") {
+                // cierra y navega a Summary
+                NotificationCenter.default.post(name: .navigateToSummary, object: nil)
+                dismiss()
+            }
+        } message: {
+            Text("Your run has been saved.")
+        }
         .task {
             do {
                 try await manager.requestAuthorization()
