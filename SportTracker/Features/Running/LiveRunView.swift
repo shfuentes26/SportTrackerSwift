@@ -51,10 +51,10 @@ struct LiveRunView: View {
                 }
 
                 Button(role: .destructive) {
-                    manager.end { _ in
-                        saveToAppModel()
-                        showSaved = true   // ← mostramos confirmación
-                    }
+                    manager.end { workout in
+                            saveToAppModel(workout: workout)   // ⬅️ ahora le pasamos el HKWorkout
+                            showSaved = true
+                        }
                 } label: {
                     controlLabel("Finish", systemImage: "stop.fill")
                 }
@@ -110,20 +110,59 @@ struct LiveRunView: View {
     }
 
     // TODO: guarda tu sesión en tu modelo (RunningSession) cuando termine
-    private func saveToAppModel() {
-        // Aquí crearías y guardarías tu RunningSession usando manager.distanceMeters, manager.elapsed, etc.
-        // Ejemplo (ajústalo a tu modelo real):
-        /*
+    private func saveToAppModel(workout: HKWorkout?) {
+        // Métricas del manager
+        let distance = manager.distanceMeters
+        let duration = Int(manager.elapsed.rounded())
+        let date = Date()
+
+        // Crea la sesión de carrera (puedes añadir notes o polyline si las tienes)
         let session = RunningSession(
-            date: Date(),
-            distanceKm: manager.distanceMeters / 1000.0,
-            durationSeconds: Int(manager.elapsed),
-            paceSecondsPerKm: manager.elapsed / max(manager.distanceMeters/1000.0, 0.001),
-            notes: nil
+            date: date,
+            durationSeconds: duration,
+            distanceMeters: distance,
+            notes: nil,
+            routePolyline: nil // TODO: si expones la polyline desde el manager, asígnala aquí
         )
+
+        // Puntuación usando Settings (distancia + tiempo + bonus por ritmo vs baseline)
+        session.totalPoints = computeRunningPoints(
+            distanceMeters: distance,
+            durationSeconds: duration
+        )
+
+        // Guarda el UUID del workout de Health como referencia (opcional)
+        if let workout = workout {
+            session.remoteId = workout.uuid.uuidString
+        }
+
+        // Inserta y persiste
         context.insert(session)
-        try? context.save()
-        */
+        do {
+            try context.save()
+        } catch {
+            print("Error saving RunningSession:", error)
+        }
+    }
+    
+    // MARK: - Scoring
+    /// Calcula puntos según tus Settings:
+    /// - distancePts = km * runningDistanceFactor
+    /// - timePts     = (min) * runningTimeFactor
+    /// - paceBonus   = max(0, (baseline - pace)/baseline) * runningPaceFactor
+    private func computeRunningPoints(distanceMeters: Double, durationSeconds: Int) -> Double {
+        // Intenta leer Settings; si no hay, usa los defaults del modelo (sin persistirlos)
+        let settings: Settings = (try? context.fetch(FetchDescriptor<Settings>()).first) ?? Settings()
+
+        let km = distanceMeters / 1000.0
+        let minutes = Double(durationSeconds) / 60.0
+        let paceSecPerKm = durationSeconds > 0 && km > 0 ? Double(durationSeconds) / km : settings.runningPaceBaselineSecPerKm
+
+        let distancePts = km * settings.runningDistanceFactor
+        let timePts = minutes * settings.runningTimeFactor
+        let paceBonus = max(0, (settings.runningPaceBaselineSecPerKm - paceSecPerKm) / settings.runningPaceBaselineSecPerKm) * settings.runningPaceFactor
+
+        return distancePts + timePts + paceBonus
     }
 }
 
