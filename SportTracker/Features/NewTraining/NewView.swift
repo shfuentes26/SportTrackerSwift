@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import MapKit
 
 // Selector de tipo de entrenamiento
 enum TrainingType: String, CaseIterable, Identifiable {
@@ -41,6 +42,19 @@ struct NewView: View {
     @Query private var settingsList: [Settings]
     private var useMiles: Bool  { settingsList.first?.prefersMiles  ?? false }
     private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
+    
+    private enum RunningMode { case choose, manual }
+
+    @State private var goLiveRun = false
+    @State private var runningMode: RunningMode = .choose
+    
+    // -- Map --
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 37.3349, longitude: -122.0090),
+        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+    )
+    @State private var tracking: MapUserTrackingMode = .follow
+    @State private var locManager = CLLocationManager()
 
     init() {} // evita init(exercises:) sintetizado por @Query
 
@@ -63,17 +77,19 @@ struct NewView: View {
 
                 Spacer(minLength: 12)
 
-                Button(action: saveTapped) {
-                    Text("Save \(selectedType.rawValue)")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue.opacity(0.9))
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .padding(.horizontal)
+                if selectedType == .gym || (selectedType == .running && runningMode == .manual) {
+                    Button(action: saveTapped) {
+                        Text("Save \(selectedType.rawValue)")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue.opacity(0.9))
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .padding(.horizontal)
+                    }
+                    .padding(.bottom)
                 }
-                .padding(.bottom)
             }
             .navigationTitle("New Training")
             .brandHeaderSpacer()
@@ -106,57 +122,110 @@ struct NewView: View {
 
     // MARK: - Running form
     
+    // MARK: - Running form
     @State private var hh = ""
     @State private var mm = ""
     @State private var ss = ""
 
     private var runningForm: some View {
-        Form {
-            // NUEVO: acceso a Live Run
-            Section {
-                NavigationLink {
-                    LiveRunView() // ← ya lo tienes en el proyecto
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "dot.radiowaves.left.and.right").font(.title2)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Start live run").font(.headline)
-                            Text("Record with GPS & Health")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+        Group {
+            if runningMode == .choose {
+                VStack(spacing: 16) {
+                    // Mapa centrado en la posición del usuario
+                    Map(coordinateRegion: $region,
+                        showsUserLocation: true,
+                        userTrackingMode: $tracking)
+                    .frame(height: 280)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                    )
+                    .onAppear {
+                        // Pedimos permiso de localización para mostrar el punto azul
+                        if locManager.authorizationStatus == .notDetermined {
+                            locManager.requestWhenInUseAuthorization()
                         }
-                        Spacer()
+                        tracking = .follow
                     }
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
+
+                    // Botones debajo del mapa
+                    VStack(spacing: 10) {
+                        Button {
+                            goLiveRun = true
+                        } label: {
+                            Text("Start Workout")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .foregroundStyle(.white)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(Color.blue)
+                                )
+                        }
+
+                        Button {
+                            runningMode = .manual
+                        } label: {
+                            Text("Track manually")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                        }
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color.gray.opacity(0.12))
+                        )
+                    }
+                    .padding(.horizontal)
                 }
-                .buttonStyle(.plain)
-                .listRowBackground(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue.opacity(0.12))
+                .padding(.horizontal)
+                // NavigationLink oculto para LiveRun
+                .background(
+                    NavigationLink("", isActive: $goLiveRun) {
+                        LiveRunView()
+                    }
+                    .hidden()
                 )
-            }
 
-            // ——— Registro manual (igual que antes)
-            DatePicker("Date", selection: $runDate, displayedComponents: [.date, .hourAndMinute])
+            } else {
+                // Paso 2: formulario MANUAL
+                Form {
+                    Section {
+                        Button {
+                            withAnimation(.easeInOut) {
+                                runningMode = .choose
+                            }
+                        } label: {
+                            Label("Back to options", systemImage: "chevron.left")
+                        }
+                        .buttonStyle(.plain)
+                    }
 
-            HStack {
-                TextField("Distance (\(useMiles ? "mi" : "km"))", text: $runDistanceKm)
-                    .keyboardType(.decimalPad)
-                Text(useMiles ? "mi" : "km").foregroundStyle(.secondary)
-            }
+                    DatePicker("Date", selection: $runDate, displayedComponents: [.date, .hourAndMinute])
 
-            Section("Duration (hh:mm:ss)") {
-                DurationFields(hours: $hh, minutes: $mm, seconds: $ss)
-                Text("Example: 1:02:30 → 1 hour, 2 minutes, 30 seconds")
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
+                    HStack {
+                        TextField("Distance (\(useMiles ? "mi" : "km"))", text: $runDistanceKm)
+                            .keyboardType(.decimalPad)
+                        Text(useMiles ? "mi" : "km").foregroundStyle(.secondary)
+                    }
 
-            Section("Notes") {
-                TextField("Optional", text: $runNotes, axis: .vertical)
+                    Section("Duration (hh:mm:ss)") {
+                        DurationFields(hours: $hh, minutes: $mm, seconds: $ss)
+                        Text("Example: 1:02:30 → 1 hour, 2 minutes, 30 seconds")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+
+                    Section("Notes") {
+                        TextField("Optional", text: $runNotes, axis: .vertical)
+                    }
+                }
+                .scrollDismissesKeyboard(.interactively)  // ✅ en vez de onTapGesture
+                .id(runningMode)
+                .animation(.easeInOut, value: runningMode)
             }
         }
-        .onTapGesture { dismissKeyboard() }
     }
 
     // MARK: - Gym form
