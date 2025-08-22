@@ -172,7 +172,7 @@ extension StrengthSession: Identifiable {}
 
 // MARK: - Editor con sets
 
-private struct EditGymSheet: View {
+ struct EditGymSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
 

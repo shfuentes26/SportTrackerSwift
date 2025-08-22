@@ -451,42 +451,6 @@ private struct EditRunningSheet: View {
     }
 }
 
-// Editor simple para Strength (Gym): fecha + notas
-private struct EditStrengthNotesSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var context
-    @State var session: StrengthSession
-    @State private var date: Date
-    @State private var notes: String
-
-    init(session: StrengthSession) {
-        _session = State(initialValue: session)
-        _date = State(initialValue: session.date)
-        _notes = State(initialValue: session.notes ?? "")
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
-                Section("Notes") { TextField("Optional", text: $notes, axis: .vertical) }
-            }
-            .navigationTitle("Edit Gym")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() } }
-            }
-        }
-    }
-
-    private func save() {
-        session.date = date
-        session.notes = notes.isEmpty ? nil : notes
-        try? context.save()
-        dismiss()
-    }
-}
-
 
 #Preview {
     SummaryView()

@@ -161,20 +161,156 @@ struct RouteMapView: UIViewRepresentable {
     }
 }
 
-// MARK: - Gym detail (básico)
 
+// MARK: - Gym detail (mejorado)
+import SwiftData // asegúrate de tenerlo arriba del archivo
+
+// MARK: - Gym detail (mejorado y con type-check ligero)
 struct GymSessionDetail: View {
-    let session: StrengthSession    // ← StrengthSession del modelo
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+
+    let session: StrengthSession
+
+    @State private var showDelete = false
+    @State private var showEdit = false
+
     var body: some View {
         List {
-            Section {
-                Text("\(Int(session.totalPoints)) pts • \(SummaryView.formatDate(session.date))")
+            // 1) Sets (tipo + grupo) → reps/peso
+            Section("Sets") {
+                ForEach(sortedSets, id: \.id) { set in
+                    GymSetRow(set: set)        // ← subvista pequeña = el type-check va rápido
+                }
             }
+
+            // 2) Notas (si hay)
             if let notes = session.notes, !notes.isEmpty {
                 Section("Notes") { Text(notes) }
+            }
+
+            // 3) Fecha y puntos
+            Section("Summary") {
+                HStack {
+                    Text("Date"); Spacer()
+                    Text(SummaryView.formatDate(session.date))
+                        .foregroundStyle(.secondary)
+                }
+                HStack {
+                    Text("Points"); Spacer()
+                    Text("\(Int(session.totalPoints)) pts")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
             }
         }
         .navigationTitle("Gym")
         .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button("Edit") { showEdit = true }
+                Button(role: .destructive) { showDelete = true } label: { Text("Delete") }
+            }
+        }
+        .confirmationDialog("Delete workout?",
+                            isPresented: $showDelete,
+                            titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                context.delete(session)
+                try? context.save()
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .sheet(isPresented: $showEdit) {
+            EditGymSheet(session: session)   // ← el editor completo que ya existe
+        }
+    }
+
+    // MARK: Helpers
+    private var sortedSets: [StrengthSet] {
+        session.sets.sorted { a, b in
+            if a.order != b.order { return a.order < b.order }
+            return a.id.uuidString < b.id.uuidString
+        }
+    }
+}
+
+// Fila pequeña para cada set (reduce complejidad del body principal)
+private struct GymSetRow: View {
+    let set: StrengthSet
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // Tipo de ejercicio + grupo
+            HStack {
+                Text(set.exercise.name).font(.headline)
+                Text("• \(groupName(set.exercise.muscleGroup))")
+                    .foregroundStyle(.secondary)
+            }
+
+            // Reps y peso (si hay)
+            HStack(spacing: 12) {
+                Text("Reps: \(set.reps)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+
+                if let w = set.weightKg, w > 0 {
+                    Text("Weight: \(String(format: "%.1f", w)) kg")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func groupName(_ g: MuscleGroup) -> String {
+        switch g {
+        case .chestBack: return "Chest/Back"
+        case .arms:      return "Arms"
+        case .legs:      return "Legs"
+        case .core:      return "Core"
+        @unknown default: return "Other"
+        }
+    }
+}
+// Editor simple (fecha + notas) para Strength; se puede ampliar luego
+struct EditStrengthNotesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    @State var session: StrengthSession
+    @State private var date: Date
+    @State private var notes: String
+
+    init(session: StrengthSession) {
+        _session = State(initialValue: session)
+        _date = State(initialValue: session.date)
+        _notes = State(initialValue: session.notes ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
+                Section("Notes") {
+                    TextField("Optional", text: $notes, axis: .vertical)
+                }
+            }
+            .navigationTitle("Edit Gym")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() } }
+            }
+        }
+    }
+
+    private func save() {
+        session.date = date
+        session.notes = notes.isEmpty ? nil : notes
+        try? context.save()
+        dismiss()
     }
 }
