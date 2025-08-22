@@ -15,6 +15,10 @@ struct SummaryView: View {
     // Deep-link a cada pestaña del editor
     @State private var goToRunningGoal = false
     @State private var goToGymGoal = false
+    
+    @Environment(\.modelContext) private var context
+    @State private var editingRun: RunningSession? = nil
+    @State private var editingGym: StrengthSession? = nil
 
     init() {}
 
@@ -24,33 +28,73 @@ struct SummaryView: View {
         NavigationStack {
             List {
                 goalsCardSection
-
-                if pastItems.isEmpty {
+                if combinedItems.isEmpty {
                     ContentUnavailableView("There are no trainings yet", systemImage: "calendar.badge.clock")
                 } else {
                     Section("Past Trainings") {
-                        ForEach(pastItems) { item in
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: item.icon)
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(.primary)
-                                    .frame(width: rowIconWidth, alignment: .leading)
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.title).font(.headline)
-                                    Text(item.subtitle).font(.subheadline).foregroundStyle(.secondary)
+                        ForEach(combinedItems) { row in
+                            switch row {
+                            case .run(let r):
+                                NavigationLink {
+                                    TrainingDetailView(item: .running(r))
+                                } label: {
+                                    HStack(alignment: .top, spacing: 12) {
+                                        Image(systemName: "figure.run")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundStyle(.primary)
+                                            .frame(width: rowIconWidth, alignment: .leading)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Running • \(Self.formatDate(r.date))").font(.headline)
+                                            Text("\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles))")
+                                                .font(.subheadline).foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Text("\(Int(r.totalPoints)) pts")
+                                            .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                                    }
+                                }
+                                .swipeActions {
+                                    Button(role: .destructive) { deleteRun(r) } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    Button { editingRun = r } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
                                 }
 
-                                Spacer()
-
-                                Text(item.trailing)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .monospacedDigit()
+                            case .gym(let s):
+                                NavigationLink {
+                                    TrainingDetailView(item: .gym(s))
+                                } label: {
+                                    HStack(alignment: .top, spacing: 12) {
+                                        Image(systemName: "dumbbell.fill")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundStyle(.primary)
+                                            .frame(width: rowIconWidth, alignment: .leading)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Gym • \(Self.formatDate(s.date))").font(.headline)
+                                            Text(gymDetails(s))
+                                                .font(.subheadline).foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Text("\(Int(s.totalPoints)) pts")
+                                            .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                                    }
+                                }
+                                .swipeActions {
+                                    Button(role: .destructive) { deleteGym(s) } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    Button { editingGym = s } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                }
                             }
                         }
                     }
+
                 }
+
             }
             // Links ocultos para navegar sin chevron y hacia la pestaña adecuada
             .background(
@@ -66,6 +110,12 @@ struct SummaryView: View {
             .navigationTitle("Summary")
             .navigationBarTitleDisplayMode(.large)
             .brandHeaderSpacer()
+            .sheet(item: $editingRun) { run in
+                EditRunningSheet(run: run)
+            }
+            .sheet(item: $editingGym) { session in
+                EditStrengthNotesSheet(session: session)
+            }
         }
         .brandNavBar()
     }
@@ -291,7 +341,152 @@ struct SummaryView: View {
         let ss = secs % 60
         return String(format: "%d:%02d %@", mm, ss, useMiles ? "/mi" : "/km")
     }
+    
+    // Mezcla runs y gyms con su tipo para poder abrir detalle o hacer swipe
+    private enum PastRow: Identifiable {
+        case run(RunningSession)
+        case gym(StrengthSession)
+
+        var id: String {
+            switch self {
+            case .run(let r): return "run-\(r.id.uuidString)"
+            case .gym(let s): return "gym-\(s.id.uuidString)"
+            }
+        }
+        var date: Date {
+            switch self {
+            case .run(let r): return r.date
+            case .gym(let s): return s.date
+            }
+        }
+    }
+    private var combinedItems: [PastRow] {
+        (runs.map(PastRow.run) + gyms.map(PastRow.gym)).sorted { $0.date > $1.date }
+    }
+
+    @MainActor private func deleteRun(_ r: RunningSession) {
+        context.delete(r); try? context.save()
+    }
+    @MainActor private func deleteGym(_ s: StrengthSession) {
+        context.delete(s); try? context.save()
+    }
+
 }
+
+// Editor rápido para Running (igual patrón que en RunningView)
+private struct EditRunningSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    @State var run: RunningSession
+
+    @State private var date: Date
+    @State private var distanceKm: String
+    @State private var hh: String
+    @State private var mm: String
+    @State private var ss: String
+    @State private var notes: String
+
+    init(run: RunningSession) {
+        _run = State(initialValue: run)
+        _date = State(initialValue: run.date)
+        _distanceKm = State(initialValue: SummaryView.formatNumber(run.distanceKm))
+        let sec = run.durationSeconds
+        _hh = State(initialValue: String(sec/3600))
+        _mm = State(initialValue: String((sec%3600)/60))
+        _ss = State(initialValue: String(sec%60))
+        _notes = State(initialValue: run.notes ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
+                HStack {
+                    TextField("Distance (km)", text: $distanceKm).keyboardType(.decimalPad)
+                    Text("km").foregroundStyle(.secondary)
+                }
+                Section("Duration (hh:mm:ss)") {
+                    HStack(spacing: 6) {
+                        TextField("hh", text: $hh).keyboardType(.numberPad).frame(width: 42).multilineTextAlignment(.center)
+                        Text(":")
+                        TextField("mm", text: $mm).keyboardType(.numberPad).frame(width: 42).multilineTextAlignment(.center)
+                        Text(":")
+                        TextField("ss", text: $ss).keyboardType(.numberPad).frame(width: 42).multilineTextAlignment(.center)
+                    }.monospacedDigit()
+                }
+                Section("Notes") { TextField("Optional", text: $notes, axis: .vertical) }
+            }
+            .navigationTitle("Edit Running")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() } }
+            }
+        }
+    }
+
+    private func save() {
+        let dist = Double(distanceKm.replacingOccurrences(of: ",", with: ".")) ?? 0
+        let H = Int(hh) ?? 0, M = Int(mm) ?? 0, S = Int(ss) ?? 0
+        let sec = H*3600 + M*60 + S
+        guard dist > 0, sec > 0 else { return }
+
+        run.date = date
+        run.distanceMeters = dist * 1000
+        run.durationSeconds = sec
+        run.notes = notes.isEmpty ? nil : notes
+
+        // Recalcular puntos con Settings
+        let settings = (try? context.fetch(FetchDescriptor<Settings>()).first) ?? Settings()
+        if settings.persistentModelID == nil { context.insert(settings) }
+        let km = dist
+        let minutes = Double(sec)/60.0
+        let paceSecPerKm = Double(sec)/max(km, 0.001)
+        let distancePts = km * settings.runningDistanceFactor
+        let timePts = minutes * settings.runningTimeFactor
+        let paceBonus = max(0, (settings.runningPaceBaselineSecPerKm - paceSecPerKm)/settings.runningPaceBaselineSecPerKm) * settings.runningPaceFactor
+        run.totalPoints = distancePts + timePts + paceBonus
+
+        try? context.save()
+        dismiss()
+    }
+}
+
+// Editor simple para Strength (Gym): fecha + notas
+private struct EditStrengthNotesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    @State var session: StrengthSession
+    @State private var date: Date
+    @State private var notes: String
+
+    init(session: StrengthSession) {
+        _session = State(initialValue: session)
+        _date = State(initialValue: session.date)
+        _notes = State(initialValue: session.notes ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
+                Section("Notes") { TextField("Optional", text: $notes, axis: .vertical) }
+            }
+            .navigationTitle("Edit Gym")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() } }
+            }
+        }
+    }
+
+    private func save() {
+        session.date = date
+        session.notes = notes.isEmpty ? nil : notes
+        try? context.save()
+        dismiss()
+    }
+}
+
 
 #Preview {
     SummaryView()
