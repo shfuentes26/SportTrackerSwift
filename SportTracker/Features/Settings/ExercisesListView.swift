@@ -16,34 +16,20 @@ struct ExercisesListView: View {
     @Query(sort: [SortDescriptor(\Exercise.name, order: .forward)])
     private var allExercises: [Exercise]
 
-    @State private var selected: MuscleGroup? = nil     // nil = All
-    @State private var search: String = ""
-    // por estas:
-    @State private var creating = false
+    /// View model storing the current search string and selected category.
+    /// Using a ``@StateObject`` here ensures that the model is created
+    /// once per view lifecycle and is retained across view reloads.
+    @StateObject private var viewModel = ExercisesListViewModel()
+    @State private var showingForm = false
     @State private var editing: Exercise? = nil
 
-    // Rompemos la expresión en bloques simples para ayudar al type-checker
-    private var filtered: [Exercise] {
-        let q = search.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let sel = selected {
-            if q.isEmpty {
-                return allExercises.filter { (ex: Exercise) in ex.muscleGroup == sel }
-            } else {
-                return allExercises.filter { (ex: Exercise) in
-                    ex.muscleGroup == sel && ex.name.localizedCaseInsensitiveContains(q)
-                }
-            }
-        } else {
-            if q.isEmpty { return allExercises }
-            return allExercises.filter { (ex: Exercise) in
-                ex.name.localizedCaseInsensitiveContains(q)
-            }
-        }
-    }
+    // Filtering is delegated to the view model. See ``ExercisesListViewModel``.
 
     var body: some View {
         List {
-            let items = filtered  // otra pista al compilador
+            // Obtain the filtered list from the view model. The model
+            // reads the current search text and selected muscle group.
+            let items = viewModel.filteredExercises(from: allExercises)
             if items.isEmpty {
                 ContentUnavailableView(
                     "No exercises yet",
@@ -53,8 +39,8 @@ struct ExercisesListView: View {
             } else {
                 ForEach(items) { ex in
                     Button {
-                        editing = ex                      // ← selecciona el item a editar
-                        // ya NO activamos ningún booleano aquí
+                        editing = ex
+                        showingForm = true
                     } label: {
                         ExerciseRow(ex: ex)
                     }
@@ -69,13 +55,13 @@ struct ExercisesListView: View {
                 }
             }
         }
-        .searchable(text: $search,
+        .searchable(text: $viewModel.search,
             placement: .navigationBarDrawer(displayMode: .always))
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     // Optional tags explícitas para evitar ambigüedad
-                    Picker("Category", selection: $selected) {
+                    Picker("Category", selection: $viewModel.selected) {
                         Text("All").tag(Optional<MuscleGroup>.none)
                         Text("Core").tag(Optional(MuscleGroup.core))
                         Text("Chest/Back").tag(Optional(MuscleGroup.chestBack))
@@ -83,29 +69,22 @@ struct ExercisesListView: View {
                         Text("Legs").tag(Optional(MuscleGroup.legs))
                     }
                 } label: {
-                    Label(selected?.display ?? "All",
+                    Label(viewModel.selected?.display ?? "All",
                           systemImage: "line.3.horizontal.decrease.circle")
                 }
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    creating = true               // ← modo crear
+                    editing = nil
+                    showingForm = true
                 } label: { Label("Add", systemImage: "plus") }
             }
         }
         .navigationTitle("Manage trainings")
-        .sheet(item: $editing) { ex in
+        .sheet(isPresented: $showingForm) {
             NavigationStack {
                 ExerciseFormView(
-                    exercise: ex,
-                    onSave: { try? context.save() }
-                )
-            }
-        }
-        .sheet(isPresented: $creating) {
-            NavigationStack {
-                ExerciseFormView(
-                    exercise: nil,
+                    exercise: editing,
                     onSave: { try? context.save() }
                 )
             }
