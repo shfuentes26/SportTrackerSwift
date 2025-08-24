@@ -271,9 +271,10 @@
 				DEVELOPMENT_TEAM = 8568JZJ3QU;
 				INFOPLIST_FILE = SportTracker/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tits;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.SportTracker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker;
 				PRODUCT_NAME = SportTracker;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
@@ -292,9 +293,10 @@
 				DEVELOPMENT_TEAM = 8568JZJ3QU;
 				INFOPLIST_FILE = SportTracker/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tits;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.SportTracker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker;
 				PRODUCT_NAME = SportTracker;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";

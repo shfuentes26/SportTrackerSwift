@@ -29,9 +29,35 @@ struct ExerciseFormView: View {
         _weighted = State(initialValue: exercise?.isWeighted ?? false)
         _notes    = State(initialValue: exercise?.notes ?? "")
     }
+    
+    private func systemIcon(for group: MuscleGroup, weighted: Bool) -> String {
+        // Mapeo simple y robusto (SF Symbols estándar)
+        switch group {
+        case .core:
+            return "figure.strengthtraining.functional"
+        case .chestBack, .arms, .legs:
+            return weighted ? "dumbbell" : "figure.strengthtraining.functional"
+        @unknown default:
+            return "dumbbell"
+        }
+    }
 
     var body: some View {
         Form {
+            Section {
+                HStack {
+                    Spacer()
+                    Image(systemName: systemIcon(for: group, weighted: weighted))
+                        .symbolRenderingMode(.hierarchical)
+                        .font(.system(size: 48, weight: .semibold))
+                        .frame(width: 96, height: 96)
+                        .padding()
+                        .background(Color.secondary.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    Spacer()
+                }
+            }
+            .listRowBackground(Color.clear)
             Section("Basics") {
                 TextField("Name", text: $name)
                 Picker("Category", selection: $group) {
@@ -62,7 +88,7 @@ struct ExerciseFormView: View {
                             muscleGroup: group,
                             isWeighted: weighted,
                             isCustom: true,
-                            notes: notes.trimmingCharacters(in: .whitespacesAndNewlines) 
+                            notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
                         )
                         context.insert(ex)
                     }
