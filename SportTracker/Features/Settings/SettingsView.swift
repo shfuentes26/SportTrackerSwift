@@ -75,7 +75,7 @@ extension SettingsView {
         defer { isImporting = false }
 
         guard HKHealthStore.isHealthDataAvailable() else {
-            importResult = "Health no disponible (este dispositivo no permite HealthKit)."
+            importResult = "Health not available (This device doesn't allow HealthKit)."
             showImportAlert = true
             return
         }
@@ -113,7 +113,7 @@ extension SettingsView {
 
             // 4) Marcar importación finalizada y avisar
             HealthKitManager.shared.markImported()
-            importResult = "Importados \(totalInserted) entrenamientos."
+            importResult = "Imported \(totalInserted) trainings."
         } catch {
             importResult = "Error: \(error.localizedDescription)"
         }
