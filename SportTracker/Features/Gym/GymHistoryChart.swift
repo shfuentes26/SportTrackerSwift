@@ -77,6 +77,13 @@ struct GymHistoryChart: View {
         .onAppear { reload() }
         .onChange(of: mode) { _ in reload() }
         .onChange(of: anchor) { _ in reload() }
+        // Después
+        .task(id: sessions.map(\.id)) {
+            reload()
+        }
+        .task(id: sessions.flatMap { $0.sets.map(\.id) }) {
+            reload()
+        }
         .animation(.snappy, value: mode)
         .animation(.snappy, value: anchor)
     }

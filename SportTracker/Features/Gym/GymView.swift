@@ -100,6 +100,7 @@ struct GymView: View {
 
                 // ⬇️ La gráfica ahora va FUERA de la List y ocupa todo el ancho
                 GymHistoryChart(sessions: filteredSessions)
+                    .id(selectedCategory)
 
                 // ⬇️ Tu lista de sesiones, tal cual la tenías
                 List {
