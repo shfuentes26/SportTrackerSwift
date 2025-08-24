@@ -1,0 +1,528 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    ":" : {
+
+    },
+    "%@ • %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ • %2$@"
+          }
+        }
+      }
+    },
+    "%@ • %@ • %lld min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ • %2$@ • %3$lld min"
+          }
+        }
+      }
+    },
+    "%lld pts" : {
+
+    },
+    "%lld pts • %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld pts • %2$@"
+          }
+        }
+      }
+    },
+    "%lld%%" : {
+
+    },
+    "• %@" : {
+
+    },
+    "🏆" : {
+
+    },
+    "0" : {
+
+    },
+    "Add" : {
+
+    },
+    "Add Exercise" : {
+
+    },
+    "Add Set" : {
+
+    },
+    "Add your first exercise with the + button." : {
+
+    },
+    "All" : {
+
+    },
+    "All-time Records" : {
+
+    },
+    "Arms" : {
+
+    },
+    "Arms: %lld" : {
+
+    },
+    "Back to options" : {
+
+    },
+    "Basics" : {
+
+    },
+    "Bucket" : {
+
+    },
+    "Cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "Category" : {
+
+    },
+    "Chest/Back" : {
+
+    },
+    "Chest/Back: %lld" : {
+
+    },
+    "Core" : {
+
+    },
+    "Core: %lld" : {
+
+    },
+    "Create a goal" : {
+
+    },
+    "Date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fecha"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
+          }
+        }
+      }
+    },
+    "Delete workout?" : {
+
+    },
+    "Distance (%@)" : {
+
+    },
+    "Distance (km)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distancia (km)"
+          }
+        }
+      }
+    },
+    "Done" : {
+
+    },
+    "Duration (hh:mm:ss)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duración (hh:mm:ss)"
+          }
+        }
+      }
+    },
+    "Edit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
+          }
+        }
+      }
+    },
+    "Edit Exercise" : {
+
+    },
+    "Edit Gym" : {
+
+    },
+    "Edit Running" : {
+      "extractionState" : "manual"
+    },
+    "Example: 1:02:30 → 1 hour, 2 minutes, 30 seconds" : {
+
+    },
+    "Exercise" : {
+
+    },
+    "Exercises" : {
+
+    },
+    "Goal type" : {
+
+    },
+    "Goals" : {
+
+    },
+    "Group" : {
+
+    },
+    "Gym" : {
+
+    },
+    "Gym • %@" : {
+
+    },
+    "hh" : {
+
+    },
+    "Import" : {
+
+    },
+    "Import from Apple Health" : {
+
+    },
+    "Info" : {
+
+    },
+    "Integrations" : {
+
+    },
+    "km" : {
+
+    },
+    "Km" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Km"
+          }
+        }
+      }
+    },
+    "Label" : {
+
+    },
+    "Last import: %@" : {
+
+    },
+    "Legs" : {
+
+    },
+    "Legs: %lld" : {
+
+    },
+    "Live Run" : {
+
+    },
+    "Manage goals" : {
+
+    },
+    "Manage trainings" : {
+
+    },
+    "mi" : {
+
+    },
+    "mm" : {
+
+    },
+    "Month" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mes"
+          }
+        }
+      }
+    },
+    "Name" : {
+
+    },
+    "New" : {
+
+    },
+    "New Exercise" : {
+
+    },
+    "New Training" : {
+
+    },
+    "No exercises found. Add some in your library." : {
+
+    },
+    "No exercises in this category" : {
+
+    },
+    "No exercises yet" : {
+
+    },
+    "No record yet" : {
+
+    },
+    "No sessions for %@" : {
+
+    },
+    "Notes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas"
+          }
+        }
+      }
+    },
+    "OK" : {
+
+    },
+    "Optional" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opcional"
+          }
+        }
+      }
+    },
+    "Pace %@/km" : {
+
+    },
+    "Past Trainings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamientos Pasados"
+          }
+        }
+      }
+    },
+    "Points" : {
+
+    },
+    "Points preview: %lld pts" : {
+
+    },
+    "Progress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progreso"
+          }
+        }
+      }
+    },
+    "Records" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Records"
+          }
+        }
+      }
+    },
+    "Reps" : {
+
+    },
+    "Reps: %lld" : {
+
+    },
+    "Running" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running"
+          }
+        }
+      }
+    },
+    "Running • %@" : {
+
+    },
+    "Save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar"
+          }
+        }
+      }
+    },
+    "Save %@" : {
+
+    },
+    "Save gym goal" : {
+
+    },
+    "Save running goal" : {
+
+    },
+    "Saved" : {
+
+    },
+    "Sets" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Show miles (min/mi)" : {
+
+    },
+    "Show pounds (lb)" : {
+
+    },
+    "ss" : {
+
+    },
+    "Start Workout" : {
+
+    },
+    "Summary" : {
+
+    },
+    "There are no gym trainings yet" : {
+
+    },
+    "There are no running trainings yet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay entrenamientos de carrera"
+          }
+        }
+      }
+    },
+    "There are no trainings yet" : {
+
+    },
+    "Track manually" : {
+
+    },
+    "Track weekly progress for Running and Gym" : {
+
+    },
+    "Training" : {
+
+    },
+    "Training saved successfully" : {
+
+    },
+    "Type" : {
+
+    },
+    "Units" : {
+
+    },
+    "Validation" : {
+
+    },
+    "Value" : {
+
+    },
+    "Week" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana"
+          }
+        }
+      }
+    },
+    "Weekly target" : {
+
+    },
+    "Weight (%@)" : {
+
+    },
+    "Weight (kg)" : {
+
+    },
+    "Weight: %@ kg" : {
+
+    },
+    "Weighted (kg)" : {
+
+    },
+    "Will be added to %@" : {
+
+    },
+    "Workout saved" : {
+
+    },
+    "Year" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Año"
+          }
+        }
+      }
+    },
+    "Your run has been saved." : {
+
+    }
+  },
+  "version" : "1.0"
+}
