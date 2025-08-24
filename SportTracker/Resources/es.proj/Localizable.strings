@@ -1,0 +1,40 @@
+//
+//  Localizable.strings
+//  SportTracker
+//
+//  Created by Satur Hernandez Fuentes on 8/24/25.
+//
++/* Running tab titles */
++"Progress" = "Progreso";
++"Records"  = "Récords";
++
++/* Past Trainings section */
++"Past Trainings" = "Entrenamientos anteriores";
++
++/* When there are no runs */
++"There are no running trainings yet" = "Aún no hay entrenamientos de carrera";
++
++/* Buttons */
++"Delete" = "Eliminar";
++"Edit"   = "Editar";
++"Save"   = "Guardar";
++"Cancel" = "Cancelar";
++
++/* Form fields */
++"Date"          = "Fecha";
++"Distance (km)" = "Distancia (km)";
++"Duration (hh:mm:ss)" = "Duración (hh:mm:ss)";
++"Notes"         = "Notas";
++"Optional"      = "Opcional";
++
++/* Running screen */
++"Running" = "Carrera";
++
++/* Edit running sheet title */
++"Edit Running" = "Editar Carrera";
++
++/* RunningHistoryChart */
++"Week"  = "Semana";
++"Month" = "Mes";
++"Year"  = "Año";
++"Km"    = "Km";
