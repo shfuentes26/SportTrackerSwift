@@ -4,6 +4,7 @@
 //
 //  Created by Satur Hernandez Fuentes on 8/19/25.
 //
+
 // Features/Settings/ExercisesListView.swift
 import SwiftUI
 import SwiftData
@@ -114,7 +115,7 @@ private struct ExerciseRow: View {
             Text(ex.name).font(.headline)
             Text(ex.muscleGroup.display)
                 .font(.caption)
-                            .foregroundStyle(.secondary)
+                .foregroundStyle(.secondary)
         }
     }
 }
@@ -122,12 +123,11 @@ private struct ExerciseRow: View {
 extension MuscleGroup {
     var display: String {
         switch self {
-        case .core: return "Core"
-        case .chestBack: return "Chest/Back"
-        case .arms: return "Arms"
-        case .legs: return "Legs"
-        default: return "All"
+        case .core:       return "Core"
+        case .chestBack:  return "Chest/Back"
+        case .arms:       return "Arms"
+        case .legs:       return "Legs"
+        default:          return "All"
         }
     }
 }
-
