@@ -114,3 +114,20 @@ private struct ExerciseRow: View {
             Text(ex.name).font(.headline)
             Text(ex.muscleGroup.display)
                 .font(.caption)
+                            .foregroundStyle(.secondary)
+        }
+    }
+}
+
+extension MuscleGroup {
+    var display: String {
+        switch self {
+        case .core: return "Core"
+        case .chestBack: return "Chest/Back"
+        case .arms: return "Arms"
+        case .legs: return "Legs"
+        default: return "All"
+        }
+    }
+}
+
