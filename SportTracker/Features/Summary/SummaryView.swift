@@ -234,8 +234,11 @@ struct SummaryView: View {
     // MARK: - Helpers de semana/formatos
 
     private var weekInterval: DateInterval {
-        let cal = Calendar.current
-        if let di = cal.dateInterval(of: .weekOfYear, for: Date()) { return di }
+        var cal = Calendar.current
+        cal.firstWeekday = 2 // 1=Sunday, 2=Monday
+        if let di = cal.dateInterval(of: .weekOfYear, for: Date()) {
+            return di
+        }
         let start = cal.startOfDay(for: Date())
         return DateInterval(start: start, duration: 7*24*3600)
     }
