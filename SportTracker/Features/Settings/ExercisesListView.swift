@@ -18,7 +18,8 @@ struct ExercisesListView: View {
 
     @State private var selected: MuscleGroup? = nil     // nil = All
     @State private var search: String = ""
-    @State private var showingForm = false
+    // por estas:
+    @State private var creating = false
     @State private var editing: Exercise? = nil
 
     // Rompemos la expresión en bloques simples para ayudar al type-checker
@@ -52,8 +53,8 @@ struct ExercisesListView: View {
             } else {
                 ForEach(items) { ex in
                     Button {
-                        editing = ex
-                        showingForm = true
+                        editing = ex                      // ← selecciona el item a editar
+                        // ya NO activamos ningún booleano aquí
                     } label: {
                         ExerciseRow(ex: ex)
                     }
@@ -88,16 +89,23 @@ struct ExercisesListView: View {
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    editing = nil
-                    showingForm = true
+                    creating = true               // ← modo crear
                 } label: { Label("Add", systemImage: "plus") }
             }
         }
         .navigationTitle("Manage trainings")
-        .sheet(isPresented: $showingForm) {
+        .sheet(item: $editing) { ex in
             NavigationStack {
                 ExerciseFormView(
-                    exercise: editing,
+                    exercise: ex,
+                    onSave: { try? context.save() }
+                )
+            }
+        }
+        .sheet(isPresented: $creating) {
+            NavigationStack {
+                ExerciseFormView(
+                    exercise: nil,
                     onSave: { try? context.save() }
                 )
             }
