@@ -4,7 +4,7 @@ import SwiftData
 struct GymView: View {
     @Environment(\.modelContext) private var context
     @State private var editingSession: StrengthSession? = nil
-    
+
     @State private var weekStart: Date = Calendar.iso8601Monday.startOfWeek(for: Date())
 
     private var currentWeekLabel: String {
@@ -16,7 +16,7 @@ struct GymView: View {
         fmt.dateFormat = "d MMM"
         return "\(fmt.string(from: weekStart)) – \(fmt.string(from: end))"
     }
-    
+
     @State private var vm: GymViewModel? = nil
 
     @Query(sort: [SortDescriptor(\StrengthSession.date, order: .reverse)])
@@ -24,7 +24,6 @@ struct GymView: View {
     @Query private var settingsList: [Settings]
     private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
 
-    
     private enum GymFilterCategory: String, CaseIterable, Identifiable {
         case all = "All"
         case core = "Core"
@@ -33,7 +32,7 @@ struct GymView: View {
         case legs = "Legs"
         var id: String { rawValue }
     }
-    
+
     private func gymDetails(_ s: StrengthSession) -> String {
         if s.sets.isEmpty { return "No sets" }
         let items = s.sets
@@ -50,46 +49,35 @@ struct GymView: View {
         if s.sets.count > 3 { line += " …" }
         return line
     }
-    
+
     private var filteredSessions: [StrengthSession] {
         sessions.filter { s in
             selectedCategory == .all || session(s, matches: selectedCategory)
         }
     }
-    
-    // Devuelve true si la sesión tiene al menos un set cuyo ejercicio
-    // pertenece a la categoría seleccionada.
+
     private func session(_ s: StrengthSession, matches cat: GymFilterCategory) -> Bool {
         let cats = Set(s.sets.compactMap { mapGroup($0.exercise.muscleGroup) })
         return cats.contains(cat)
     }
-    
-    // Mapea tu enum MuscleGroup a las categorías del filtro.
-    // Ajusta los cases según tu enum real si tienes más (ej. .shoulders).
+
     private func mapGroup(_ g: MuscleGroup) -> GymFilterCategory? {
         switch g {
-        case .core:
-            return .core
-        case .chestBack:
-            return .chestBack
-        case .arms:
-            return .arms
-        case .legs:
-            return .legs
-        default:
-            return nil
+        case .core:       return .core
+        case .chestBack:  return .chestBack
+        case .arms:       return .arms
+        case .legs:       return .legs
+        default:          return nil
         }
     }
 
     @State private var selectedCategory: GymFilterCategory = .all
-    
-    init() {} // evita el init(sessions:) sintetizado por @Query
+
+    init() {}
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 8) {
-
-                // Segmented control (igual que tenías)
                 Picker("Category", selection: $selectedCategory) {
                     ForEach(GymFilterCategory.allCases) { c in
                         Text(c.rawValue).tag(c)
@@ -98,11 +86,9 @@ struct GymView: View {
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
 
-                // ⬇️ La gráfica ahora va FUERA de la List y ocupa todo el ancho
                 GymHistoryChart(sessions: filteredSessions)
                     .id(selectedCategory)
 
-                // ⬇️ Tu lista de sesiones, tal cual la tenías
                 List {
                     if filteredSessions.isEmpty {
                         ContentUnavailableView(
@@ -141,7 +127,7 @@ struct GymView: View {
                     }
                 }
             }
-            .brandHeaderSpacer()          // como en Running
+            .brandHeaderSpacer()
             .navigationTitle("Gym")
         }
         .task {
@@ -158,12 +144,8 @@ struct GymView: View {
         }
     }
 
-
-    // MARK: - Actions
-
     @MainActor
     private func delete(session: StrengthSession) {
-        // Borra la sesión (sus sets se eliminan por deleteRule .cascade)
         context.delete(session)
         do { try context.save() } catch {
             print("Delete error: \(error)")
@@ -171,26 +153,23 @@ struct GymView: View {
     }
 }
 
-// Necesario para usar .sheet(item:) con StrengthSession
 extension StrengthSession: Identifiable {}
 
+// MARK: - Editor con sets (respeta lb/kg)
 
-// MARK: - Editor con sets
-
- struct EditGymSheet: View {
+struct EditGymSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
 
-    // Lista de ejercicios disponibles para el picker
     @Query(sort: [SortDescriptor(\Exercise.name, order: .forward)])
     private var exercises: [Exercise]
 
-    // @Bindable permite editar directamente el modelo @Model
+    @Query private var settingsList: [Settings]
+    private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
+
     @Bindable var session: StrengthSession
 
-    init(session: StrengthSession) {
-        self.session = session
-    }
+    init(session: StrengthSession) { self.session = session }
 
     var body: some View {
         NavigationStack {
@@ -204,9 +183,8 @@ extension StrengthSession: Identifiable {}
                             .foregroundStyle(.secondary)
                     }
 
-                    // Editor de cada set
                     ForEach(session.sets) { set in
-                        SetEditorRow(set: set, exercises: exercises)
+                        SetEditorRow(set: set, exercises: exercises, usePounds: usePounds)
                     }
                     .onDelete(perform: deleteSets)
                     .onMove(perform: moveSets)
@@ -233,15 +211,9 @@ extension StrengthSession: Identifiable {}
             }
             .navigationTitle("Edit Gym")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                }
-                ToolbarItem(placement: .keyboard) {
-                    Button("Done") { hideKeyboard() }
-                }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() } }
+                ToolbarItem(placement: .keyboard) { Button("Done") { hideKeyboard() } }
             }
         }
     }
@@ -249,7 +221,6 @@ extension StrengthSession: Identifiable {}
     // MARK: - Set helpers
 
     private func addSet() {
-        // Elige un ejercicio por defecto (si no hay, crea uno básico)
         let ex: Exercise
         if let first = exercises.first {
             ex = first
@@ -259,16 +230,13 @@ extension StrengthSession: Identifiable {}
         }
         let newOrder = (session.sets.map(\.order).max() ?? 0) + 1
         let newSet = StrengthSet(exercise: ex, order: newOrder, reps: 10, weightKg: nil)
-        // Vincula a la sesión
         newSet.session = session
         session.sets.append(newSet)
-        // No es necesario insert explícito; se persiste al guardar
     }
 
     private func deleteSets(at offsets: IndexSet) {
         for index in offsets {
             let set = session.sets[index]
-            // Eliminar del contexto si ya estaba guardado
             context.delete(set)
         }
         session.sets.remove(atOffsets: offsets)
@@ -287,13 +255,11 @@ extension StrengthSession: Identifiable {}
     }
 
     private func pointsPreview() -> Int {
-        // Calcula puntos con los valores actuales (sin guardar)
         let settings = (try? context.fetch(FetchDescriptor<Settings>()).first) ?? Settings()
         return Int(max(0, PointsCalculator.score(strength: session, settings: settings)))
     }
 
     private func save() {
-        // Recalcula puntos y guarda
         let settings = (try? context.fetch(FetchDescriptor<Settings>()).first) ?? Settings()
         if settings.persistentModelID == nil { context.insert(settings) }
         session.totalPoints = PointsCalculator.score(strength: session, settings: settings)
@@ -306,21 +272,21 @@ extension StrengthSession: Identifiable {}
 
     private func hideKeyboard() {
         #if canImport(UIKit)
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
         #endif
     }
 }
 
-// MARK: - Fila de edición de un set
+// MARK: - Fila de edición de un set (lb/kg)
 
 private struct SetEditorRow: View {
-    // @Bindable sobre el set para editar sus propiedades
     @Bindable var set: StrengthSet
     let exercises: [Exercise]
+    let usePounds: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Picker de ejercicio por id (UUID), para evitar problemas de Equatable
             Picker("Exercise", selection: Binding(
                 get: { set.exercise.id },
                 set: { newId in
@@ -335,18 +301,24 @@ private struct SetEditorRow: View {
             }
 
             HStack {
-                // Reps como Int con binding nativo
                 TextField("Reps", value: $set.reps, format: .number)
                     .keyboardType(.numberPad)
 
                 Divider()
 
-                // Weight opcional (kg) con binding manual a String
-                TextField("Weight (kg)", text: Binding(
-                    get: { set.weightKg.map { String($0) } ?? "" },
+                TextField(usePounds ? "Weight (lb)" : "Weight (kg)", text: Binding(
+                    get: {
+                        guard let wKg = set.weightKg else { return "" }
+                        let value = usePounds ? (wKg * 2.2046226218) : wKg
+                        return String(format: usePounds ? "%.0f" : "%.1f", value)
+                    },
                     set: { txt in
                         let t = txt.replacingOccurrences(of: ",", with: ".")
-                        set.weightKg = Double(t)
+                        if let entered = Double(t) {
+                            set.weightKg = usePounds ? (entered / 2.2046226218) : entered
+                        } else {
+                            set.weightKg = nil
+                        }
                     }
                 ))
                 .keyboardType(.decimalPad)

@@ -1,11 +1,12 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import SwiftData
 
 // Unifica ambos tipos de detalle
 enum TrainingItem {
     case running(RunningSession)
-    case gym(StrengthSession)      // ← usa StrengthSession (no existe GymSession)
+    case gym(StrengthSession)
 }
 
 struct TrainingDetailView: View {
@@ -29,15 +30,13 @@ struct RunningSessionDetail: View {
 
     var body: some View {
         ScrollView {
-            // Mapa con ruta si existe
             if let poly = session.routePolyline, !poly.isEmpty {
-                let coords = Polyline.decode(poly)   // ← usa el Polyline ya definido en RunningLiveManager.swift
+                let coords = Polyline.decode(poly)
                 RouteMapView(coords: coords)
                     .frame(height: 260)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(.horizontal)
             } else {
-                // Mapa básico sin ruta (centrado genérico)
                 Map(coordinateRegion: $region)
                     .onAppear { region = defaultRegion() }
                     .frame(height: 200)
@@ -45,13 +44,13 @@ struct RunningSessionDetail: View {
                     .padding(.horizontal)
             }
 
-            // Métricas
             VStack(spacing: 20) {
                 Metric(value: formatDistance(session.distanceMeters), label: "Distance")
                 Metric(value: formatElapsed(session.durationSeconds), label: "Time")
-                Metric(value: formatPace(distanceMeters: session.distanceMeters,
-                                         durationSeconds: session.durationSeconds),
-                       label: "Pace")
+                Metric(
+                    value: formatPace(distanceMeters: session.distanceMeters, durationSeconds: session.durationSeconds),
+                    label: "Pace"
+                )
 
                 Text("\(Int(session.totalPoints)) pts • \(SummaryView.formatDate(session.date))")
                     .foregroundStyle(.secondary)
@@ -72,7 +71,6 @@ struct RunningSessionDetail: View {
         .navigationBarTitleDisplayMode(.large)
     }
 
-    // Helpers de formato (km/min/km por defecto)
     private func formatDistance(_ meters: Double) -> String {
         let km = meters / 1000.0
         return String(format: "%.2f km", km)
@@ -88,8 +86,10 @@ struct RunningSessionDetail: View {
         return String(format: "%d:%02d min/km", m, s)
     }
     private func defaultRegion() -> MKCoordinateRegion {
-        MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 37.3349, longitude: -122.0090),
-                           span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 37.3349, longitude: -122.0090),
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        )
     }
 }
 
@@ -109,7 +109,7 @@ private struct Metric: View {
     }
 }
 
-// MARK: - Mapa con ruta (funciona iOS 15+ usando MKMapView)
+// MARK: - Mapa con ruta
 
 struct RouteMapView: UIViewRepresentable {
     let coords: [CLLocationCoordinate2D]
@@ -139,9 +139,10 @@ struct RouteMapView: UIViewRepresentable {
         let polyline = MKPolyline(coordinates: coords, count: coords.count)
         map.addOverlay(polyline)
 
-        // encuadre con padding
         let rect = polyline.boundingMapRect
-        map.setVisibleMapRect(rect, edgePadding: UIEdgeInsets(top: 24, left: 24, bottom: 24, right: 24), animated: false)
+        map.setVisibleMapRect(rect,
+                              edgePadding: UIEdgeInsets(top: 24, left: 24, bottom: 24, right: 24),
+                              animated: false)
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -161,11 +162,8 @@ struct RouteMapView: UIViewRepresentable {
     }
 }
 
+// MARK: - Gym detail (respeta unidades lb/kg desde SwiftData Settings)
 
-// MARK: - Gym detail (mejorado)
-import SwiftData // asegúrate de tenerlo arriba del archivo
-
-// MARK: - Gym detail (mejorado y con type-check ligero)
 struct GymSessionDetail: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -177,20 +175,17 @@ struct GymSessionDetail: View {
 
     var body: some View {
         List {
-            // 1) Sets (tipo + grupo) → reps/peso
-            Section("Sets") {
+            Section("SETS") {
                 ForEach(sortedSets, id: \.id) { set in
-                    GymSetRow(set: set)        // ← subvista pequeña = el type-check va rápido
+                    GymSetRow(set: set)
                 }
             }
 
-            // 2) Notas (si hay)
             if let notes = session.notes, !notes.isEmpty {
-                Section("Notes") { Text(notes) }
+                Section("NOTES") { Text(notes) }
             }
 
-            // 3) Fecha y puntos
-            Section("Summary") {
+            Section("SUMMARY") {
                 HStack {
                     Text("Date"); Spacer()
                     Text(SummaryView.formatDate(session.date))
@@ -223,11 +218,10 @@ struct GymSessionDetail: View {
             Button("Cancel", role: .cancel) {}
         }
         .sheet(isPresented: $showEdit) {
-            EditGymSheet(session: session)   // ← el editor completo que ya existe
+            EditGymSheet(session: session)
         }
     }
 
-    // MARK: Helpers
     private var sortedSets: [StrengthSet] {
         session.sets.sorted { a, b in
             if a.order != b.order { return a.order < b.order }
@@ -236,28 +230,32 @@ struct GymSessionDetail: View {
     }
 }
 
-// Fila pequeña para cada set (reduce complejidad del body principal)
 private struct GymSetRow: View {
+    // Leemos la preferencia real desde Settings (SwiftData)
+    @Query private var settingsList: [Settings]
+    private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
+
     let set: StrengthSet
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // Tipo de ejercicio + grupo
             HStack {
                 Text(set.exercise.name).font(.headline)
                 Text("• \(groupName(set.exercise.muscleGroup))")
                     .foregroundStyle(.secondary)
             }
 
-            // Reps y peso (si hay)
             HStack(spacing: 12) {
                 Text("Reps: \(set.reps)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
 
-                if let w = set.weightKg, w > 0 {
-                    Text("Weight: \(String(format: "%.1f", w)) kg")
+                if let wKg = set.weightKg, wKg > 0 {
+                    let value = usePounds ? kgToLb(wKg) : wKg
+                    let unit  = usePounds ? "lb"      : "kg"
+                    let fmt   = usePounds ? "%.0f"    : "%.1f"
+                    Text("Weight: \(String(format: fmt, value)) \(unit)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
@@ -277,40 +275,13 @@ private struct GymSetRow: View {
         }
     }
 }
-// Editor simple (fecha + notas) para Strength; se puede ampliar luego
-struct EditStrengthNotesSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var context
-    @State var session: StrengthSession
-    @State private var date: Date
-    @State private var notes: String
 
-    init(session: StrengthSession) {
-        _session = State(initialValue: session)
-        _date = State(initialValue: session.date)
-        _notes = State(initialValue: session.notes ?? "")
-    }
+// Helpers de conversión
+@inline(__always) private func kgToLb(_ kg: Double) -> Double { kg * 2.2046226218 }
+@inline(__always) private func lbToKg(_ lb: Double) -> Double { lb / 2.2046226218 }
 
-    var body: some View {
-        NavigationStack {
-            Form {
-                DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
-                Section("Notes") {
-                    TextField("Optional", text: $notes, axis: .vertical)
-                }
-            }
-            .navigationTitle("Edit Gym")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() } }
-            }
-        }
-    }
-
-    private func save() {
-        session.date = date
-        session.notes = notes.isEmpty ? nil : notes
-        try? context.save()
-        dismiss()
-    }
+// Compat: permite seguir usando init(session:)
+extension TrainingDetailView {
+    init(session: RunningSession)  { self.init(item: .running(session)) }
+    init(session: StrengthSession) { self.init(item: .gym(session)) }
 }

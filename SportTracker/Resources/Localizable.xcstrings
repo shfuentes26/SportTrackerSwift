@@ -548,6 +548,9 @@
         }
       }
     },
+    "NOTES" : {
+
+    },
     "OK" : {
 
     },
@@ -657,6 +660,9 @@
     "Sets" : {
 
     },
+    "SETS" : {
+
+    },
     "Settings" : {
 
     },
@@ -673,6 +679,9 @@
 
     },
     "Summary" : {
+
+    },
+    "SUMMARY" : {
 
     },
     "There are no gym trainings yet" : {
@@ -799,8 +808,18 @@
     "Weight (kg)" : {
 
     },
-    "Weight: %@ kg" : {
+    "Weight (lb)" : {
 
+    },
+    "Weight: %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Weight: %1$@ %2$@"
+          }
+        }
+      }
     },
     "Weighted (kg)" : {
 
