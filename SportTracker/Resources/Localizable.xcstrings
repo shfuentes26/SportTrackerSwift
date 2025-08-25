@@ -53,10 +53,24 @@
 
     },
     "Add" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir"
+          }
+        }
+      }
     },
     "Add Exercise" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir ejercicio"
+          }
+        }
+      }
     },
     "Add Set" : {
 
@@ -65,19 +79,40 @@
 
     },
     "All" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo"
+          }
+        }
+      }
     },
     "All-time Records" : {
 
     },
     "Arms" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brazos"
+          }
+        }
+      }
     },
     "Arms: %lld" : {
 
     },
     "Back to options" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver"
+          }
+        }
+      }
     },
     "Basics" : {
 
@@ -97,22 +132,50 @@
       }
     },
     "Category" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Categoría"
+          }
+        }
+      }
     },
     "Chest/Back" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pecho/Espalda"
+          }
+        }
+      }
     },
     "Chest/Back: %lld" : {
 
     },
     "Core" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core"
+          }
+        }
+      }
     },
     "Core: %lld" : {
 
     },
     "Create a goal" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea un goal"
+          }
+        }
+      }
     },
     "Date" : {
       "extractionState" : "manual",
@@ -137,7 +200,14 @@
       }
     },
     "Delete workout?" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar entrenamiento?"
+          }
+        }
+      }
     },
     "Distance (%@)" : {
 
@@ -154,7 +224,14 @@
       }
     },
     "Done" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hecho"
+          }
+        }
+      }
     },
     "Duration (hh:mm:ss)" : {
       "extractionState" : "manual",
@@ -179,55 +256,161 @@
       }
     },
     "Edit Exercise" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar ejercicio"
+          }
+        }
+      }
     },
     "Edit Gym" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar Gym"
+          }
+        }
+      }
     },
     "Edit Running" : {
-      "extractionState" : "manual"
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar Carrera"
+          }
+        }
+      }
     },
     "Example: 1:02:30 → 1 hour, 2 minutes, 30 seconds" : {
 
     },
     "Exercise" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejercicio"
+          }
+        }
+      }
     },
     "Exercises" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejercicios"
+          }
+        }
+      }
     },
     "Goal type" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo de goal"
+          }
+        }
+      }
     },
     "Goals" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goals"
+          }
+        }
+      }
     },
     "Group" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupo"
+          }
+        }
+      }
     },
     "Gym" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gym"
+          }
+        }
+      }
     },
     "Gym • %@" : {
 
     },
     "hh" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hh"
+          }
+        }
+      }
     },
     "Import" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar"
+          }
+        }
+      }
     },
     "Import from Apple Health" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar de Apple Health"
+          }
+        }
+      }
     },
     "Info" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Info"
+          }
+        }
+      }
     },
     "Integrations" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integraciones"
+          }
+        }
+      }
     },
     "km" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "km"
+          }
+        }
+      }
     },
     "Km" : {
       "extractionState" : "manual",
@@ -241,13 +424,27 @@
       }
     },
     "Label" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta"
+          }
+        }
+      }
     },
     "Last import: %@" : {
 
     },
     "Legs" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piernas"
+          }
+        }
+      }
     },
     "Legs: %lld" : {
 
@@ -279,22 +476,57 @@
       }
     },
     "Name" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre"
+          }
+        }
+      }
     },
     "New" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo"
+          }
+        }
+      }
     },
     "New Exercise" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo Ejercicio"
+          }
+        }
+      }
     },
     "New Training" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo Entrenamiento"
+          }
+        }
+      }
     },
     "No exercises found. Add some in your library." : {
 
     },
     "No exercises in this category" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay ejercicios en esta categoría"
+          }
+        }
+      }
     },
     "No exercises yet" : {
 
@@ -373,7 +605,14 @@
       }
     },
     "Reps" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reps"
+          }
+        }
+      }
     },
     "Reps: %lld" : {
 
@@ -451,31 +690,87 @@
       }
     },
     "There are no trainings yet" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay entrenamientos"
+          }
+        }
+      }
     },
     "Track manually" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registro manual"
+          }
+        }
+      }
     },
     "Track weekly progress for Running and Gym" : {
 
     },
     "Training" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento"
+          }
+        }
+      }
     },
     "Training saved successfully" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento guardado correctamente"
+          }
+        }
+      }
     },
     "Type" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo"
+          }
+        }
+      }
     },
     "Units" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidades"
+          }
+        }
+      }
     },
     "Validation" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Validación"
+          }
+        }
+      }
     },
     "Value" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valor"
+          }
+        }
+      }
     },
     "Week" : {
       "extractionState" : "manual",
@@ -489,7 +784,14 @@
       }
     },
     "Weekly target" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objetivo semanal"
+          }
+        }
+      }
     },
     "Weight (%@)" : {
 
@@ -507,7 +809,14 @@
 
     },
     "Workout saved" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento guardado"
+          }
+        }
+      }
     },
     "Year" : {
       "extractionState" : "manual",
@@ -521,7 +830,14 @@
       }
     },
     "Your run has been saved." : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu carrera se ha guardado"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
