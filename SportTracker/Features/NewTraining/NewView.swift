@@ -125,6 +125,11 @@ struct NewView: View {
                                         to: nil, from: nil, for: nil)
     #endif
     }
+    
+    private func endEditing() {
+        focusedField = nil
+        dismissKeyboard()
+    }
 
     // MARK: - Running form
     
@@ -203,9 +208,8 @@ struct NewView: View {
                 Form {
                     Section {
                         Button {
-                            withAnimation(.easeInOut) {
-                                runningMode = .choose
-                            }
+                            withAnimation(.easeInOut) { runningMode = .choose }
+                            endEditing()
                         } label: {
                             Label("Back to options", systemImage: "chevron.left")
                         }
@@ -229,9 +233,20 @@ struct NewView: View {
 
                     Section("Notes") {
                         TextField("Optional", text: $runNotes, axis: .vertical)
+                            .focused($focusedField, equals: .runNotes)   // ← añade foco también aquí
                     }
                 }
-                .scrollDismissesKeyboard(.interactively)  // ✅ en vez de onTapGesture
+                .scrollDismissesKeyboard(.interactively)                     // arrastrar para cerrar
+                .contentShape(Rectangle())                                    // toda la zona es “tapeable”
+                .simultaneousGesture(TapGesture().onEnded { endEditing() })   // tap para cerrar
+                .toolbar {                                                     // botón “Done” en el teclado
+                    ToolbarItem(placement: .keyboard) {
+                        HStack {
+                            Spacer()
+                            Button("Done") { endEditing() }
+                        }
+                    }
+                }
                 .id(runningMode)
                 .animation(.easeInOut, value: runningMode)
             }
@@ -285,6 +300,18 @@ struct NewView: View {
         }
         .sheet(isPresented: $showAddExercise) {
             AddExerciseSheet(selectedCategory: $selectedGymCategory)
+        }
+        // 👇 mismos cierres de teclado que ya pusimos en running manual
+        .scrollDismissesKeyboard(.interactively)                     // arrastrar para cerrar
+        .contentShape(Rectangle())                                    // toda el área recibe taps
+        .simultaneousGesture(TapGesture().onEnded { endEditing() })   // tap para cerrar
+        .toolbar {                                                     // botón Done en el teclado
+            ToolbarItem(placement: .keyboard) {
+                HStack {
+                    Spacer()
+                    Button("Done") { endEditing() }
+                }
+            }
         }
     }
 
@@ -455,6 +482,7 @@ struct SetRow: View {
             }
         }
     }
+    
 }
 
 // MARK: - AddExerciseSheet (anidada) ----------------------------------------
