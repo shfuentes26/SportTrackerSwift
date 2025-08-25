@@ -55,6 +55,10 @@ struct NewView: View {
     )
     @State private var tracking: MapUserTrackingMode = .follow
     @State private var locManager = CLLocationManager()
+    
+    // al principio de la struct NewView
+    @FocusState private var focusedField: Field?
+    private enum Field { case runDistance, runH, runM, runS, runNotes }
 
     init() {} // evita init(exercises:) sintetizado por @Query
 
@@ -169,6 +173,9 @@ struct NewView: View {
 
                         Button {
                             runningMode = .manual
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    focusedField = .runDistance
+                                }
                         } label: {
                             Text("Track manually")
                                 .font(.headline)
@@ -210,6 +217,7 @@ struct NewView: View {
                     HStack {
                         TextField("Distance (\(useMiles ? "mi" : "km"))", text: $runDistanceKm)
                             .keyboardType(.decimalPad)
+                            .focused($focusedField, equals: .runDistance)
                         Text(useMiles ? "mi" : "km").foregroundStyle(.secondary)
                     }
 
