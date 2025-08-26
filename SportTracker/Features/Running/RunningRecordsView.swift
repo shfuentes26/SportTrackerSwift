@@ -73,39 +73,32 @@ struct RunRecord {
 /// - Entre candidatos, gana el tiempo total más bajo.
 /// - Si no hay candidatos, devuelve `nil` → "No record yet".
 func bestRecord(for dist: RecordDistance, from runs: [RunningSession]) -> RunRecord? {
-    let target = dist.targetKm
-    let tolerance = 0.00 // ±3%
+    let targetKm = dist.targetKm
 
-    // 1) Preferir marcas con distancia "exacta" (±3%)
-    let exactCandidates = runs.filter { run in
-        let km = run.distanceMeters / 1000.0
-        return km >= target * (1.0 - tolerance)
-            && km <= target * (1.0 + tolerance)
-            && run.durationSeconds > 0
+    // Candidatos: runs válidos que cubren al menos la distancia objetivo
+    let candidates = runs.filter { r in
+        r.durationSeconds > 0 && (r.distanceMeters / 1000.0) >= targetKm
     }
-    if let bestExact = exactCandidates.min(by: { $0.durationSeconds < $1.durationSeconds }) {
-        let km = max(bestExact.distanceMeters / 1000.0, 0.001)
-        let pace = TimeInterval(bestExact.durationSeconds) / km
-        return RunRecord(totalTime: TimeInterval(bestExact.durationSeconds),
-                         pacePerKm: pace,
-                         date: bestExact.date)
-    }
+    guard !candidates.isEmpty else { return nil }
 
-    // 2) Si no hay exactas, estimar con el ritmo medio de runs que cubren la distancia
-    let eligible = runs.filter { run in
-        (run.distanceMeters / 1000.0) >= target && run.durationSeconds > 0
-    }
-    guard let bestEst = eligible.min(by: { a, b in
-        let paceA = Double(a.durationSeconds) / max(a.distanceMeters / 1000.0, 0.001)
-        let paceB = Double(b.durationSeconds) / max(b.distanceMeters / 1000.0, 0.001)
-        return (paceA * target) < (paceB * target)
+    // Elige el mejor por "tiempo estimado a la distancia objetivo"
+    guard let best = candidates.min(by: { a, b in
+        let kmA = max(a.distanceMeters / 1000.0, 0.001)
+        let kmB = max(b.distanceMeters / 1000.0, 0.001)
+        let paceA = Double(a.durationSeconds) / kmA        // s/km
+        let paceB = Double(b.durationSeconds) / kmB        // s/km
+        return (paceA * targetKm) < (paceB * targetKm)
     }) else {
         return nil
     }
 
-    let pace = TimeInterval(Double(bestEst.durationSeconds) / max(bestEst.distanceMeters / 1000.0, 0.001))
-    let estimatedTime = pace * target
-    return RunRecord(totalTime: estimatedTime, pacePerKm: pace, date: bestEst.date)
+    let km = max(best.distanceMeters / 1000.0, 0.001)
+    let pacePerKm = TimeInterval(Double(best.durationSeconds) / km) // s/km
+    let estimatedTimeAtTarget = pacePerKm * targetKm                 // s
+
+    return RunRecord(totalTime: estimatedTimeAtTarget,
+                     pacePerKm: pacePerKm,
+                     date: best.date)
 }
 
 
