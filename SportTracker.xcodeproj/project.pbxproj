@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235697172E5D0189006409D8 /* PaceHistorySection.swift */; };
+		2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
@@ -28,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		235697172E5D0189006409D8 /* PaceHistorySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceHistorySection.swift; sourceTree = "<group>"; };
+		2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDistanceFilter.swift; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 		23BE56BE2E53931500600875 /* Running */ = {
 			isa = PBXGroup;
 			children = (
+				2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */,
 				235697172E5D0189006409D8 /* PaceHistorySection.swift */,
 				23BE57BE2E57C3A100600875 /* LiveRunView.swift */,
 				23BE57BC2E57C38000600875 /* RunningLiveManager.swift */,
@@ -251,6 +254,7 @@
 				23BE57BF2E57C3AC00600875 /* LiveRunView.swift in Sources */,
 				23BE57B22E563CA700600875 /* GymHistoryChart.swift in Sources */,
 				23BE56C12E53931500600875 /* RunningViewModel.swift in Sources */,
+				2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */,
 				A000004 /* GymView.swift in Sources */,
 				A000006 /* RunningView.swift in Sources */,
 				23BE56C62E53932000600875 /* RunningRepository.swift in Sources */,

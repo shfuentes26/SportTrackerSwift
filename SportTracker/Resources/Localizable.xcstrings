@@ -55,6 +55,18 @@
     "0" : {
 
     },
+    "1K" : {
+
+    },
+    "3K" : {
+
+    },
+    "5K" : {
+
+    },
+    "10K" : {
+
+    },
     "Add" : {
       "localizations" : {
         "es" : {
@@ -228,6 +240,9 @@
         }
       }
     },
+    "Distance" : {
+
+    },
     "Distance (%@)" : {
 
     },
@@ -371,6 +386,9 @@
     "Gym • %@" : {
 
     },
+    "Half" : {
+
+    },
     "hh" : {
       "localizations" : {
         "es" : {
@@ -481,6 +499,9 @@
 
     },
     "Manage trainings" : {
+
+    },
+    "Marathon" : {
 
     },
     "mi" : {

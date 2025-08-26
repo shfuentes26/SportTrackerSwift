@@ -21,6 +21,14 @@ struct RunningView: View {
     private var useMiles: Bool { settingsList.first?.prefersMiles ?? false }
 
     @State private var selectedTab: RunningTab = .progress
+    
+    @State private var runFilter: RunDistanceFilter = .all
+    private var filteredRuns: [RunningSession] {
+        runs.filter { run in
+            runFilter.allows(distanceMeters: run.distanceMeters)
+        }
+    }
+
 
     init() {} // evita init(runs:) sintetizado por @Query
 
@@ -42,14 +50,14 @@ struct RunningView: View {
                     RunningHistoryChart()
 
                     List {
-                        if runs.isEmpty {
+                        if filteredRuns.isEmpty {
                             ContentUnavailableView(
                                 "There are no running trainings yet",
                                 systemImage: "figure.run"
                             )
                         } else {
                             Section("Past Trainings") {
-                                ForEach(runs) { r in
+                                ForEach(filteredRuns) { r in
                                     NavigationLink {
                                         TrainingDetailView(item: .running(r))
                                     } label: {
@@ -83,6 +91,24 @@ struct RunningView: View {
             }
             .navigationTitle("Running")
             .navigationBarTitleDisplayMode(.large)          // ← nuevo
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                       Menu {
+                           Picker("Distance", selection: $runFilter) {
+                               Text("All").tag(RunDistanceFilter.all)
+                               Text("1K").tag(RunDistanceFilter.k1)
+                               Text("3K").tag(RunDistanceFilter.k3)
+                               Text("5K").tag(RunDistanceFilter.k5)
+                               Text("10K").tag(RunDistanceFilter.k10)
+                               Text("Half").tag(RunDistanceFilter.half)
+                               Text("Marathon").tag(RunDistanceFilter.marathon)
+                           }
+                       } label: {
+                           // Igual estilo que Exercises: icono + título actual
+                           Label(runFilter.title, systemImage: "line.3.horizontal.decrease.circle")
+                       }
+                   }
+               }
             //.toolbarBackground(.visible, for: .navigationBar) // ← nuevo
             .brandHeaderSpacer()         // mantiene el espacio bajo tu cabecera verde
         }
