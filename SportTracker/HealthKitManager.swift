@@ -23,6 +23,9 @@ final class HealthKitManager: ObservableObject {
         if let energy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
             set.insert(energy)
         }
+        if #available(iOS 11.0, *) {
+                set.insert(HKSeriesType.workoutRoute())
+            }
         return set
     }
 
@@ -102,6 +105,25 @@ final class HealthKitManager: ObservableObject {
             self.healthStore.execute(query)
         }
     
+    }
+    
+    func fetchNewHKWorkouts() async throws -> [HKWorkout] {
+        try await ensureAvailability()
+
+        let workoutType = HKObjectType.workoutType()
+        let datePredicate = HKQuery.predicateForSamples(withStart: lastImportDate, end: Date(), options: .strictEndDate)
+        let runningPredicate = HKQuery.predicateForWorkouts(with: .running)
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [datePredicate, runningPredicate])
+        let sort = [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+
+        return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<[HKWorkout], Error>) in
+            let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: sort) {
+                _, results, error in
+                if let error = error { cont.resume(throwing: error); return }
+                cont.resume(returning: (results as? [HKWorkout]) ?? [])
+            }
+            self.healthStore.execute(query)
+        }
     }
 
     // Opcional: filtra solo actividades que te interesan

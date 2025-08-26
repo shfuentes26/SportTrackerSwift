@@ -81,37 +81,49 @@ extension SettingsView {
         }
 
         do {
-            // 1) Autorizar lectura de HealthKit (delegado en tu manager)
+            // 1) Autorizar lectura
             try await HealthKitManager.shared.requestAuthorization()
 
-            // 2) Traer nuevos workouts, filtrar soportados e insertar
-            let newWk = try await HealthKitManager.shared.fetchNewWorkouts()
-            let supported = HealthKitManager.shared.filterSupported(newWk)
-            let insertedWorkouts = try await HealthKitImportService.saveToLocal(supported, context: context)
-            if insertedWorkouts > 0 {
-                print("[HK] inserted workouts: \(insertedWorkouts)") // LOG corto
+            // 2) PRIMER INTENTO: traer HKWorkout "reales" (permiten leer HKWorkoutRoute)
+            let hkWorkouts = try await HealthKitManager.shared.fetchNewHKWorkouts()
+            let insertedWithRoutes = try await HealthKitImportService.saveHKWorkoutsToLocal(
+                hkWorkouts,
+                context: context
+            )
+            if insertedWithRoutes > 0 {
+                print("[HK] inserted workouts with routes: \(insertedWithRoutes)")
             }
 
-            var totalInserted = insertedWorkouts
+            var totalInserted = insertedWithRoutes
 
-            // 3) Fallback si no hay workouts reales:
-            //    reconstruye sesiones desde distanceWalkingRunning y filtra caminatas
-            if insertedWorkouts == 0 {
+            // 3) SEGUNDO INTENTO (legado): si no llegó nada, usar tu flujo previo (sin rutas)
+            if totalInserted == 0 {
+                let newWk = try await HealthKitManager.shared.fetchNewWorkouts()
+                let supported = HealthKitManager.shared.filterSupported(newWk)
+                let insertedLegacy = try await HealthKitImportService.saveToLocal(supported, context: context)
+                if insertedLegacy > 0 {
+                    print("[HK] inserted legacy workouts (no routes): \(insertedLegacy)")
+                }
+                totalInserted += insertedLegacy
+            }
+
+            // 4) TERCER INTENTO (fallback por muestras): reconstruir desde distanceWalkingRunning
+            if totalInserted == 0 {
                 let insertedFallback = try await HealthKitImportService.importFromDistanceSamples(
                     context: context,
                     daysBack: 365,
                     gapSeconds: 15*60,
-                    minRunSpeedMS: 2.1,   // ≈ 8:00 min/km
-                    minDistanceM: 800,    // >= 0.8 km
-                    minDurationS: 8*60    // >= 8 min
+                    minRunSpeedMS: 2.1,
+                    minDistanceM: 800,
+                    minDurationS: 8*60
                 )
                 if insertedFallback > 0 {
-                    print("[HK] inserted from distance samples: \(insertedFallback)") // LOG corto
+                    print("[HK] inserted from distance samples: \(insertedFallback)")
                 }
                 totalInserted += insertedFallback
             }
 
-            // 4) Marcar importación finalizada y avisar
+            // 5) Cierre
             HealthKitManager.shared.markImported()
             importResult = "Imported \(totalInserted) trainings."
         } catch {

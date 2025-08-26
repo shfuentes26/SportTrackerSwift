@@ -169,11 +169,13 @@ enum HealthKitImportService {
                     cont.resume(returning: Polyline.encode(allCoords))
                 }
             }
+            healthStore.execute(q)
         }
     }
     
     /// Guarda en SwiftData entrenamientos de running leídos como HKWorkout,
     /// incluyendo la ruta GPS si existe. Devuelve cuántos insertó.
+    @MainActor
     static func saveHKWorkoutsToLocal(_ workouts: [HKWorkout],
                                       context: ModelContext,
                                       healthStore: HKHealthStore = HKHealthStore()) async throws -> Int {
