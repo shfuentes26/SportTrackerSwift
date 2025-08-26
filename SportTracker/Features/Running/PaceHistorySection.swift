@@ -314,6 +314,7 @@ struct FullScreenPaceChart: View {
                 maxHeight: (vSize == .compact) ? nil : .infinity,
                 alignment: .top
             )
+            .brandHeaderSpacer()
         }
         // Rotación habilitada en Insights (requiere OrientationSupport.swift)
         .onAppear { OrientationLockDelegate.allowPortraitAndLandscape() }
