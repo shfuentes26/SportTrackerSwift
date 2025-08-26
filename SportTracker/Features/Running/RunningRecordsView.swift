@@ -49,7 +49,8 @@ struct RunningRecordsView: View {
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(RecordDistance.allCases) { dist in
                         RecordCard(distance: dist,
-                                   record: bestRecord(for: dist, from: runs))
+                                   record: bestRecord(for: dist, from: runs),
+                                   useMiles: useMiles)
                     }
                 }
                 .padding(.horizontal)
@@ -112,16 +113,21 @@ func formatDuration(_ seconds: TimeInterval) -> String {
     return String(format: "%02d:%02d", m, sec)
 }
 
-func formatPace(_ secondsPerKm: TimeInterval) -> String {
-    let s = Int(secondsPerKm.rounded())
+/// Devuelve "mm:ss min/km" o "mm:ss min/mi" según `useMiles`.
+/// `secondsPerKm` siempre llega en s/km; para millas se convierte a s/mi.
+func paceString(secondsPerKm: TimeInterval, useMiles: Bool) -> String {
+    let secondsPerUnit = useMiles ? secondsPerKm * 1.609344 : secondsPerKm
+    let s = Int(secondsPerUnit.rounded())
     let m = s / 60
     let sec = s % 60
-    return String(format: "%d:%02d", m, sec)
+    let unit = useMiles ? "min/mi" : "min/km"
+    return String(format: "%d:%02d %@", m, sec, unit)
 }
 
 struct RecordCard: View {
     let distance: RecordDistance
     let record: RunRecord?
+    let useMiles: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -138,7 +144,8 @@ struct RecordCard: View {
                         .monospacedDigit()
                 }
 
-                Text("Pace \(formatPace(r.pacePerKm))/km")
+                // Pace con unidad correcta y con "min"
+                Text("Pace \(paceString(secondsPerKm: r.pacePerKm, useMiles: useMiles))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
