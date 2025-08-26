@@ -461,3 +461,62 @@ extension HealthKitImportService {
         return (series, ascent)
     }
 }
+
+extension HealthKitImportService {
+    struct BackfillResult {
+        var scanned: Int = 0
+        var updated: Int = 0
+        var notFoundInHK: Int = 0
+        var noRouteInHK: Int = 0
+    }
+
+    /// Busca en tu BD las RunningSession sin routePolyline, intenta localizar
+    /// el HKWorkout correspondiente y, si HealthKit tiene ruta, la guarda.
+    /// Al finalizar devuelve un pequeño resumen.
+    @MainActor
+    static func backfillMissingRoutes(
+        context: ModelContext,
+        limit: Int? = nil,
+        healthStore: HKHealthStore = HKHealthStore()
+    ) async throws -> BackfillResult {
+
+        // 1) Buscar runs sin ruta
+        let pred = #Predicate<RunningSession> { $0.routePolyline == nil || $0.routePolyline == "" }
+        var desc = FetchDescriptor<RunningSession>(predicate: pred,
+                                                   sortBy: [SortDescriptor(\.date, order: .forward)])
+        if let limit { desc.fetchLimit = limit }
+        let runs = (try? context.fetch(desc)) ?? []
+
+        var result = BackfillResult(scanned: runs.count)
+
+        guard !runs.isEmpty else { return result }
+
+        // 2) Para cada run, localizar HKWorkout y leer polyline
+        for run in runs {
+            do {
+                // Usa tu helper existente para casar la sesión local con un HKWorkout
+                // (definido en el mismo fichero) 👇
+                guard let workout = try await findMatchingWorkout(for: run, healthStore: healthStore) else {
+                    result.notFoundInHK += 1
+                    continue
+                }
+
+                // Lee la ruta de ese workout y encódala (helper existente) 👇
+                if let poly = await fetchRoutePolyline(for: workout, healthStore: healthStore) {
+                    run.routePolyline = poly
+                    result.updated += 1
+                } else {
+                    result.noRouteInHK += 1
+                }
+
+            } catch {
+                // Si hay error puntual con un workout, sigue con el resto
+                print("[Backfill] error for run \(run.id):", error.localizedDescription)
+            }
+        }
+
+        try context.save()
+        print("[Backfill] scanned=\(result.scanned) updated=\(result.updated) notFound=\(result.notFoundInHK) noRoute=\(result.noRouteInHK)")
+        return result
+    }
+}

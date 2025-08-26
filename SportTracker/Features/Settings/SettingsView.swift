@@ -10,6 +10,9 @@ struct SettingsView: View {
     @State private var importResult: String?
     @State private var showImportAlert = false
 
+    // 🔒 Ocultar Maintenance cuando el backfill ya se ejecutó una vez
+    @AppStorage("didRunRoutesBackfillOnce") private var didRunRoutesBackfillOnce = false
+
     // Crea el registro de Settings si no existe
     private func ensureSettings() -> Settings {
         if let s = settingsList.first { return s }
@@ -44,11 +47,11 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
-            // Navegación a gestión de ejercicios (mantengo el nombre de tu pantalla)
-            Section ("Training") {
+            // Navegación a gestión de ejercicios
+            Section("Training") {
                 NavigationLink("Manage trainings") { ExercisesListScreen() }
             }
-            Section ("Goals") {
+            Section("Goals") {
                 NavigationLink("Manage goals") { GoalsSettingsView() }
             }
 
@@ -56,6 +59,26 @@ struct SettingsView: View {
             Section("Units") {
                 Toggle("Show miles (min/mi)", isOn: $sb.prefersMiles)
                 Toggle("Show pounds (lb)",    isOn: $sb.prefersPounds)
+            }
+
+            // 🔧 Maintenance (oculto cuando ya se ejecutó el backfill)
+            if !didRunRoutesBackfillOnce {
+                Section("Maintenance") {
+                    NavigationLink {
+                        MaintenanceToolsView()
+                    } label: {
+                        Label("Backfill missing routes", systemImage: "wrench.and.screwdriver")
+                    }
+                }
+            } else {
+                // (Opcional) Muestra estado de que ya se ejecutó
+                Section("Maintenance") {
+                    HStack {
+                        Label("Routes backfill", systemImage: "wrench.and.screwdriver")
+                        Spacer()
+                        Text("Done").foregroundStyle(.secondary)
+                    }
+                }
             }
         }
         .navigationTitle("Settings")

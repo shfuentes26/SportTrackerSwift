@@ -142,6 +142,12 @@
         }
       }
     },
+    "Backfill missing routes" : {
+
+    },
+    "Backfill missing routes from Apple Health" : {
+
+    },
     "Basics" : {
 
     },
@@ -514,6 +520,9 @@
     "m" : {
 
     },
+    "Maintenance" : {
+
+    },
     "Manage goals" : {
 
     },
@@ -625,6 +634,9 @@
     "OK" : {
 
     },
+    "One-time fixes" : {
+
+    },
     "Optional" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -695,6 +707,12 @@
       }
     },
     "Reps: %lld" : {
+
+    },
+    "Result" : {
+
+    },
+    "Routes backfill" : {
 
     },
     "Running" : {
@@ -914,6 +932,9 @@
 
     },
     "Will be added to %@" : {
+
+    },
+    "Working…" : {
 
     },
     "Workout saved" : {
