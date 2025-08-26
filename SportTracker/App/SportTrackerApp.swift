@@ -10,6 +10,7 @@ import SwiftData
 
 @main
 struct SportTrackerApp: App {
+    @UIApplicationDelegateAdaptor(OrientationLockDelegate.self) var appDelegate
     @State private var container: ModelContainer?
 
     init() {

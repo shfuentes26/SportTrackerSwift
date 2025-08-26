@@ -1,9 +1,10 @@
+// TrainingDetailView.swift
 import SwiftUI
 import MapKit
 import CoreLocation
 import SwiftData
+// La gráfica vive en PaceHistorySection.swift (PaceHistorySection + FullScreenPaceChart)
 
-// Unifica ambos tipos de detalle
 enum TrainingItem {
     case running(RunningSession)
     case gym(StrengthSession)
@@ -28,8 +29,22 @@ struct RunningSessionDetail: View {
     let session: RunningSession
     @State private var region = MKCoordinateRegion()
 
+    // Datos
+    @Environment(\.modelContext) private var context
+    @Query private var settingsList: [Settings]
+    private var useMiles: Bool { settingsList.first?.prefersMiles ?? false }
+
+    // --- Insights full screen ---
+    @State private var insights: InsightsPayload? = nil
+    private struct InsightsPayload: Identifiable {
+        let id = UUID()
+        let bucket: RecordBucket
+        let points: [PacePoint]
+    }
+
     var body: some View {
         ScrollView {
+            // Mapa o ruta
             if let poly = session.routePolyline, !poly.isEmpty {
                 let coords = Polyline.decode(poly)
                 RouteMapView(coords: coords)
@@ -45,6 +60,7 @@ struct RunningSessionDetail: View {
             }
 
             VStack(spacing: 20) {
+                // Métricas del run
                 Metric(value: formatDistance(session.distanceMeters), label: "Distance")
                 Metric(value: formatElapsed(session.durationSeconds), label: "Time")
                 Metric(
@@ -63,14 +79,56 @@ struct RunningSessionDetail: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+
+                // ---- Botón "Insights" (abre gráfico standalone) ----
+                if let b = bucket(for: session.distanceMeters / 1000.0) {
+                    let pts = fetchPaceHistory(for: b, prefersMiles: useMiles)
+                    if pts.count >= 2 {
+                        Button {
+                            insights = .init(bucket: b, points: pts)
+                        } label: {
+                            Label("Insights • \(b.display)", systemImage: "chart.xyaxis.line")
+                                .font(.headline)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
+                    }
+                }
             }
             .padding(.horizontal)
             .padding(.top, 16)
         }
         .navigationTitle("Running")
         .navigationBarTitleDisplayMode(.large)
+        // Presentación del gráfico en pantalla completa
+        .sheet(item: $insights) { payload in
+            FullScreenPaceChart(bucket: payload.bucket,
+                                prefersMiles: useMiles,
+                                points: payload.points)
+        }
     }
 
+    // Serie desde el primer run que cumple la marca hasta el último registrado
+    private func fetchPaceHistory(for bucket: RecordBucket, prefersMiles: Bool) -> [PacePoint] {
+        let minMeters = bucket.km * 1000.0
+        let pred = #Predicate<RunningSession> { $0.distanceMeters >= minMeters }
+        var desc = FetchDescriptor<RunningSession>(
+            predicate: pred,
+            sortBy: [SortDescriptor(\RunningSession.date, order: .forward)]
+        )
+        let runs = (try? context.fetch(desc)) ?? []
+
+        return runs.map { r in
+            let km = max(r.distanceMeters / 1000.0, 0.001)
+            let pace = pacePerUnit(seconds: Double(r.durationSeconds),
+                                   distanceKm: km,
+                                   prefersMiles: prefersMiles)
+            return PacePoint(date: r.date, paceSecPerUnit: pace)
+        }
+    }
+
+    // Formatos básicos (puedes adaptarlos a millas si quieres que todo el detalle siga Settings)
     private func formatDistance(_ meters: Double) -> String {
         let km = meters / 1000.0
         return String(format: "%.2f km", km)
@@ -162,7 +220,7 @@ struct RouteMapView: UIViewRepresentable {
     }
 }
 
-// MARK: - Gym detail (respeta unidades lb/kg desde SwiftData Settings)
+// MARK: - Gym detail
 
 struct GymSessionDetail: View {
     @Environment(\.modelContext) private var context
@@ -231,7 +289,7 @@ struct GymSessionDetail: View {
 }
 
 private struct GymSetRow: View {
-    // Leemos la preferencia real desde Settings (SwiftData)
+    // Lee lb/kg reales desde Settings (SwiftData)
     @Query private var settingsList: [Settings]
     private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
 

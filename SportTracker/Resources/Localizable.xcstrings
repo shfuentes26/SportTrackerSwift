@@ -27,6 +27,9 @@
         }
       }
     },
+    "%@ pace" : {
+
+    },
     "%lld pts" : {
 
     },
@@ -117,6 +120,19 @@
     "Basics" : {
 
     },
+    "Best: %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Best: %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "BestPlot" : {
+
+    },
     "Bucket" : {
 
     },
@@ -152,6 +168,9 @@
       }
     },
     "Chest/Back: %lld" : {
+
+    },
+    "Close" : {
 
     },
     "Core" : {
@@ -392,6 +411,12 @@
         }
       }
     },
+    "Insights" : {
+
+    },
+    "Insights • %@" : {
+
+    },
     "Integrations" : {
       "localizations" : {
         "es" : {
@@ -515,6 +540,9 @@
         }
       }
     },
+    "No data" : {
+
+    },
     "No exercises found. Add some in your library." : {
 
     },
@@ -529,6 +557,9 @@
       }
     },
     "No exercises yet" : {
+
+    },
+    "No hay registros para %@." : {
 
     },
     "No record yet" : {
@@ -566,6 +597,12 @@
       }
     },
     "Pace %@/km" : {
+
+    },
+    "Pace trend • %@" : {
+
+    },
+    "PacePlot" : {
 
     },
     "Past Trainings" : {
@@ -655,6 +692,9 @@
 
     },
     "Saved" : {
+
+    },
+    "Scope" : {
 
     },
     "Sets" : {

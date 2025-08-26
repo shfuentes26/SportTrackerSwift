@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235697172E5D0189006409D8 /* PaceHistorySection.swift */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
@@ -26,6 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		235697172E5D0189006409D8 /* PaceHistorySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceHistorySection.swift; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
@@ -90,6 +92,7 @@
 		23BE56BE2E53931500600875 /* Running */ = {
 			isa = PBXGroup;
 			children = (
+				235697172E5D0189006409D8 /* PaceHistorySection.swift */,
 				23BE57BE2E57C3A100600875 /* LiveRunView.swift */,
 				23BE57BC2E57C38000600875 /* RunningLiveManager.swift */,
 				23BE575F2E55FFC200600875 /* RunningRecordsView.swift */,
@@ -252,6 +255,7 @@
 				A000006 /* RunningView.swift in Sources */,
 				23BE56C62E53932000600875 /* RunningRepository.swift in Sources */,
 				23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */,
+				235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
 				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
