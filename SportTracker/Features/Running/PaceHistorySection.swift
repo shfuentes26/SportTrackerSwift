@@ -152,6 +152,7 @@ private enum ChartScope: String, CaseIterable, Identifiable {
 
 struct FullScreenPaceChart: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.verticalSizeClass) private var vSize
     let bucket: RecordBucket
     let prefersMiles: Bool
     let points: [PacePoint]
@@ -298,11 +299,21 @@ struct FullScreenPaceChart: View {
                             }
                         }
                     }
+                    // Altura: en portrait (sizeClass vertical = .regular) ocupa ~la mitad de la pantalla.
+                    // En landscape (sizeClass vertical = .compact) lo dejamos como está (llenando).
+                    .frame(height: (vSize == .compact) ? nil : max(240, UIScreen.main.bounds.height * 0.5))
+                    .frame(maxHeight: (vSize == .compact) ? .infinity : nil, alignment: .top)
+
                 }
             }
             .navigationTitle("\(bucket.display) pace")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Close") { dismiss() } } }
             // IMPORTANTE: NO ignoramos safe area => las etiquetas del eje Y no quedan bajo la isla
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: (vSize == .compact) ? nil : .infinity,
+                alignment: .top
+            )
         }
         // Rotación habilitada en Insights (requiere OrientationSupport.swift)
         .onAppear { OrientationLockDelegate.allowPortraitAndLandscape() }
