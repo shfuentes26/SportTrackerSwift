@@ -87,8 +87,6 @@ struct RunningSessionDetail: View {
         return best
     }
 
-    
-    
     // Qué pestañas (gráficas) hay disponibles según los datos
     private enum AnalysisTab: Int, CaseIterable {
         case pace, elevation, hr
@@ -111,7 +109,7 @@ struct RunningSessionDetail: View {
         return tabs
     }
 
-    // dentro de RunningSessionDetail, junto a tus @State
+    // Ruta decodificada (opcional)
     private var routeCoords: [CLLocationCoordinate2D]? {
         guard let poly = session.routePolyline, !poly.isEmpty else { return nil }
         return Polyline.decode(poly)
@@ -206,7 +204,7 @@ struct RunningSessionDetail: View {
         }
     }
 
-    // Formatos básicos (puedes adaptarlos a millas si quieres que todo el detalle siga Settings)
+    // Formatos básicos
     private func formatDistance(_ meters: Double) -> String {
         let km = meters / 1000.0
         return String(format: "%.2f km", km)
@@ -215,16 +213,22 @@ struct RunningSessionDetail: View {
         let h = seconds/3600, m = (seconds%3600)/60, s = seconds%60
         return String(format: "%d:%02d:%02d", h, m, s)
     }
+
+    /// Pace en tarjeta superior: respeta Settings (min/km o min/mi)
     private func formatPace(distanceMeters: Double, durationSeconds: Int) -> String {
         let km = max(distanceMeters / 1000.0, 0.001)
-        let spk = Double(durationSeconds) / km
-        let m = Int(spk) / 60, s = Int(spk) % 60
-        return String(format: "%d:%02d min/km", m, s)
+        let secPerKm = Double(durationSeconds) / km
+        let secPerUnit = useMiles ? secPerKm * 1.609344 : secPerKm // s/mi si miles
+        let m = Int(secPerUnit) / 60
+        let s = Int(secPerUnit) % 60
+        let unit = useMiles ? "min/mi" : "min/km"
+        return String(format: "%d:%02d %@", m, s, unit)
     }
     
-    private func paceLabel(_ secPerKm: Double) -> String {
-        let m = Int(secPerKm) / 60
-        let s = Int(secPerKm) % 60
+    /// Etiqueta para valores de pace en el eje Y (mm:ss)
+    private func paceLabel(_ secondsPerUnit: Double) -> String {
+        let m = Int(secondsPerUnit) / 60
+        let s = Int(secondsPerUnit) % 60
         return String(format: "%d:%02d", m, s)
     }
     
@@ -258,11 +262,20 @@ struct RunningSessionDetail: View {
                     Group {
                         switch tabs[safeIndex] {
                         case .pace:
+                            // Serie mostrada: convierte a s/mi si useMiles
+                            let paceSeriesDisplayed: [(time: Double, secPerUnit: Double)] =
+                                m.paceSeries.map { p in
+                                    let val = useMiles ? p.secPerKm * 1.609344 : p.secPerKm
+                                    return (p.time, val)
+                                }
+                            
                             Chart {
-                                ForEach(m.paceSeries.indices, id: \.self) { i in
-                                    let p = m.paceSeries[i]
-                                    LineMark(x: .value("t", p.time), y: .value("sec/km", p.secPerKm))
-                                    PointMark(x: .value("t", p.time), y: .value("sec/km", p.secPerKm))
+                                ForEach(paceSeriesDisplayed.indices, id: \.self) { i in
+                                    let p = paceSeriesDisplayed[i]
+                                    LineMark(x: .value("t", p.time),
+                                             y: .value(useMiles ? "sec/mi" : "sec/km", p.secPerUnit))
+                                    PointMark(x: .value("t", p.time),
+                                              y: .value(useMiles ? "sec/mi" : "sec/km", p.secPerUnit))
                                         .opacity(selPace?.t == p.time ? 1 : 0) // resalta el seleccionado
                                 }
                             }
@@ -284,10 +297,10 @@ struct RunningSessionDetail: View {
                                                 .onChanged { value in
                                                     let xInPlot = value.location.x - plot.minX
                                                     if let xVal: Double = proxy.value(atX: xInPlot) {
-                                                        let xs = m.paceSeries.map { $0.time }
+                                                        let xs = paceSeriesDisplayed.map { $0.time }
                                                         if let idx = nearestIndex(xVal, in: xs) {
-                                                            let p = m.paceSeries[idx]
-                                                            selPace = (p.time, p.secPerKm)
+                                                            let p = paceSeriesDisplayed[idx]
+                                                            selPace = (p.time, p.secPerUnit)
                                                         }
                                                     }
                                                 }
@@ -298,8 +311,11 @@ struct RunningSessionDetail: View {
                                         let margin: CGFloat = 40
                                         let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
                                         let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
-                                        LocalCallout(title: paceLabel(s.v), subtitle: timeLabel(s.t))
-                                            .position(x: clampedX, y: clampedY)
+                                        LocalCallout(
+                                            title: paceLabel(s.v),
+                                            subtitle: timeLabel(s.t)
+                                        )
+                                        .position(x: clampedX, y: clampedY)
                                     }
                                 }
                             }
@@ -338,12 +354,14 @@ struct RunningSessionDetail: View {
                                         let margin: CGFloat = 40
                                         let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
                                         let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
-                                        LocalCallout(title: paceLabel(s.v), subtitle: timeLabel(s.t))
-                                            .position(x: clampedX, y: clampedY)
+                                        LocalCallout(
+                                            title: "\(Int(s.v)) m",
+                                            subtitle: timeLabel(s.t)
+                                        )
+                                        .position(x: clampedX, y: clampedY)
                                     }
                                 }
                             }
-
 
                         case .hr:
                             Chart {
@@ -379,8 +397,11 @@ struct RunningSessionDetail: View {
                                         let margin: CGFloat = 40
                                         let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
                                         let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
-                                        LocalCallout(title: paceLabel(s.v), subtitle: timeLabel(s.t))
-                                            .position(x: clampedX, y: clampedY)
+                                        LocalCallout(
+                                            title: "\(Int(s.v)) bpm",
+                                            subtitle: timeLabel(s.t)
+                                        )
+                                        .position(x: clampedX, y: clampedY)
                                     }
                                 }
                             }
