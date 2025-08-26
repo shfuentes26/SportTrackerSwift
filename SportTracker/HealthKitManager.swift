@@ -25,7 +25,10 @@ final class HealthKitManager: ObservableObject {
         }
         if #available(iOS 11.0, *) {
                 set.insert(HKSeriesType.workoutRoute())
-            }
+        }
+        if let hr = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            set.insert(hr)
+        }
         return set
     }
 

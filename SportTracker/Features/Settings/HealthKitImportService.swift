@@ -38,6 +38,25 @@ enum HealthKitImportService {
         let distanceMeters: Double
         var durationSec: Double { end.timeIntervalSince(start) }
     }
+    
+    // Datos listos para UI
+    struct RunMetrics {
+        // Pace por km
+        struct Split: Identifiable { let id = UUID(); let km: Int; let seconds: Double }
+        let splits: [Split]
+
+        // Serie temporal (opcional si luego quieres trazar línea)
+        let paceSeries: [(time: TimeInterval, secPerKm: Double)]  // tiempo desde inicio, s/km
+
+        // Elevación
+        let elevationSeries: [(time: TimeInterval, meters: Double)]
+        let totalAscent: Double
+
+        // HR
+        let heartRateSeries: [(time: TimeInterval, bpm: Double)]
+        let avgHR: Double?
+        let maxHR: Double?
+    }
 
     /// Reconstruye sesiones a partir de `distanceWalkingRunning` y filtra caminatas por umbrales.
     static func importFromDistanceSamples(
@@ -206,4 +225,239 @@ enum HealthKitImportService {
     }
 
 
+}
+
+extension HealthKitImportService {
+    /// Lee métricas (pace/elev/HR) para una sesión existente usando HealthKit.
+    /// No modifica tu BD; es solo lectura para pintar la UI.
+    static func fetchRunMetrics(for session: RunningSession,
+                                healthStore: HKHealthStore = HKHealthStore()) async throws -> RunMetrics? {
+
+        // 1) Buscar el HKWorkout que mejor coincide (por fecha y distancia)
+        guard let workout = try await findMatchingWorkout(for: session, healthStore: healthStore) else {
+            return nil
+        }
+
+        // 2) Ruta con timestamps (CLLocation)
+        let locations = try await fetchRouteLocations(for: workout, healthStore: healthStore)
+
+        // 3) Calcular pace (splits + serie) y elevación
+        let (splits, paceSeries) = computePace(locations: locations, duration: session.durationSeconds)
+        let (elevSeries, ascent) = computeElevation(locations: locations)
+
+        // 4) HR del workout
+        let (hrSeries, avg, max) = try await fetchHeartRateSeries(for: workout, healthStore: healthStore)
+
+        return RunMetrics(splits: splits,
+                          paceSeries: paceSeries,
+                          elevationSeries: elevSeries,
+                          totalAscent: ascent,
+                          heartRateSeries: hrSeries,
+                          avgHR: avg, maxHR: max)
+    }
+
+    // MARK: - Helpers
+
+    private static func findMatchingWorkout(for s: RunningSession,
+                                            healthStore: HKHealthStore) async throws -> HKWorkout? {
+        let type = HKObjectType.workoutType()
+        // ventana ±30 min respecto al inicio
+        let start = s.date.addingTimeInterval(-30*60)
+        let end   = s.date.addingTimeInterval(TimeInterval(s.durationSeconds) + 30*60)
+        let pDate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        let pRun  = HKQuery.predicateForWorkouts(with: .running)
+        let pred  = NSCompoundPredicate(andPredicateWithSubpredicates: [pDate, pRun])
+
+        let sort  = [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+
+        let workouts: [HKWorkout] = try await withCheckedThrowingContinuation { cont in
+            let q = HKSampleQuery(sampleType: type, predicate: pred, limit: HKObjectQueryNoLimit, sortDescriptors: sort) {
+                _, res, err in
+                if let err = err { cont.resume(throwing: err); return }
+                cont.resume(returning: (res as? [HKWorkout]) ?? [])
+            }
+            healthStore.execute(q)
+        }
+
+        // elegir el más cercano en distancia y hora
+        let targetM = s.distanceMeters
+        func score(_ wk: HKWorkout) -> Double {
+            let d = wk.totalDistance?.doubleValue(for: .meter()) ?? 0
+            let dt = abs(wk.startDate.timeIntervalSince(s.date))
+            let distScore = abs(d - targetM)
+            return distScore + dt * 0.1
+        }
+        return workouts.min(by: { score($0) < score($1) })
+    }
+
+    private static func fetchRouteLocations(for workout: HKWorkout,
+                                            healthStore: HKHealthStore) async throws -> [CLLocation] {
+        // Antes: guard let routeType = HKObjectType.seriesType(forIdentifier: .workoutRoute) else { return [] }
+        let routeType = HKSeriesType.workoutRoute()   // ✅ correcto
+
+        let pred = HKQuery.predicateForObjects(from: workout)
+
+        return try await withCheckedThrowingContinuation { cont in
+            let q = HKSampleQuery(sampleType: routeType,
+                                  predicate: pred,
+                                  limit: HKObjectQueryNoLimit,
+                                  sortDescriptors: nil) { _, samples, error in
+                if let error = error { cont.resume(throwing: error); return }
+                let routes = (samples as? [HKWorkoutRoute]) ?? []
+                if routes.isEmpty { cont.resume(returning: []); return }
+
+                var all: [CLLocation] = []
+                let group = DispatchGroup()
+
+                for r in routes {
+                    group.enter()
+                    let rq = HKWorkoutRouteQuery(route: r) { _, locs, done, err in
+                        if let err = err { print("route error:", err) }
+                        if let locs = locs { all.append(contentsOf: locs) }
+                        if done { group.leave() }
+                    }
+                    healthStore.execute(rq)
+                }
+
+                group.notify(queue: .global(qos: .userInitiated)) {
+                    cont.resume(returning: all.sorted { $0.timestamp < $1.timestamp })
+                }
+            }
+            healthStore.execute(q) // ← recuerda ejecutar también esta query
+        }
+    }
+
+    private static func fetchHeartRateSeries(for workout: HKWorkout,
+                                             healthStore: HKHealthStore) async throws
+    -> ([(time: TimeInterval, bpm: Double)], Double?, Double?) {
+
+        guard let hrType = HKObjectType.quantityType(forIdentifier: .heartRate) else { return ([], nil, nil) }
+        let pred = HKQuery.predicateForObjects(from: workout)
+        let unit = HKUnit.count().unitDivided(by: HKUnit.minute())
+
+        let samples: [HKQuantitySample] = try await withCheckedThrowingContinuation { cont in
+            let q = HKSampleQuery(sampleType: hrType, predicate: pred, limit: HKObjectQueryNoLimit, sortDescriptors: nil) {
+                _, res, err in
+                if let err = err { cont.resume(throwing: err); return }
+                cont.resume(returning: (res as? [HKQuantitySample]) ?? [])
+            }
+            healthStore.execute(q)
+        }
+
+        guard !samples.isEmpty else { return ([], nil, nil) }
+
+        let start = workout.startDate
+        var series: [(TimeInterval, Double)] = []
+        series.reserveCapacity(samples.count)
+
+        var sum = 0.0, maxB = 0.0
+        for s in samples {
+            let bpm = s.quantity.doubleValue(for: unit)
+            sum += bpm; maxB = max(maxB, bpm)
+            series.append((s.startDate.timeIntervalSince(start), bpm))
+        }
+        let avg = sum / Double(samples.count)
+        return (series.sorted { $0.0 < $1.0 }, avg, maxB)
+    }
+
+    // Pace y elevación a partir de CLLocation
+    private static func computePace(
+        locations: [CLLocation],
+        duration: Int
+    ) -> (splits: [RunMetrics.Split], series: [(time: TimeInterval, secPerKm: Double)]) {
+
+        guard locations.count >= 2 else { return ([], []) }
+
+        // Serie de ritmo: muestreo cada 100m con ventana acumulada
+        let step: Double = 100.0 // metros
+        var windowDist: Double = 0
+        var windowTime: TimeInterval = 0
+
+        var cumDist: Double = 0
+        var cumTime: TimeInterval = 0
+
+        var paceSeries: [(TimeInterval, Double)] = []
+        paceSeries.reserveCapacity(Int((locations.last!.distance(from: locations.first!)) / step) + 1)
+
+        // Splits por kilómetro (duración de cada km)
+        var splits: [RunMetrics.Split] = []
+        var nextSplit: Double = 1000.0
+        var lastSplitTime: TimeInterval = 0
+
+        for i in 1..<locations.count {
+            let prev = locations[i-1]
+            let curr = locations[i]
+
+            let d  = max(curr.distance(from: prev), 0)                          // metros
+            let dt = max(curr.timestamp.timeIntervalSince(prev.timestamp), 0)   // segundos
+            guard d > 0, dt > 0 else { continue }
+
+            cumDist += d
+            cumTime += dt
+
+            // ---- Ventana acumulada para serie de ritmo (cada 100 m) ----
+            windowDist += d
+            windowTime += dt
+            while windowDist >= step {
+                // Tiempo proporcional contenido en los primeros 100 m de la ventana
+                let frac = step / windowDist
+                let tSlice = windowTime * frac
+                let elapsedFromStart = cumTime - (windowTime - tSlice)
+
+                // Ritmo medio de la ventana (s/km)
+                let secPerKm = (windowTime / windowDist) * 1000.0
+                paceSeries.append((elapsedFromStart, secPerKm))
+
+                // Consumimos esos 100 m de la ventana
+                windowDist -= step
+                windowTime -= tSlice
+            }
+
+            // ---- Splits por kilómetro (interpolando el cruce del umbral) ----
+            while cumDist >= nextSplit {
+                // ¿qué fracción del tramo actual cae dentro del km que se cierra?
+                let over = cumDist - nextSplit
+                let fracInSegment = (d > 0) ? (1.0 - over / d) : 1.0
+
+                // Tiempo exacto cuando cruzamos el km
+                let timeAtThreshold = cumTime - dt * (1.0 - fracInSegment)
+
+                // Duración del km acabado = t(umbral) - t(umbral anterior)
+                let splitSeconds = timeAtThreshold - lastSplitTime
+                splits.append(.init(km: Int(nextSplit / 1000.0), seconds: splitSeconds))
+
+                lastSplitTime = timeAtThreshold
+                nextSplit += 1000.0
+            }
+        }
+
+        // Si no se emitió nada (rutas muy cortas), añade un punto final medio
+        if paceSeries.isEmpty, cumDist > 0 {
+            let secPerKm = (cumTime / cumDist) * 1000.0
+            paceSeries.append((cumTime, secPerKm))
+        }
+
+        return (splits, paceSeries)
+    }
+
+
+    private static func computeElevation(locations: [CLLocation])
+    -> (series: [(TimeInterval, Double)], ascent: Double) {
+        guard let first = locations.first else { return ([], 0) }
+        let start = first.timestamp
+        var series: [(TimeInterval, Double)] = []
+        series.reserveCapacity(locations.count)
+        var ascent: Double = 0
+        let noise: Double = 1.5 // metros para filtrar ruido
+
+        for i in 0..<locations.count {
+            let h = locations[i].altitude
+            series.append((locations[i].timestamp.timeIntervalSince(start), h))
+            if i > 0 {
+                let gain = h - locations[i-1].altitude
+                if gain > noise { ascent += gain }
+            }
+        }
+        return (series, ascent)
+    }
 }

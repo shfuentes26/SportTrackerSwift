@@ -3,7 +3,10 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import SwiftData
+import Charts
 // La gráfica vive en PaceHistorySection.swift (PaceHistorySection + FullScreenPaceChart)
+
+typealias RunMetrics = HealthKitImportService.RunMetrics
 
 enum TrainingItem {
     case running(RunningSession)
@@ -41,12 +44,83 @@ struct RunningSessionDetail: View {
         let bucket: RecordBucket
         let points: [PacePoint]
     }
+    
+    @State private var metrics: RunMetrics? = nil
+    @State private var selectedIndex: Int = 0  // índice dentro de las pestañas disponibles
+    
+    // Selecciones para mostrar el callout
+    @State private var selPace: (t: TimeInterval, v: Double)? = nil
+    @State private var selElev: (t: TimeInterval, v: Double)? = nil
+    @State private var selHR:   (t: TimeInterval, v: Double)? = nil
 
+    // Callout simple reutilizable (similar al de Insights)
+    private struct LocalCallout: View {
+        let title: String
+        let subtitle: String
+        var body: some View {
+            VStack(spacing: 2) {
+                Text(title).font(.caption).fontWeight(.semibold).monospacedDigit()
+                Text(subtitle).font(.caption2).foregroundStyle(.secondary)
+            }
+            .padding(8)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(.separator.opacity(0.4), lineWidth: 1))
+        }
+    }
+    
+    /// Convierte un TimeInterval en "hh:mm:ss" (con cero a la izquierda)
+    private func timeLabel(_ t: TimeInterval) -> String {
+        let h = Int(t) / 3600
+        let m = (Int(t) % 3600) / 60
+        let s = Int(t) % 60
+        return String(format: "%02d:%02d:%02d", h, m, s)
+    }
+
+    // Índice más cercano por eje X (TimeInterval)
+    private func nearestIndex(_ x: Double, in xs: [Double]) -> Int? {
+        guard !xs.isEmpty else { return nil }
+        var best = 0; var bestDist = abs(xs[0] - x)
+        for i in 1..<xs.count {
+            let d = abs(xs[i] - x)
+            if d < bestDist { best = i; bestDist = d }
+        }
+        return best
+    }
+
+    
+    
+    // Qué pestañas (gráficas) hay disponibles según los datos
+    private enum AnalysisTab: Int, CaseIterable {
+        case pace, elevation, hr
+        
+        var title: String {
+            switch self {
+            case .pace:      return "Pace"
+            case .elevation: return "Elevation"
+            case .hr:        return "HR"
+            }
+        }
+    }
+
+    // Devuelve las pestañas que realmente tienen datos
+    private func availableTabs(for m: RunMetrics) -> [AnalysisTab] {
+        var tabs: [AnalysisTab] = []
+        if !m.paceSeries.isEmpty      { tabs.append(.pace) }
+        if !m.elevationSeries.isEmpty { tabs.append(.elevation) }
+        if !m.heartRateSeries.isEmpty { tabs.append(.hr) }
+        return tabs
+    }
+
+    // dentro de RunningSessionDetail, junto a tus @State
+    private var routeCoords: [CLLocationCoordinate2D]? {
+        guard let poly = session.routePolyline, !poly.isEmpty else { return nil }
+        return Polyline.decode(poly)
+    }
+    
     var body: some View {
         ScrollView {
             // Mapa o ruta
-            if let poly = session.routePolyline, !poly.isEmpty {
-                let coords = Polyline.decode(poly)
+            if let coords = routeCoords {
                 RouteMapView(coords: coords)
                     .frame(height: 260)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -58,7 +132,6 @@ struct RunningSessionDetail: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(.horizontal)
             }
-
             VStack(spacing: 20) {
                 // Métricas del run
                 Metric(value: formatDistance(session.distanceMeters), label: "Distance")
@@ -79,7 +152,8 @@ struct RunningSessionDetail: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
+                // ====== MÉTRICAS DETALLADAS (PACE / ELEV / HR) ======
+                analysisSection
                 // ---- Botón "Insights" (abre gráfico standalone) ----
                 if let b = bucket(for: session.distanceMeters / 1000.0) {
                     let pts = fetchPaceHistory(for: b, prefersMiles: useMiles)
@@ -106,6 +180,10 @@ struct RunningSessionDetail: View {
             FullScreenPaceChart(bucket: payload.bucket,
                                 prefersMiles: useMiles,
                                 points: payload.points)
+        }
+        .task {
+            metrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
+            selectedIndex = 0 // empezamos siempre en el primer tab disponible
         }
     }
 
@@ -143,6 +221,188 @@ struct RunningSessionDetail: View {
         let m = Int(spk) / 60, s = Int(spk) % 60
         return String(format: "%d:%02d min/km", m, s)
     }
+    
+    private func paceLabel(_ secPerKm: Double) -> String {
+        let m = Int(secPerKm) / 60
+        let s = Int(secPerKm) % 60
+        return String(format: "%d:%02d", m, s)
+    }
+    
+    // ====== SOLO TABS CON DATOS ======
+    @ViewBuilder
+    private var analysisSection: some View {
+        if let m = metrics {
+            // Construir tabs disponibles dinámicamente
+            let tabs = availableTabs(for: m)
+            if !tabs.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Analysis").font(.headline)
+
+                    // Asegurar índice válido si cambia el set de tabs
+                    let safeIndex = min(selectedIndex, max(tabs.count - 1, 0))
+
+                    Picker("", selection: Binding(
+                        get: { safeIndex },
+                        set: { newVal in selectedIndex = newVal }
+                    )) {
+                        ForEach(Array(tabs.enumerated()), id: \.offset) { idx, tab in
+                            Text(tab.title).tag(idx)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: tabs) { _ in
+                        // Si cambian los tabs (por datos que llegan), vuelve al primero
+                        selectedIndex = 0
+                    }
+
+                    Group {
+                        switch tabs[safeIndex] {
+                        case .pace:
+                            Chart {
+                                ForEach(m.paceSeries.indices, id: \.self) { i in
+                                    let p = m.paceSeries[i]
+                                    LineMark(x: .value("t", p.time), y: .value("sec/km", p.secPerKm))
+                                    PointMark(x: .value("t", p.time), y: .value("sec/km", p.secPerKm))
+                                        .opacity(selPace?.t == p.time ? 1 : 0) // resalta el seleccionado
+                                }
+                            }
+                            .chartYAxis {
+                                AxisMarks(preset: .extended) { v in
+                                    AxisGridLine(); AxisTick()
+                                    AxisValueLabel {
+                                        if let y = v.as(Double.self) { Text(paceLabel(y)) }
+                                    }
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .chartOverlay { proxy in
+                                GeometryReader { geo in
+                                    let plot = geo[proxy.plotAreaFrame]
+                                    Rectangle().fill(.clear).contentShape(Rectangle())
+                                        .gesture(
+                                            DragGesture(minimumDistance: 0)
+                                                .onChanged { value in
+                                                    let xInPlot = value.location.x - plot.minX
+                                                    if let xVal: Double = proxy.value(atX: xInPlot) {
+                                                        let xs = m.paceSeries.map { $0.time }
+                                                        if let idx = nearestIndex(xVal, in: xs) {
+                                                            let p = m.paceSeries[idx]
+                                                            selPace = (p.time, p.secPerKm)
+                                                        }
+                                                    }
+                                                }
+                                        )
+                                    if let s = selPace,
+                                       let px = proxy.position(forX: s.t),
+                                       let py = proxy.position(forY: s.v) {
+                                        let margin: CGFloat = 40
+                                        let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
+                                        let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
+                                        LocalCallout(title: paceLabel(s.v), subtitle: timeLabel(s.t))
+                                            .position(x: clampedX, y: clampedY)
+                                    }
+                                }
+                            }
+
+                        case .elevation:
+                            Chart {
+                                ForEach(m.elevationSeries.indices, id: \.self) { i in
+                                    let p = m.elevationSeries[i]
+                                    LineMark(x: .value("t", p.time), y: .value("m", p.meters))
+                                    PointMark(x: .value("t", p.time), y: .value("m", p.meters))
+                                        .opacity(selElev?.t == p.time ? 1 : 0)
+                                }
+                            }
+                            .chartYAxis { AxisMarks() }
+                            .contentShape(Rectangle())
+                            .chartOverlay { proxy in
+                                GeometryReader { geo in
+                                    let plot = geo[proxy.plotAreaFrame]
+                                    Rectangle().fill(.clear).contentShape(Rectangle())
+                                        .gesture(
+                                            DragGesture(minimumDistance: 0)
+                                                .onChanged { value in
+                                                    let xInPlot = value.location.x - plot.minX
+                                                    if let xVal: Double = proxy.value(atX: xInPlot) {
+                                                        let xs = m.elevationSeries.map { $0.time }
+                                                        if let idx = nearestIndex(xVal, in: xs) {
+                                                            let p = m.elevationSeries[idx]
+                                                            selElev = (p.time, p.meters)
+                                                        }
+                                                    }
+                                                }
+                                        )
+                                    if let s = selElev,
+                                       let px = proxy.position(forX: s.t),
+                                       let py = proxy.position(forY: s.v) {
+                                        let margin: CGFloat = 40
+                                        let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
+                                        let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
+                                        LocalCallout(title: paceLabel(s.v), subtitle: timeLabel(s.t))
+                                            .position(x: clampedX, y: clampedY)
+                                    }
+                                }
+                            }
+
+
+                        case .hr:
+                            Chart {
+                                ForEach(m.heartRateSeries.indices, id: \.self) { i in
+                                    let p = m.heartRateSeries[i]
+                                    LineMark(x: .value("t", p.time), y: .value("bpm", p.bpm))
+                                    PointMark(x: .value("t", p.time), y: .value("bpm", p.bpm))
+                                        .opacity(selHR?.t == p.time ? 1 : 0)
+                                }
+                            }
+                            .chartYAxis { AxisMarks() }
+                            .contentShape(Rectangle())
+                            .chartOverlay { proxy in
+                                GeometryReader { geo in
+                                    let plot = geo[proxy.plotAreaFrame]
+                                    Rectangle().fill(.clear).contentShape(Rectangle())
+                                        .gesture(
+                                            DragGesture(minimumDistance: 0)
+                                                .onChanged { value in
+                                                    let xInPlot = value.location.x - plot.minX
+                                                    if let xVal: Double = proxy.value(atX: xInPlot) {
+                                                        let xs = m.heartRateSeries.map { $0.time }
+                                                        if let idx = nearestIndex(xVal, in: xs) {
+                                                            let p = m.heartRateSeries[idx]
+                                                            selHR = (p.time, p.bpm)
+                                                        }
+                                                    }
+                                                }
+                                        )
+                                    if let s = selHR,
+                                       let px = proxy.position(forX: s.t),
+                                       let py = proxy.position(forY: s.v) {
+                                        let margin: CGFloat = 40
+                                        let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
+                                        let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
+                                        LocalCallout(title: paceLabel(s.v), subtitle: timeLabel(s.t))
+                                            .position(x: clampedX, y: clampedY)
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    .frame(height: 220)
+
+                    if tabs[safeIndex] == .hr, let a = m.avgHR, let mx = m.maxHR {
+                        Text("Avg \(Int(a)) bpm • Max \(Int(mx)) bpm")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                // Si no hay ningún dato, no mostramos sección
+                EmptyView()
+            }
+        }
+    }
+    
     private func defaultRegion() -> MKCoordinateRegion {
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 37.3349, longitude: -122.0090),
