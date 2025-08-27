@@ -47,13 +47,8 @@ struct ExerciseFormView: View {
             Section {
                 HStack {
                     Spacer()
-                    Image(systemName: systemIcon(for: group, weighted: weighted))
-                        .symbolRenderingMode(.hierarchical)
-                        .font(.system(size: 48, weight: .semibold))
-                        .frame(width: 96, height: 96)
-                        .padding()
-                        .background(Color.secondary.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    ExerciseHeroImage(name: name, group: group)
+                        .padding(.top, 4)
                     Spacer()
                 }
             }
