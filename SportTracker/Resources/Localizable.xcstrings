@@ -421,6 +421,9 @@
         }
       }
     },
+    "HR %lld" : {
+
+    },
     "Import" : {
       "localizations" : {
         "es" : {

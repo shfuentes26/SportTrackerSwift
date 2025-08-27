@@ -18,22 +18,50 @@ final class PhoneSession: NSObject, WCSessionDelegate {
         }
     }
 
-    // Responder a mensajes del Watch
+    // 1) Con replyHandler (ya lo tenías)
     func session(_ session: WCSession,
                  didReceiveMessage message: [String : Any],
                  replyHandler: @escaping ([String : Any]) -> Void) {
-        if message["ping"] != nil {
-            replyHandler(["pong": "hello-from-iphone"])
-        } else {
-            replyHandler(["ok": true])
-        }
+        handle(message: message, replyHandler: replyHandler)
     }
 
-    // Requeridos
+    // 2) SIN replyHandler (faltaba)
+    func session(_ session: WCSession,
+                 didReceiveMessage message: [String : Any]) {
+        handle(message: message, replyHandler: nil)
+    }
+
+    // Lógica común
+    private func handle(message: [String: Any],
+                        replyHandler: (([String : Any]) -> Void)?) {
+        if let type = message["type"] as? String, type == "update" {
+            let hr = message["hr"] as? Int ?? 0
+            let km = message["dist"] as? Double ?? 0
+            let el = message["elapsed"] as? Double ?? 0
+
+            print("IPHONE RECV update hr=\(hr) km=\(km) elapsed=\(el)")
+
+            DispatchQueue.main.async {
+                LiveWorkoutBridge.shared.hr = hr
+                LiveWorkoutBridge.shared.km = km
+                LiveWorkoutBridge.shared.elapsed = el
+            }
+            replyHandler?(["ok": true])
+            return
+        }
+
+        if message["ping"] != nil {
+            replyHandler?(["pong": "hello-from-iphone"])
+            return
+        }
+
+        replyHandler?(["ok": true])
+    }
+
+    // Requeridos mínimos
     func sessionDidBecomeInactive(_ session: WCSession) {}
     func sessionDidDeactivate(_ session: WCSession) { WCSession.default.activate() }
     func session(_ session: WCSession,
                  activationDidCompleteWith activationState: WCSessionActivationState,
                  error: Error?) {}
 }
-

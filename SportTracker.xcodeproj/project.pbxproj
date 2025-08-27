@@ -11,6 +11,8 @@
 		2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */; };
 		2365CAF52E5F348900CF609C /* TTWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2365CB012E5F4B6A00CF609C /* PhoneSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB002E5F4B6600CF609C /* PhoneSession.swift */; };
+		2365CB032E5F4F6900CF609C /* LiveWorkoutBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */; };
+		2365CB052E5F4F9500CF609C /* LiveBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB042E5F4F9200CF609C /* LiveBar.swift */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
@@ -58,6 +60,8 @@
 		2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDistanceFilter.swift; sourceTree = "<group>"; };
 		2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TTWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2365CB002E5F4B6600CF609C /* PhoneSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneSession.swift; sourceTree = "<group>"; };
+		2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWorkoutBridge.swift; sourceTree = "<group>"; };
+		2365CB042E5F4F9200CF609C /* LiveBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveBar.swift; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
@@ -185,6 +189,8 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
+				2365CB042E5F4F9200CF609C /* LiveBar.swift */,
+				2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */,
 				2365CB002E5F4B6600CF609C /* PhoneSession.swift */,
 				23BE575A2E55466D00600875 /* HealthKitManager.swift */,
 				23BE57592E5545BF00600875 /* SportTracker.entitlements */,
@@ -341,6 +347,8 @@
 				23BE56C62E53932000600875 /* RunningRepository.swift in Sources */,
 				23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */,
 				2365CB012E5F4B6A00CF609C /* PhoneSession.swift in Sources */,
+				2365CB032E5F4F6900CF609C /* LiveWorkoutBridge.swift in Sources */,
+				2365CB052E5F4F9500CF609C /* LiveBar.swift in Sources */,
 				235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
 				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
