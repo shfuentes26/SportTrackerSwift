@@ -303,8 +303,8 @@ struct NewView: View {
         }
         // 👇 mismos cierres de teclado que ya pusimos en running manual
         .scrollDismissesKeyboard(.interactively)                     // arrastrar para cerrar
-        .contentShape(Rectangle())                                    // toda el área recibe taps
-        .simultaneousGesture(TapGesture().onEnded { endEditing() })   // tap para cerrar
+        //.contentShape(Rectangle())                                    // toda el área recibe taps
+        //.simultaneousGesture(TapGesture().onEnded { endEditing() })   // tap para cerrar
         .toolbar {                                                     // botón Done en el teclado
             ToolbarItem(placement: .keyboard) {
                 HStack {
