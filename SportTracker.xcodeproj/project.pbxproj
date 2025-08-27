@@ -435,8 +435,14 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = TTWatch;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_CFBundleDisplayName = Tits;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app reads your running workouts from Apple Health to import them into SportTracker.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "App saves your workouts to Health.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "App uses your location to record your route while the app runs in the background.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "App uses your location to record your running route during workouts.";
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.satcom.SportTracker;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -457,7 +463,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+				WATCHOS_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Debug;
 		};
@@ -514,8 +520,14 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = TTWatch;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_CFBundleDisplayName = Tits;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app reads your running workouts from Apple Health to import them into SportTracker.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "App saves your workouts to Health.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "App uses your location to record your route while the app runs in the background.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "App uses your location to record your running route during workouts.";
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.satcom.SportTracker;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -535,7 +547,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				VALIDATE_PRODUCT = YES;
-				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+				WATCHOS_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Release;
 		};
@@ -547,6 +559,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8568JZJ3QU;
+				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SportTracker/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tits;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
@@ -570,6 +583,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8568JZJ3QU;
+				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SportTracker/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tits;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
