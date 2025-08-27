@@ -463,7 +463,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 10.6;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
 		};
@@ -547,7 +547,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				VALIDATE_PRODUCT = YES;
-				WATCHOS_DEPLOYMENT_TARGET = 10.6;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -563,6 +563,11 @@
 				INFOPLIST_FILE = SportTracker/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tits;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "SportTracker reads your workouts, routes, distance, heart rate, and calories from the Health app to display and sync your sessions.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "SportTracker writes your workouts and metrics to the Health app to keep your records up to date.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We use your location in the background during workouts so tracking can continue when the screen is off.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location during workouts to record distance and routes.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "We use motion data to improve pace and distance estimates during workouts.";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker;
@@ -587,6 +592,11 @@
 				INFOPLIST_FILE = SportTracker/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tits;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "SportTracker reads your workouts, routes, distance, heart rate, and calories from the Health app to display and sync your sessions.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "SportTracker writes your workouts and metrics to the Health app to keep your records up to date.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We use your location in the background during workouts so tracking can continue when the screen is off.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location during workouts to record distance and routes.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "We use motion data to improve pace and distance estimates during workouts.";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker;
