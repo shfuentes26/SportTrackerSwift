@@ -10,6 +10,7 @@ extension Notification.Name {
 
 struct ContentView: View {
     @State private var selectedTab: AppTab = .summary
+    @ObservedObject private var bridge = LiveWorkoutBridge.shared
 
     var body: some View {
         // ⬇️ ENLAZAMOS EL TABVIEW A selectedTab
@@ -35,6 +36,15 @@ struct ContentView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .tabItem { Image(systemName: "gearshape.fill"); Text("Settings") }
                 .tag(AppTab.settings)  // ⬅️ TAG
+        }
+        .sheet(item: Binding(
+            get: { bridge.lastSummary },
+            set: { bridge.lastSummary = $0 }
+        )) { s in
+            SummarySheet(summary: s) { _ in
+                bridge.lastSummary = nil
+            }
+            .presentationDetents([.height(220)])
         }
         .tint(.blue)
         .safeAreaInset(edge: .bottom) {

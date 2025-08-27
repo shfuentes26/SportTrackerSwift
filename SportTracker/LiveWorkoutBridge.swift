@@ -11,5 +11,7 @@ final class LiveWorkoutBridge: ObservableObject {
     @Published var hr: Int = 0
     @Published var km: Double = 0
     @Published var elapsed: TimeInterval = 0
+    @Published var lastSummary: WorkoutSummary?
+    @Published var isRunning: Bool = false
 }
 

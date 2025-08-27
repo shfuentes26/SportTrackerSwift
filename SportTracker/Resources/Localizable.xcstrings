@@ -132,6 +132,9 @@
         }
       }
     },
+    "Avg HR: %lld bpm" : {
+
+    },
     "Back to options" : {
       "localizations" : {
         "es" : {
@@ -261,6 +264,9 @@
           }
         }
       }
+    },
+    "Dismiss" : {
+
     },
     "Distance" : {
 
@@ -949,6 +955,9 @@
           }
         }
       }
+    },
+    "Workout summary" : {
+
     },
     "Year" : {
       "extractionState" : "manual",

@@ -45,6 +45,41 @@ final class PhoneSession: NSObject, WCSessionDelegate {
                 LiveWorkoutBridge.shared.hr = hr
                 LiveWorkoutBridge.shared.km = km
                 LiveWorkoutBridge.shared.elapsed = el
+                LiveWorkoutBridge.shared.isRunning = true
+            }
+            replyHandler?(["ok": true])
+            return
+        }
+        
+        if let type = message["type"] as? String, type == "summary" {
+            let start = Date(timeIntervalSince1970: message["start"] as? Double ?? 0)
+            let end   = Date(timeIntervalSince1970: message["end"] as? Double ?? 0)
+            let km    = message["dist"] as? Double ?? 0
+            let avgHR = message["avgHR"] as? Int ?? 0
+
+            print("IPHONE RECV summary km=\(km) avgHR=\(avgHR)")
+
+            DispatchQueue.main.async {
+                LiveWorkoutBridge.shared.lastSummary = WorkoutSummary(
+                    start: start, end: end, distanceKm: km, avgHR: avgHR
+                )
+                LiveWorkoutBridge.shared.isRunning = false
+            }
+            replyHandler?(["ok": true])
+            return
+        }
+        if let type = message["type"] as? String, type == "state" {
+            if (message["value"] as? String) == "stopped" {
+                DispatchQueue.main.async {
+                    LiveWorkoutBridge.shared.isRunning = false
+                }
+            } else if (message["value"] as? String) == "started" {
+                DispatchQueue.main.async {
+                    LiveWorkoutBridge.shared.isRunning = true
+                    LiveWorkoutBridge.shared.hr = 0
+                    LiveWorkoutBridge.shared.km = 0
+                    LiveWorkoutBridge.shared.elapsed = 0
+                }
             }
             replyHandler?(["ok": true])
             return

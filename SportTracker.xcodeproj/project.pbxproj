@@ -13,6 +13,8 @@
 		2365CB012E5F4B6A00CF609C /* PhoneSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB002E5F4B6600CF609C /* PhoneSession.swift */; };
 		2365CB032E5F4F6900CF609C /* LiveWorkoutBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */; };
 		2365CB052E5F4F9500CF609C /* LiveBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB042E5F4F9200CF609C /* LiveBar.swift */; };
+		2365CB072E5F5FE200CF609C /* LiveWorkoutSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB062E5F5FD700CF609C /* LiveWorkoutSummary.swift */; };
+		2365CB092E5F7F0B00CF609C /* SummarySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB082E5F7F0500CF609C /* SummarySheet.swift */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
@@ -62,6 +64,8 @@
 		2365CB002E5F4B6600CF609C /* PhoneSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneSession.swift; sourceTree = "<group>"; };
 		2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWorkoutBridge.swift; sourceTree = "<group>"; };
 		2365CB042E5F4F9200CF609C /* LiveBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveBar.swift; sourceTree = "<group>"; };
+		2365CB062E5F5FD700CF609C /* LiveWorkoutSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWorkoutSummary.swift; sourceTree = "<group>"; };
+		2365CB082E5F7F0500CF609C /* SummarySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummarySheet.swift; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
@@ -189,6 +193,8 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
+				2365CB082E5F7F0500CF609C /* SummarySheet.swift */,
+				2365CB062E5F5FD700CF609C /* LiveWorkoutSummary.swift */,
 				2365CB042E5F4F9200CF609C /* LiveBar.swift */,
 				2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */,
 				2365CB002E5F4B6600CF609C /* PhoneSession.swift */,
@@ -334,6 +340,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2365CB072E5F5FE200CF609C /* LiveWorkoutSummary.swift in Sources */,
 				23BE57602E55FFD100600875 /* RunningRecordsView.swift in Sources */,
 				23BE56B42E53706C00600875 /* Persistence.swift in Sources */,
 				A000002 /* ContentView.swift in Sources */,
@@ -352,6 +359,7 @@
 				235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
 				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
+				2365CB092E5F7F0B00CF609C /* SummarySheet.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
 				23BE57BD2E57C38300600875 /* RunningLiveManager.swift in Sources */,
 			);
