@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235697172E5D0189006409D8 /* PaceHistorySection.swift */; };
 		2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */; };
+		2365CAF52E5F348900CF609C /* TTWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2365CB012E5F4B6A00CF609C /* PhoneSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB002E5F4B6600CF609C /* PhoneSession.swift */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
@@ -27,9 +29,35 @@
 		A000006 /* RunningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000106 /* RunningView.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		2365CAF32E5F348900CF609C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2365CAEA2E5F348700CF609C;
+			remoteInfo = "TTWatch Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2365CAF62E5F348900CF609C /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				2365CAF52E5F348900CF609C /* TTWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		235697172E5D0189006409D8 /* PaceHistorySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceHistorySection.swift; sourceTree = "<group>"; };
 		2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDistanceFilter.swift; sourceTree = "<group>"; };
+		2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TTWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2365CB002E5F4B6600CF609C /* PhoneSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneSession.swift; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
@@ -61,6 +89,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		2365CAEC2E5F348700CF609C /* TTWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "TTWatch Watch App"; sourceTree = "<group>"; };
 		23BE56CA2E53A53800600875 /* Domain */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Domain; sourceTree = "<group>"; };
 		23BE56CB2E53A55B00600875 /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
 		23BE56CC2E53A56700600875 /* Resources */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (23BE56D32E53A76B00600875 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Resources; sourceTree = "<group>"; };
@@ -71,6 +100,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2365CAE82E5F348700CF609C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A001000 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -141,6 +177,7 @@
 			isa = PBXGroup;
 			children = (
 				A002100 /* SportTracker */,
+				2365CAEC2E5F348700CF609C /* TTWatch Watch App */,
 				A002200 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -148,6 +185,7 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
+				2365CB002E5F4B6600CF609C /* PhoneSession.swift */,
 				23BE575A2E55466D00600875 /* HealthKitManager.swift */,
 				23BE57592E5545BF00600875 /* SportTracker.entitlements */,
 				23BE56CD2E53A57600600875 /* App */,
@@ -166,6 +204,7 @@
 			isa = PBXGroup;
 			children = (
 				A000400 /* SportTracker.app */,
+				2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -173,6 +212,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2365CAEA2E5F348700CF609C /* TTWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2365CAF92E5F348900CF609C /* Build configuration list for PBXNativeTarget "TTWatch Watch App" */;
+			buildPhases = (
+				2365CAE72E5F348700CF609C /* Sources */,
+				2365CAE82E5F348700CF609C /* Frameworks */,
+				2365CAE92E5F348700CF609C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2365CAEC2E5F348700CF609C /* TTWatch Watch App */,
+			);
+			name = "TTWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "TTWatch Watch App";
+			productReference = 2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
 		A003000 /* SportTracker */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A006000 /* Build configuration list for PBXNativeTarget "SportTracker" */;
@@ -180,10 +241,12 @@
 				A004000 /* Sources */,
 				A001000 /* Frameworks */,
 				A005000 /* Resources */,
+				2365CAF62E5F348900CF609C /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2365CAF42E5F348900CF609C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				23BE56CA2E53A53800600875 /* Domain */,
@@ -205,9 +268,12 @@
 		A000000 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1500;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
+					2365CAEA2E5F348700CF609C = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					A003000 = {
 						CreatedOnToolsVersion = 15.0;
 					};
@@ -227,11 +293,19 @@
 			projectRoot = "";
 			targets = (
 				A003000 /* SportTracker */,
+				2365CAEA2E5F348700CF609C /* TTWatch Watch App */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2365CAE92E5F348700CF609C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A005000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -243,6 +317,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2365CAE72E5F348700CF609C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A004000 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -259,6 +340,7 @@
 				A000006 /* RunningView.swift in Sources */,
 				23BE56C62E53932000600875 /* RunningRepository.swift in Sources */,
 				23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */,
+				2365CB012E5F4B6A00CF609C /* PhoneSession.swift in Sources */,
 				235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
 				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
@@ -269,7 +351,178 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		2365CAF42E5F348900CF609C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2365CAEA2E5F348700CF609C /* TTWatch Watch App */;
+			targetProxy = 2365CAF32E5F348900CF609C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		2365CAF72E5F348900CF609C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 8568JZJ3QU;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = TTWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.satcom.SportTracker;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		2365CAF82E5F348900CF609C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 8568JZJ3QU;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = TTWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.satcom.SportTracker;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
 		A006200 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -319,6 +572,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2365CAF92E5F348900CF609C /* Build configuration list for PBXNativeTarget "TTWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2365CAF72E5F348900CF609C /* Debug */,
+				2365CAF82E5F348900CF609C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A006000 /* Build configuration list for PBXNativeTarget "SportTracker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

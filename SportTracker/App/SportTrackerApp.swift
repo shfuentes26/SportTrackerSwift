@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import WatchConnectivity
 
 @main
 struct SportTrackerApp: App {
@@ -14,6 +15,8 @@ struct SportTrackerApp: App {
     @State private var container: ModelContainer?
 
     init() {
+        
+        
         let brand = UIColor(named: "BrandGreen") ?? UIColor(red: 0.63, green: 0.913, blue: 0.333, alpha: 1)
         // NAV BAR
         let nav = UINavigationBarAppearance()
@@ -31,6 +34,8 @@ struct SportTrackerApp: App {
         } catch {
             assertionFailure("Failed to create ModelContainer: \(error)")
         }
+        // 🔑 Inicializa la sesión WatchConnectivity
+        _ = PhoneSession.shared
     }
 
     var body: some Scene {
