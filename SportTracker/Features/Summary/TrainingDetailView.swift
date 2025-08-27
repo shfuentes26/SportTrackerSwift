@@ -183,6 +183,7 @@ struct RunningSessionDetail: View {
             metrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
             selectedIndex = 0 // empezamos siempre en el primer tab disponible
         }
+        .brandHeaderSpacer()
     }
 
     // Serie desde el primer run que cumple la marca hasta el último registrado
