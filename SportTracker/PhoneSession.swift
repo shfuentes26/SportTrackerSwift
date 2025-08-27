@@ -64,4 +64,10 @@ final class PhoneSession: NSObject, WCSessionDelegate {
     func session(_ session: WCSession,
                  activationDidCompleteWith activationState: WCSessionActivationState,
                  error: Error?) {}
+    
+    // Cuando el iPhone no está en foreground, el watch enviará con transferUserInfo.
+    // Este callback llega aunque la app esté en background.
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        handle(message: userInfo, replyHandler: nil)
+    }
 }

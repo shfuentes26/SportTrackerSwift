@@ -36,14 +36,9 @@ final class WatchSession: NSObject, ObservableObject, WCSessionDelegate {
     }
 
     // Envío de datos en vivo al iPhone
+    // Deja este como alias para centralizar la lógica
     func sendUpdate(hr: Int, distanceKm: Double, elapsed: TimeInterval) {
-        let reachable = WCSession.default.isReachable
-            print("WATCH SEND hr=\(hr) km=\(distanceKm) elapsed=\(elapsed) reachable=\(reachable)")
-
-        guard WCSession.default.isReachable else { return }
-        WCSession.default.sendMessage(
-            ["type": "update", "hr": hr, "dist": distanceKm, "elapsed": elapsed],
-            replyHandler: nil, errorHandler: { _ in })
+        sendUpdateSmart(hr: hr, distanceKm: distanceKm, elapsed: elapsed)
     }
 
     // MARK: - WCSessionDelegate
@@ -55,6 +50,23 @@ final class WatchSession: NSObject, ObservableObject, WCSessionDelegate {
 
     func sessionReachabilityDidChange(_ session: WCSession) {
         DispatchQueue.main.async { self.reachable = session.isReachable }
+    }
+    
+    func sendUpdateSmart(hr: Int, distanceKm: Double, elapsed: TimeInterval) {
+        let payload: [String: Any] = [
+            "type": "update",
+            "hr": hr,
+            "dist": distanceKm,
+            "elapsed": elapsed
+        ]
+
+        if WCSession.default.isReachable {
+            // Tiempo real (iPhone en foreground)
+            WCSession.default.sendMessage(payload, replyHandler: nil, errorHandler: nil)
+        } else {
+            // Encolar si el iPhone no está en foreground
+            WCSession.default.transferUserInfo(payload)
+        }
     }
 }
 
