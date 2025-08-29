@@ -6,7 +6,8 @@
 //
 import Foundation
 import WatchConnectivity
-import SwiftData   // 👈 añadido
+import SwiftData
+import HealthKit
 
 final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
     static let shared = PhoneSession()
@@ -110,7 +111,7 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
     
     // MARK: - Guardado en SwiftData desde payload del Watch
     @MainActor
-    private func saveWatchRunning(payload: WorkoutPayload) {
+    private func saveWatchRunning(payload: WorkoutPayload, polyline: String?) {
         guard let container = Persistence.shared.appContainer else {
             print("[SwiftData] container missing")
             return
@@ -123,7 +124,7 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
             durationSeconds: Int(payload.duration),
             distanceMeters: payload.distanceMeters ?? 0,
             notes: "Imported from Apple Watch",
-            routePolyline: nil
+            routePolyline: polyline
         )
         context.insert(session)
 
@@ -173,6 +174,13 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
 
         do {
             try context.save()
+            Task { @MainActor in
+                // Rellena routePolyline en las sesiones que no la tengan (incluida la que acabas de crear)
+                _ = try? await HealthKitImportService.backfillMissingRoutes(
+                    context: Persistence.shared.appContainer!.mainContext,
+                    limit: 1   // basta con 1 run reciente
+                )
+            }
             print("[SwiftData] Saved RunningSession + Watch detail")
         } catch {
             print("[SwiftData][ERROR] save:", error)
@@ -190,8 +198,9 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
             WorkoutInbox.shared.store(payload: payload, from: file.fileURL)
 
             // ⬇️ Guarda también en SwiftData
+            let poly = meta["routePolyline"] as? String
             Task { @MainActor in
-                self.saveWatchRunning(payload: payload)
+                self.saveWatchRunning(payload: payload, polyline: poly)
             }
             DispatchQueue.main.async {
                 self.lastReceivedSummary = String(

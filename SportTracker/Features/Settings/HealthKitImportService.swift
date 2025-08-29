@@ -204,6 +204,24 @@ enum HealthKitImportService {
             guard wk.workoutActivityType == .running else { continue }
             let distM = wk.totalDistance?.doubleValue(for: .meter()) ?? 0
             guard distM > 0 else { continue }
+            
+            // --- DEDUPE: ¿ya existe una sesión equivalente? ---
+            let dur = Int(wk.duration.rounded())
+            let minDate = wk.startDate.addingTimeInterval(-180)
+            let maxDate = wk.startDate.addingTimeInterval(+180)
+            let pred = #Predicate<RunningSession> { s in
+                s.date >= minDate && s.date <= maxDate &&
+                s.durationSeconds >= (dur - 20) && s.durationSeconds <= (dur + 20) &&
+                s.distanceMeters >= (distM - 80) && s.distanceMeters <= (distM + 80)
+            }
+            if let existing = try? context.fetch(FetchDescriptor<RunningSession>(predicate: pred)).first {
+                // Ya existía (probablemente creado al recibir el fichero del Watch) → solo enriquecemos la ruta
+                if existing.routePolyline == nil,
+                   let poly = await fetchRoutePolyline(for: wk, healthStore: healthStore) {
+                    existing.routePolyline = poly
+                }
+                continue // ❗ No insertes otro
+            }
 
             // Ruta (si Apple Health la tiene)
             let poly = await fetchRoutePolyline(for: wk, healthStore: healthStore)

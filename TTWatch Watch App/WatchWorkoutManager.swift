@@ -9,6 +9,7 @@ import SwiftUI
 import HealthKit
 import WatchConnectivity
 import Foundation
+import CoreLocation
 
 #if targetEnvironment(simulator)
 // ------- SIMULADOR: sin HealthKit -------
@@ -16,7 +17,7 @@ import Foundation
 
 
 @MainActor
-final class WatchWorkoutManager: ObservableObject {
+final class  WatchWorkoutManager: NSObject, ObservableObject {
     @Published var isRunning = false
     @Published var status = "Sim Idle"
     private var timer: Timer?
@@ -40,8 +41,21 @@ final class WatchWorkoutManager: ObservableObject {
     private var splitStartDist: Double = 0
     private var splitHrSum: Int = 0
     private var splitHrCount: Int = 0
+    
+    // Localización
+    private let location = CLLocationManager()
+    private var routeCoords: [CLLocationCoordinate2D] = []
 
-    func requestAuthorization() { status = "Sim Authorized" }
+    func requestAuthorization() {
+        status = "Sim Authorized"
+        // Localización (Watch)
+        location.delegate = self
+        location.activityType = .fitness
+        location.desiredAccuracy = kCLLocationAccuracyBest
+        if location.authorizationStatus == .notDetermined {
+            location.requestWhenInUseAuthorization()
+        }
+    }
 
     func start() {
         status = "Sim Running…"
@@ -62,6 +76,9 @@ final class WatchWorkoutManager: ObservableObject {
         
         km = 0; hr = 110
         hrSum = 0; hrCount = 0
+        routeCoords.removeAll()
+        location.startUpdatingLocation()
+        
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self, self.isRunning else { return }
@@ -127,6 +144,7 @@ final class WatchWorkoutManager: ObservableObject {
     func stop() {
         isRunning = false
         timer?.invalidate(); timer = nil
+        location.stopUpdatingLocation()
 
         let end = Date()
         let start = self.startDate ?? end
@@ -149,7 +167,12 @@ final class WatchWorkoutManager: ObservableObject {
 
         do {
             let url = try WorkoutPayloadIO.write(payload)
-            let tf = WCSession.default.transferFile(url, metadata: payload.makeTransferMetadata())
+            
+            // Adjuntamos la polyline en el metadata
+            var meta = payload.makeTransferMetadata()
+            meta["routePolyline"] = Polyline.encode(self.routeCoords)
+            let tf = WCSession.default.transferFile(url, metadata: meta)
+            
             print("[WC][watch] queued after enqueue:",
                   WCSession.default.outstandingFileTransfers.count,
                   "isTransferring:", tf.isTransferring)
@@ -191,6 +214,10 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
     private var splitStartDist: Double = 0
     private var splitHrSum: Int = 0
     private var splitHrCount: Int = 0
+    
+    // Localización
+    private let location = CLLocationManager()
+    private var routeCoords: [CLLocationCoordinate2D] = []
 
     func requestAuthorization() {
         guard HKHealthStore.isHealthDataAvailable(), let healthStore else {
@@ -238,6 +265,16 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
             splitHrSum = 0
             splitHrCount = 0
             km = 0; hrSum = 0; hrCount = 0
+            routeCoords.removeAll()
+            location.delegate = self
+            location.activityType = .fitness
+            location.desiredAccuracy = kCLLocationAccuracyBest
+            if location.authorizationStatus == .notDetermined {
+                location.requestWhenInUseAuthorization()
+            }
+            
+            
+            location.startUpdatingLocation()
 
             session.startActivity(with: start)
             builder.beginCollection(withStart: start) { [weak self] _, _ in
@@ -252,6 +289,7 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
 
     func stop() {
         isRunning = false
+        location.stopUpdatingLocation()
 
         let end = Date()
         let start = self.startDate ?? end
@@ -275,7 +313,9 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
             )
             do {
                 let url = try WorkoutPayloadIO.write(payload)
-                let tf = WCSession.default.transferFile(url, metadata: payload.makeTransferMetadata())
+                var meta = payload.makeTransferMetadata()
+                meta["routePolyline"] = Polyline.encode(self.routeCoords)
+                let tf = WCSession.default.transferFile(url, metadata: meta)
                 print("[WC][watch] queued after enqueue:",
                       WCSession.default.outstandingFileTransfers.count,
                       "isTransferring:", tf.isTransferring)
@@ -390,3 +430,46 @@ extension WatchWorkoutManager: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDel
     func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) { }
 }
 #endif
+
+enum Polyline {
+    static func encode(_ coords: [CLLocationCoordinate2D]) -> String {
+        var res = ""
+        var lastLat = 0
+        var lastLon = 0
+        for c in coords {
+            let lat = Int(round(c.latitude * 1e5))
+            let lon = Int(round(c.longitude * 1e5))
+            res += enc(lat - lastLat)
+            res += enc(lon - lastLon)
+            lastLat = lat; lastLon = lon
+        }
+        return res
+    }
+    private static func enc(_ v: Int) -> String {
+        var x = v << 1; if v < 0 { x = ~x }
+        var out = ""
+        while x >= 0x20 {
+            out.append(Character(UnicodeScalar((0x20 | (x & 0x1f)) + 63)!))
+            x >>= 5
+        }
+        out.append(Character(UnicodeScalar(x + 63)!))
+        return out
+    }
+}
+
+import CoreLocation
+
+extension WatchWorkoutManager: CLLocationManagerDelegate {
+    public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard isRunning else { return }
+        for loc in locations {
+            guard loc.horizontalAccuracy > 0, loc.horizontalAccuracy <= 50 else { continue }
+            if let last = routeCoords.last {
+                let d = CLLocation(latitude: last.latitude, longitude: last.longitude)
+                    .distance(from: CLLocation(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude))
+                if d < 5 { continue }
+            }
+            routeCoords.append(loc.coordinate)
+        }
+    }
+}
