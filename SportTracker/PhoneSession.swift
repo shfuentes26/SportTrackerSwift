@@ -6,6 +6,7 @@
 //
 import Foundation
 import WatchConnectivity
+import SwiftData   // 👈 añadido
 
 final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
     static let shared = PhoneSession()
@@ -107,6 +108,77 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
         handle(message: userInfo, replyHandler: nil)
     }
     
+    // MARK: - Guardado en SwiftData desde payload del Watch
+    @MainActor
+    private func saveWatchRunning(payload: WorkoutPayload) {
+        guard let container = Persistence.shared.appContainer else {
+            print("[SwiftData] container missing")
+            return
+        }
+        let context = container.mainContext
+
+        // 1) Crea la RunningSession base (no rompe tu flujo actual)
+        let session = RunningSession(
+            date: payload.start,
+            durationSeconds: Int(payload.duration),
+            distanceMeters: payload.distanceMeters ?? 0,
+            notes: "Imported from Apple Watch",
+            routePolyline: nil
+        )
+        context.insert(session)
+
+        // 2) Crea detalle y enlaza
+        let detail = RunningWatchDetail()
+        detail.session = session
+        context.insert(detail)
+
+        // HR series
+        if let hrs = payload.hrSeries {
+            for s in hrs {
+                let p = WatchHRPoint(t: s.t, v: s.v)
+                p.detail = detail
+                context.insert(p)
+                detail.hrPoints.append(p)
+            }
+        }
+
+        // Pace series (m/s)
+        if let paces = payload.paceSeries {
+            for s in paces {
+                let p = WatchPacePoint(t: s.t, v: s.v)
+                p.detail = detail
+                context.insert(p)
+                detail.pacePoints.append(p)
+            }
+        }
+
+        // Elevación (cuando llegue en el payload)
+        // if let elev = payload.elevationSeries { ... WatchElevationPoint ... }
+
+        // Splits por km
+        if let splits = payload.kmSplits {
+            for sp in splits {
+                let e = RunningWatchSplit(index: sp.index,
+                                          startOffset: sp.startOffset,
+                                          endOffset: sp.endOffset,
+                                          duration: sp.duration,
+                                          distanceMeters: sp.distanceMeters,
+                                          avgHR: sp.avgHR,
+                                          avgSpeed: sp.avgSpeed)
+                e.detail = detail
+                context.insert(e)
+                detail.splits.append(e)
+            }
+        }
+
+        do {
+            try context.save()
+            print("[SwiftData] Saved RunningSession + Watch detail")
+        } catch {
+            print("[SwiftData][ERROR] save:", error)
+        }
+    }
+
     // MARK: - Archivos desde el Watch (transferFile)
     func session(_ session: WCSession, didReceive file: WCSessionFile) {
         let meta = file.metadata ?? [:]
@@ -114,8 +186,13 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
 
         do {
             let payload = try WorkoutPayloadIO.read(from: file.fileURL)
+            // (opcional) seguimos guardando el JSON en el Inbox para debug
             WorkoutInbox.shared.store(payload: payload, from: file.fileURL)
 
+            // ⬇️ Guarda también en SwiftData
+            Task { @MainActor in
+                self.saveWatchRunning(payload: payload)
+            }
             DispatchQueue.main.async {
                 self.lastReceivedSummary = String(
                     format: "Workout %@ • %.2f km • %d splits",

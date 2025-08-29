@@ -11,7 +11,12 @@ import SwiftUI
 
 final class Persistence {
     static let shared = Persistence()
+    
+    
+
     private init() {}
+    
+    private(set) var appContainer: ModelContainer?
 
     @MainActor
     func makeModelContainer(inMemory: Bool = false) throws -> ModelContainer {
@@ -23,7 +28,12 @@ final class Persistence {
             StrengthSession.self,
             RunningSession.self,
             RunningGoal.self,
-            GymGoal.self
+            GymGoal.self,
+            RunningWatchDetail.self,
+            WatchHRPoint.self,
+            WatchPacePoint.self,
+            WatchElevationPoint.self,
+            RunningWatchSplit.self
         ])
 
         let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)
@@ -113,6 +123,7 @@ final class Persistence {
         }
 
         try context.save()
+        self.appContainer = container
         return container
     }
 }
