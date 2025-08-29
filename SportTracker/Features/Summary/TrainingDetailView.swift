@@ -31,12 +31,12 @@ struct TrainingDetailView: View {
 struct RunningSessionDetail: View {
     let session: RunningSession
     @State private var region = MKCoordinateRegion()
-
+    
     // Datos
     @Environment(\.modelContext) private var context
     @Query private var settingsList: [Settings]
     private var useMiles: Bool { settingsList.first?.prefersMiles ?? false }
-
+    
     // --- Insights full screen ---
     @State private var insights: InsightsPayload? = nil
     private struct InsightsPayload: Identifiable {
@@ -52,7 +52,7 @@ struct RunningSessionDetail: View {
     @State private var selPace: (t: TimeInterval, v: Double)? = nil
     @State private var selElev: (t: TimeInterval, v: Double)? = nil
     @State private var selHR:   (t: TimeInterval, v: Double)? = nil
-
+    
     // Callout simple reutilizable (similar al de Insights)
     private struct LocalCallout: View {
         let title: String
@@ -75,7 +75,7 @@ struct RunningSessionDetail: View {
         let s = Int(t) % 60
         return String(format: "%02d:%02d:%02d", h, m, s)
     }
-
+    
     // Índice más cercano por eje X (TimeInterval)
     private func nearestIndex(_ x: Double, in xs: [Double]) -> Int? {
         guard !xs.isEmpty else { return nil }
@@ -86,7 +86,7 @@ struct RunningSessionDetail: View {
         }
         return best
     }
-
+    
     // Qué pestañas (gráficas) hay disponibles según los datos
     private enum AnalysisTab: Int, CaseIterable {
         case pace, elevation, hr
@@ -99,7 +99,7 @@ struct RunningSessionDetail: View {
             }
         }
     }
-
+    
     // Devuelve las pestañas que realmente tienen datos
     private func availableTabs(for m: RunMetrics) -> [AnalysisTab] {
         var tabs: [AnalysisTab] = []
@@ -108,7 +108,7 @@ struct RunningSessionDetail: View {
         if !m.heartRateSeries.isEmpty { tabs.append(.hr) }
         return tabs
     }
-
+    
     // Ruta decodificada (opcional)
     private var routeCoords: [CLLocationCoordinate2D]? {
         guard let poly = session.routePolyline, !poly.isEmpty else { return nil }
@@ -138,11 +138,11 @@ struct RunningSessionDetail: View {
                     value: formatPace(distanceMeters: session.distanceMeters, durationSeconds: session.durationSeconds),
                     label: "Pace"
                 )
-
+                
                 Text("\(Int(session.totalPoints)) pts • \(SummaryView.formatDate(session.date))")
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)
-
+                
                 if let notes = session.notes, !notes.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Notes").font(.headline)
@@ -180,16 +180,37 @@ struct RunningSessionDetail: View {
                                 points: payload.points)
         }
         .task {
-            if let wm = metricsFromWatchDetail() {
-                metrics = wm
+            // Señal inequívoca: este run viene de Health (no del Watch)
+            let fromHealth = (session.notes ?? "")
+                .localizedCaseInsensitiveContains("Imported from Apple Health")
+
+            // Si hay series reales del Watch para esta sesión
+            let watchDetail = watchDetailWithSeries()
+
+            #if DEBUG
+            print("[Detail] fromHealth:", fromHealth,
+                  "watchSeries: HR:", watchDetail?.hrPoints.count ?? 0,
+                  "pace:", watchDetail?.pacePoints.count ?? 0,
+                  "elev:", watchDetail?.elevationPoints.count ?? 0)
+            #endif
+
+            if fromHealth {
+                // Para Health, SIEMPRE tiramos de HealthKit
+                _ = try? await HealthKitManager.shared.requestAuthorization()
+                metrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
+            } else if let d = watchDetail {
+                // Watch con series guardadas (HR/Pace/Elev locales)
+                metrics = metricsFromWatchDetail(detail: d)
             } else {
+                // Resto de casos → HealthKit como respaldo
+                _ = try? await HealthKitManager.shared.requestAuthorization()
                 metrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
             }
             selectedIndex = 0
         }
         .brandHeaderSpacer()
     }
-
+    
     // Serie desde el primer run que cumple la marca hasta el último registrado
     private func fetchPaceHistory(for bucket: RecordBucket, prefersMiles: Bool) -> [PacePoint] {
         let minMeters = bucket.km * 1000.0
@@ -199,7 +220,7 @@ struct RunningSessionDetail: View {
             sortBy: [SortDescriptor(\RunningSession.date, order: .forward)]
         )
         let runs = (try? context.fetch(desc)) ?? []
-
+        
         return runs.map { r in
             let km = max(r.distanceMeters / 1000.0, 0.001)
             let pace = pacePerUnit(seconds: Double(r.durationSeconds),
@@ -208,7 +229,7 @@ struct RunningSessionDetail: View {
             return PacePoint(date: r.date, paceSecPerUnit: pace)
         }
     }
-
+    
     // Formatos básicos
     private func formatDistance(_ meters: Double) -> String {
         let km = meters / 1000.0
@@ -218,7 +239,7 @@ struct RunningSessionDetail: View {
         let h = seconds/3600, m = (seconds%3600)/60, s = seconds%60
         return String(format: "%d:%02d:%02d", h, m, s)
     }
-
+    
     /// Pace en tarjeta superior: respeta Settings (min/km o min/mi)
     private func formatPace(distanceMeters: Double, durationSeconds: Int) -> String {
         let km = max(distanceMeters / 1000.0, 0.001)
@@ -246,10 +267,10 @@ struct RunningSessionDetail: View {
             if !tabs.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Analysis").font(.headline)
-
+                    
                     // Asegurar índice válido si cambia el set de tabs
                     let safeIndex = min(selectedIndex, max(tabs.count - 1, 0))
-
+                    
                     Picker("", selection: Binding(
                         get: { safeIndex },
                         set: { newVal in selectedIndex = newVal }
@@ -263,16 +284,16 @@ struct RunningSessionDetail: View {
                         // Si cambian los tabs (por datos que llegan), vuelve al primero
                         selectedIndex = 0
                     }
-
+                    
                     Group {
                         switch tabs[safeIndex] {
                         case .pace:
                             // Serie mostrada: convierte a s/mi si useMiles
                             let paceSeriesDisplayed: [(time: Double, secPerUnit: Double)] =
-                                m.paceSeries.map { p in
-                                    let val = useMiles ? p.secPerKm * 1.609344 : p.secPerKm
-                                    return (p.time, val)
-                                }
+                            m.paceSeries.map { p in
+                                let val = useMiles ? p.secPerKm * 1.609344 : p.secPerKm
+                                return (p.time, val)
+                            }
                             
                             Chart {
                                 ForEach(paceSeriesDisplayed.indices, id: \.self) { i in
@@ -281,7 +302,7 @@ struct RunningSessionDetail: View {
                                              y: .value(useMiles ? "sec/mi" : "sec/km", p.secPerUnit))
                                     PointMark(x: .value("t", p.time),
                                               y: .value(useMiles ? "sec/mi" : "sec/km", p.secPerUnit))
-                                        .opacity(selPace?.t == p.time ? 1 : 0) // resalta el seleccionado
+                                    .opacity(selPace?.t == p.time ? 1 : 0) // resalta el seleccionado
                                 }
                             }
                             .chartYAxis {
@@ -324,7 +345,7 @@ struct RunningSessionDetail: View {
                                     }
                                 }
                             }
-
+                            
                         case .elevation:
                             Chart {
                                 ForEach(m.elevationSeries.indices, id: \.self) { i in
@@ -367,7 +388,7 @@ struct RunningSessionDetail: View {
                                     }
                                 }
                             }
-
+                            
                         case .hr:
                             Chart {
                                 ForEach(m.heartRateSeries.indices, id: \.self) { i in
@@ -410,11 +431,11 @@ struct RunningSessionDetail: View {
                                     }
                                 }
                             }
-
+                            
                         }
                     }
                     .frame(height: 220)
-
+                    
                     if tabs[safeIndex] == .hr, let a = m.avgHR, let mx = m.maxHR {
                         Text("Avg \(Int(a)) bpm • Max \(Int(mx)) bpm")
                             .font(.footnote)
@@ -437,21 +458,12 @@ struct RunningSessionDetail: View {
     }
     
     // 👇 Construye métricas desde lo que ya guardamos al recibir el payload del Watch
-    private func metricsFromWatchDetail() -> RunMetrics? {
-        // 1) Trae unos pocos detalles y filtra por identidad del modelo (sin #Predicate)
-        var fd = FetchDescriptor<RunningWatchDetail>()
-        fd.fetchLimit = 200
-        guard
-            let details = try? context.fetch(fd),
-            let detail = details.first(where: { $0.session?.persistentModelID == session.persistentModelID })
-        else { return nil }
+    // 👇 Construye métricas desde lo que ya guardamos al recibir el payload del Watch
+    private func metricsFromWatchDetail(detail: RunningWatchDetail) -> RunMetrics? {
+        // HR
+        let hr = detail.hrPoints.sorted { $0.t < $1.t }.map { (time: $0.t, bpm: $0.v) }
 
-        // 2) HR [(t, bpm)]
-        let hr = detail.hrPoints
-            .sorted { $0.t < $1.t }
-            .map { (time: $0.t, bpm: $0.v) }
-
-        // 3) Pace: tus puntos son velocidad (m/s) -> pace (s/km) = 1000 / v
+        // Pace: tus puntos son velocidad m/s → pace s/km
         let pace = detail.pacePoints
             .sorted { $0.t < $1.t }
             .compactMap { p -> (time: Double, secPerKm: Double)? in
@@ -459,32 +471,52 @@ struct RunningSessionDetail: View {
                 return (time: p.t, secPerKm: 1000.0 / p.v)
             }
 
-        // 4) Elevation (aún no la enviamos desde el Watch)
-        let elev: [(time: Double, meters: Double)] = []
+        // Elevación
+        let elev = detail.elevationPoints
+            .sorted { $0.t < $1.t }
+            .map { (time: $0.t, meters: $0.v) }
+        
         let totalAscent: Double = 0
 
-        // 5) Splits por km (ajusta nombres si tu modelo usa otros)
+        // Splits
         let splits: [RunMetrics.Split] = detail.splits
             .sorted { $0.index < $1.index }
             .map { .init(km: Int($0.index), seconds: $0.duration) }
 
-        // 6) Stats HR
+        // HR stats
         let avg = hr.isEmpty ? nil : hr.map(\.bpm).reduce(0, +) / Double(hr.count)
         let mx  = hr.map(\.bpm).max()
 
-        // 7) RunMetrics completo
         return .init(
             splits: splits,
             paceSeries: pace,
             elevationSeries: elev,
-            totalAscent: totalAscent,
+            totalAscent: totalAscent,   // si no existe en tu modelo, usa 0
             heartRateSeries: hr,
             avgHR: avg,
             maxHR: mx
         )
     }
+    
+    /// ¿Existe un RunningWatchDetail con series para esta sesión?
+    private func watchDetailWithSeries() -> RunningWatchDetail? {
+        var fd = FetchDescriptor<RunningWatchDetail>()
+        fd.fetchLimit = 200
+        guard
+            let details = try? context.fetch(fd),
+            let d = details.first(where: { $0.session?.persistentModelID == session.persistentModelID })
+        else { return nil }
 
+        let hasSeries = (!d.hrPoints.isEmpty) || (!d.pacePoints.isEmpty) || (!d.elevationPoints.isEmpty)
+        return hasSeries ? d : nil
+    }
+
+    /// Señal barata por notas (extra, por si algún día no hubiera enlace SwiftData)
+    private var isWatchByNote: Bool {
+        (session.notes ?? "").localizedCaseInsensitiveContains("Imported from Apple Watch")
+    }
 }
+
 
 // Métrica grande y centrada
 private struct Metric: View {

@@ -154,8 +154,16 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
         }
 
         // Elevación (cuando llegue en el payload)
-        // if let elev = payload.elevationSeries { ... WatchElevationPoint ... }
-
+        // Elevación (si viene en el payload)
+        if let elev = payload.elevationSeries {
+            for s in elev {
+                let p = WatchElevationPoint(t: s.t, v: s.v) // modelo igual que HR/Pace
+                p.detail = detail
+                context.insert(p)
+                detail.elevationPoints.append(p)
+            }
+        }
+        
         // Splits por km
         if let splits = payload.kmSplits {
             for sp in splits {

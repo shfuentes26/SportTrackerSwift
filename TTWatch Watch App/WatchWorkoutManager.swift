@@ -45,6 +45,10 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
     // Localización
     private let location = CLLocationManager()
     private var routeCoords: [CLLocationCoordinate2D] = []
+    // Elevación
+    private var elevationSeries: [TimedSample<Double>] = []   // antes: [TimedSample]
+    private var lastAltitude: CLLocationDistance? = nil
+    private var totalAscentMeters: Double = 0
 
     func requestAuthorization() {
         status = "Sim Authorized"
@@ -76,6 +80,11 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
         
         km = 0; hr = 110
         hrSum = 0; hrCount = 0
+        
+        elevationSeries.removeAll()
+        lastAltitude = nil
+        totalAscentMeters = 0
+        
         routeCoords.removeAll()
         location.startUpdatingLocation()
         
@@ -161,6 +170,8 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
             avgHR: avg,
             hrSeries: hrSeries,
             paceSeries: paceSeries,
+            elevationSeries: elevationSeries,
+            totalAscent: totalAscentMeters,
             route: nil,
             kmSplits: kmSplits
         )
@@ -218,6 +229,11 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
     // Localización
     private let location = CLLocationManager()
     private var routeCoords: [CLLocationCoordinate2D] = []
+    
+    // Elevación
+    private var elevationSeries: [TimedSample<Double>] = []  // (t: seconds, v: meters)
+    private var lastAltitude: CLLocationDistance? = nil
+    private var totalAscentMeters: Double = 0
 
     func requestAuthorization() {
         guard HKHealthStore.isHealthDataAvailable(), let healthStore else {
@@ -265,6 +281,12 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
             splitHrSum = 0
             splitHrCount = 0
             km = 0; hrSum = 0; hrCount = 0
+            
+            elevationSeries.removeAll()
+            lastAltitude = nil
+            totalAscentMeters = 0
+            
+            
             routeCoords.removeAll()
             location.delegate = self
             location.activityType = .fitness
@@ -308,6 +330,8 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
                 avgHR: avg,
                 hrSeries: self.hrSeries,
                 paceSeries: self.paceSeries,
+                elevationSeries: elevationSeries,
+                totalAscent: totalAscentMeters,
                 route: nil,
                 kmSplits: self.kmSplits
             )

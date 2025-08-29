@@ -64,6 +64,8 @@ public struct WorkoutPayload: Codable, Sendable {
     public let avgHR: Double?
     public let hrSeries: [TimedSample<Double>]?
     public let paceSeries: [TimedSample<Double>]?
+    public let elevationSeries: [TimedSample<Double>]?
+    public let totalAscent: Double?
     public let route: [LocationPoint]?
     public let kmSplits: [KilometerSplit]?   // NUEVO
 
@@ -80,6 +82,8 @@ public struct WorkoutPayload: Codable, Sendable {
         avgHR: Double? = nil,
         hrSeries: [TimedSample<Double>]? = nil,
         paceSeries: [TimedSample<Double>]? = nil,
+        elevationSeries: [TimedSample<Double>]? = nil,
+        totalAscent: Double? = nil,
         route: [LocationPoint]? = nil,
         kmSplits: [KilometerSplit]? = nil
     ) {
@@ -94,6 +98,8 @@ public struct WorkoutPayload: Codable, Sendable {
         self.avgHR = avgHR
         self.hrSeries = hrSeries
         self.paceSeries = paceSeries
+        self.elevationSeries = elevationSeries
+        self.totalAscent = totalAscent
         self.route = route
         self.kmSplits = kmSplits
     }
