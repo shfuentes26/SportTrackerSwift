@@ -10,8 +10,8 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var manager = WatchWorkoutManager()
-    @StateObject private var wSession = WatchSession.shared
-
+    @ObservedObject private var wSession = WatchSession.shared
+    
     var body: some View {
         VStack(spacing: 8) {
             Text("SportTracker ⌚️").font(.headline)
@@ -21,11 +21,17 @@ struct ContentView: View {
                 Button("Start") { manager.start() }
                 Button("Stop") { manager.stop() }
             }.font(.caption2)
-            Button("Ping iPhone") { wSession.pingPhone() }
+            //Button("Ping iPhone") { wSession.pingPhone() }
+            //    .font(.caption2)
+            //Button("Force Activate") { wSession.ensureActivated() }
+            Text(wSession.lastReply)
                 .font(.caption2)
-            Text(wSession.lastReply).font(.footnote).multilineTextAlignment(.center)
+                .lineLimit(6) // más de 1 línea
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
+        .onAppear { WatchSession.shared.activate() }  
     }
 }
 

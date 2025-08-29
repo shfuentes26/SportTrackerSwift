@@ -49,9 +49,9 @@ struct ContentView: View {
         .tint(.blue)
         .safeAreaInset(edge: .bottom) {
             // La barrita en todas las pantallas
-            LiveBar()
-                .padding(.horizontal)
-                .padding(.bottom, 6) // separacion visual de la tab bar
+            //LiveBar()
+              //  .padding(.horizontal)
+              //  .padding(.bottom, 6) // separacion visual de la tab bar
         }
         .onAppear { _ = PhoneSession.shared } 
         // ⬇️ AHORA SÍ, ESTO CAMBIA DE TAB AL RECIBIR LA NOTIFICACIÓN

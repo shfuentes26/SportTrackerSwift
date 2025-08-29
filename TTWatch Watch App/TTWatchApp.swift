@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct TTWatch_Watch_AppApp: App {
+struct TTWatchApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

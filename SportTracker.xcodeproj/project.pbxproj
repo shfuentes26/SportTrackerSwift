@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2342D5372E60EE1800E696DE /* WorkoutInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2342D5362E60EE1100E696DE /* WorkoutInbox.swift */; };
+		2342D5392E60EE3A00E696DE /* WorkoutInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */; };
 		235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235697172E5D0189006409D8 /* PaceHistorySection.swift */; };
 		2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */; };
 		2365CAF52E5F348900CF609C /* TTWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -58,6 +60,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2342D5362E60EE1100E696DE /* WorkoutInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutInbox.swift; sourceTree = "<group>"; };
+		2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutInboxView.swift; sourceTree = "<group>"; };
 		235697172E5D0189006409D8 /* PaceHistorySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceHistorySection.swift; sourceTree = "<group>"; };
 		2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDistanceFilter.swift; sourceTree = "<group>"; };
 		2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TTWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,6 +91,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2342D5332E60D57800E696DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				WorkoutPayload.swift,
+			);
+			target = 2365CAEA2E5F348700CF609C /* TTWatch Watch App */;
+		};
 		23BE56D32E53A76B00600875 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -99,7 +110,7 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2365CAEC2E5F348700CF609C /* TTWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "TTWatch Watch App"; sourceTree = "<group>"; };
 		23BE56CA2E53A53800600875 /* Domain */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Domain; sourceTree = "<group>"; };
-		23BE56CB2E53A55B00600875 /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
+		23BE56CB2E53A55B00600875 /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2342D5332E60D57800E696DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
 		23BE56CC2E53A56700600875 /* Resources */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (23BE56D32E53A76B00600875 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Resources; sourceTree = "<group>"; };
 		23BE56CD2E53A57600600875 /* App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = App; sourceTree = "<group>"; };
 		23BE56CF2E53A73100600875 /* Summary */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Summary; sourceTree = "<group>"; };
@@ -193,6 +204,8 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
+				2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */,
+				2342D5362E60EE1100E696DE /* WorkoutInbox.swift */,
 				2365CB082E5F7F0500CF609C /* SummarySheet.swift */,
 				2365CB062E5F5FD700CF609C /* LiveWorkoutSummary.swift */,
 				2365CB042E5F4F9200CF609C /* LiveBar.swift */,
@@ -358,8 +371,10 @@
 				2365CB052E5F4F9500CF609C /* LiveBar.swift in Sources */,
 				235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
+				2342D5392E60EE3A00E696DE /* WorkoutInboxView.swift in Sources */,
 				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
 				2365CB092E5F7F0B00CF609C /* SummarySheet.swift in Sources */,
+				2342D5372E60EE1800E696DE /* WorkoutInbox.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
 				23BE57BD2E57C38300600875 /* RunningLiveManager.swift in Sources */,
 			);

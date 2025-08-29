@@ -7,8 +7,9 @@
 import Foundation
 import WatchConnectivity
 
-final class PhoneSession: NSObject, WCSessionDelegate {
+final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
     static let shared = PhoneSession()
+    @Published var lastReceivedSummary: String = "—"
 
     override init() {
         super.init()
@@ -18,14 +19,14 @@ final class PhoneSession: NSObject, WCSessionDelegate {
         }
     }
 
-    // 1) Con replyHandler (ya lo tenías)
+    // 1) Con replyHandler
     func session(_ session: WCSession,
                  didReceiveMessage message: [String : Any],
                  replyHandler: @escaping ([String : Any]) -> Void) {
         handle(message: message, replyHandler: replyHandler)
     }
 
-    // 2) SIN replyHandler (faltaba)
+    // 2) SIN replyHandler
     func session(_ session: WCSession,
                  didReceiveMessage message: [String : Any]) {
         handle(message: message, replyHandler: nil)
@@ -92,17 +93,39 @@ final class PhoneSession: NSObject, WCSessionDelegate {
 
         replyHandler?(["ok": true])
     }
-
+    
     // Requeridos mínimos
     func sessionDidBecomeInactive(_ session: WCSession) {}
     func sessionDidDeactivate(_ session: WCSession) { WCSession.default.activate() }
     func session(_ session: WCSession,
                  activationDidCompleteWith activationState: WCSessionActivationState,
-                 error: Error?) {}
+                 error: Error?) {
+        print("[WC][iOS] activationDidComplete: \(activationState.rawValue) error: \(String(describing: error))")
+    }
     
-    // Cuando el iPhone no está en foreground, el watch enviará con transferUserInfo.
-    // Este callback llega aunque la app esté en background.
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
         handle(message: userInfo, replyHandler: nil)
+    }
+    
+    // MARK: - Archivos desde el Watch (transferFile)
+    func session(_ session: WCSession, didReceive file: WCSessionFile) {
+        let meta = file.metadata ?? [:]
+        print("[WC][iOS] didReceive file: \(file.fileURL.lastPathComponent), meta:", meta)
+
+        do {
+            let payload = try WorkoutPayloadIO.read(from: file.fileURL)
+            WorkoutInbox.shared.store(payload: payload, from: file.fileURL)
+
+            DispatchQueue.main.async {
+                self.lastReceivedSummary = String(
+                    format: "Workout %@ • %.2f km • %d splits",
+                    payload.id.uuidString.prefix(6) as CVarArg,
+                    (payload.distanceMeters ?? 0)/1000.0,
+                    payload.kmSplits?.count ?? 0
+                )
+            }
+        } catch {
+            print("[WC][iOS][ERROR] decoding workout:", error)
+        }
     }
 }

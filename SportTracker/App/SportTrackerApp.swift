@@ -13,10 +13,11 @@ import WatchConnectivity
 struct SportTrackerApp: App {
     @UIApplicationDelegateAdaptor(OrientationLockDelegate.self) var appDelegate
     @State private var container: ModelContainer?
+    @ObservedObject private var phone = PhoneSession.shared
 
     init() {
         
-        
+        print("[BOOT][iOS] SportTrackerApp init")
         let brand = UIColor(named: "BrandGreen") ?? UIColor(red: 0.63, green: 0.913, blue: 0.333, alpha: 1)
         // NAV BAR
         let nav = UINavigationBarAppearance()
@@ -40,7 +41,15 @@ struct SportTrackerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            VStack(spacing: 0) {
+                ContentView()
+                    .frame(maxHeight: .infinity)     // <-- dejando espacio para abajo
+                Divider()
+                NavigationStack {
+                    WorkoutInboxView()
+                }
+                .frame(height: 260)                   // <-- altura visible del Inbox
+            }
         }
         .modelContainer(container!)
     }
