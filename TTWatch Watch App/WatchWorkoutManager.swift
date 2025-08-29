@@ -14,18 +14,18 @@ import CoreLocation
 #if targetEnvironment(simulator)
 // ------- SIMULADOR: sin HealthKit -------
 
-
-
 @MainActor
-final class  WatchWorkoutManager: NSObject, ObservableObject {
+final class WatchWorkoutManager: NSObject, ObservableObject {
     @Published var isRunning = false
     @Published var status = "Sim Idle"
+
     private var timer: Timer?
     private var startDate: Date?
     private var km: Double = 0
     private var hr: Int = 110
-    private var hrSum: Int = 0        // ⬅️ nuevo
-    private var hrCount: Int = 0      // ⬅️ nuevo
+    private var hrSum: Int = 0
+    private var hrCount: Int = 0
+
     // Series para enviar al iPhone
     private var hrSeries: [TimedSample<Double>] = []
     private var paceSeries: [TimedSample<Double>] = []
@@ -41,18 +41,36 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
     private var splitStartDist: Double = 0
     private var splitHrSum: Int = 0
     private var splitHrCount: Int = 0
-    
-    // Localización
+
+    // Localización (solo para registrar la ruta simulada)
     private let location = CLLocationManager()
     private var routeCoords: [CLLocationCoordinate2D] = []
+
     // Elevación
-    private var elevationSeries: [TimedSample<Double>] = []   // antes: [TimedSample]
+    private var elevationSeries: [TimedSample<Double>] = []
     private var lastAltitude: CLLocationDistance? = nil
     private var totalAscentMeters: Double = 0
 
+    // Live metrics para la UI
+    @Published var liveStartDate: Date? = nil
+    @Published var liveKm: Double = 0
+    @Published var liveHR: Int? = nil
+    @Published var livePaceSecPerKm: Double? = nil
+
+    @Published var isPaused = false
+
+    func pause() {
+        guard isRunning, !isPaused else { return }
+        isPaused = true                  // (en sim solo congelamos la simulación)
+    }
+
+    func resume() {
+        guard isRunning, isPaused else { return }
+        isPaused = false
+    }
+
     func requestAuthorization() {
         status = "Sim Authorized"
-        // Localización (Watch)
         location.delegate = self
         location.activityType = .fitness
         location.desiredAccuracy = kCLLocationAccuracyBest
@@ -64,8 +82,11 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
     func start() {
         status = "Sim Running…"
         isRunning = true
-        startDate = Date()
-        
+        isPaused = false
+        let start = Date()
+        startDate = start
+        liveStartDate = start
+
         hrSeries = []
         paceSeries = []
         lastSampleDate = nil
@@ -77,40 +98,46 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
         splitStartDist = 0
         splitHrSum = 0
         splitHrCount = 0
-        
+
         km = 0; hr = 110
         hrSum = 0; hrCount = 0
-        
+        liveKm = 0
+        liveHR = hr
+        livePaceSecPerKm = nil
+
         elevationSeries.removeAll()
         lastAltitude = nil
         totalAscentMeters = 0
-        
+
         routeCoords.removeAll()
         location.startUpdatingLocation()
-        
+
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self, self.isRunning else { return }
+            guard let self, self.isRunning, !self.isPaused else { return }
+
+            // simulamos distancia y HR
             self.km += 0.01
             self.hr = min(175, max(90, self.hr + Int.random(in: -2...3)))
-
-            // acumular HR promedio global
-            self.hrSum += self.hr; self.hrCount += 1
+            self.liveKm = self.km
+            self.liveHR = self.hr
 
             let now = Date()
             let elapsed = now.timeIntervalSince(self.startDate ?? now)
 
-            // Serie HR
+            // HR para series/promedios
+            self.hrSum += self.hr; self.hrCount += 1
             self.hrSeries.append(TimedSample(t: elapsed, v: Double(self.hr)))
 
-            // Serie velocidad (m/s) a partir de delta distancia
+            // Velocidad/pace desde delta de distancia simulada
             let distMeters = self.km * 1000.0
             if let lastT = self.lastSampleDate {
                 let dt = now.timeIntervalSince(lastT)
                 if dt > 0 {
                     let dv = max(0, distMeters - self.lastDistMeters)
-                    let speed = dv / dt
+                    let speed = dv / dt                  // m/s
                     self.paceSeries.append(TimedSample(t: elapsed, v: speed))
+                    self.livePaceSecPerKm = speed > 0 ? (1000.0 / speed) : nil
                 }
             }
             self.lastSampleDate = now
@@ -144,10 +171,8 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
             self.splitHrSum += self.hr
             self.splitHrCount += 1
 
-            // ❌ ya NO mandamos realtime
             self.status = String(format: "HR %d • %.2f km", self.hr, self.km)
         }
-
     }
 
     func stop() {
@@ -178,12 +203,12 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
 
         do {
             let url = try WorkoutPayloadIO.write(payload)
-            
+
             // Adjuntamos la polyline en el metadata
             var meta = payload.makeTransferMetadata()
             meta["routePolyline"] = Polyline.encode(self.routeCoords)
             let tf = WCSession.default.transferFile(url, metadata: meta)
-            
+
             print("[WC][watch] queued after enqueue:",
                   WCSession.default.outstandingFileTransfers.count,
                   "isTransferring:", tf.isTransferring)
@@ -192,14 +217,39 @@ final class  WatchWorkoutManager: NSObject, ObservableObject {
             status = "Sim Finish error: \(error.localizedDescription)"
         }
     }
-
 }
+
+// CLLocation SOLO para sim: guardamos la ruta (no calculamos distancia real)
+extension WatchWorkoutManager: CLLocationManagerDelegate {
+    public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard isRunning else { return }
+        for loc in locations {
+            guard loc.horizontalAccuracy > 0, loc.horizontalAccuracy <= 50 else { continue }
+            if let last = routeCoords.last {
+                let d = CLLocation(latitude: last.latitude, longitude: last.longitude)
+                    .distance(from: CLLocation(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude))
+                if d < 5 { continue }
+            }
+            routeCoords.append(loc.coordinate)
+        }
+    }
+
+    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in self.status = "Location error: \(error.localizedDescription)" }
+    }
+}
+
 #else
 // ------- DISPOSITIVO REAL: HealthKit -------
 @MainActor
 final class WatchWorkoutManager: NSObject, ObservableObject {
     @Published var isRunning = false
     @Published var status: String = "Idle"
+    // Live metrics para la UI
+    @Published var liveStartDate: Date? = nil
+    @Published var liveKm: Double = 0
+    @Published var liveHR: Int? = nil
+    @Published var livePaceSecPerKm: Double? = nil
 
     private var healthStore: HKHealthStore? = HKHealthStore()
     private var session: HKWorkoutSession?
@@ -234,6 +284,27 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
     private var elevationSeries: [TimedSample<Double>] = []  // (t: seconds, v: meters)
     private var lastAltitude: CLLocationDistance? = nil
     private var totalAscentMeters: Double = 0
+    
+    // Acumulación de distancia vía GPS
+    private var lastLocForDist: CLLocation?
+    private var totalDistMeters: Double = 0
+    
+    @Published var isPaused = false
+
+    func pause() {
+        guard isRunning, !isPaused else { return }
+        isPaused = true
+        // Si usas HealthKit en real:
+        session?.pause()
+       // builder?.pauseCollection(withStart: Date())
+    }
+
+    func resume() {
+        guard isRunning, isPaused else { return }
+        isPaused = false
+        session?.resume()
+        //builder?.resumeCollection(withStart: Date())
+    }
 
     func requestAuthorization() {
         guard HKHealthStore.isHealthDataAvailable(), let healthStore else {
@@ -253,6 +324,7 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
     func start() {
         
         isRunning = true
+        isPaused = false
         guard HKHealthStore.isHealthDataAvailable(), let healthStore else {
             status = "No HealthKit"; return
         }
@@ -269,6 +341,12 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
 
             let start = Date()
             startDate = start
+            liveStartDate = start
+            liveKm = 0
+            liveHR = nil
+            livePaceSecPerKm = nil
+            totalDistMeters = 0
+            lastLocForDist = nil
             hrSeries = []
             paceSeries = []
             lastSampleDate = nil
@@ -389,6 +467,7 @@ extension WatchWorkoutManager: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDel
             let unit = HKUnit(from: "count/min")
             hrBpm = Int(stats.mostRecentQuantity()?.doubleValue(for: unit) ?? 0)
             if hrBpm > 0 {
+                liveHR = hrBpm
                 hrSum += hrBpm; hrCount += 1
                 hrSeries.append(TimedSample(t: elapsed, v: Double(hrBpm)))
                 // acumular para split actual
@@ -481,13 +560,33 @@ enum Polyline {
     }
 }
 
+// Esta extensión es SOLO para dispositivo real (usa símbolos que no existen en sim)
+#if !targetEnvironment(simulator)
+
 import CoreLocation
 
 extension WatchWorkoutManager: CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard isRunning else { return }
+        guard isRunning, !isPaused else { return }
         for loc in locations {
             guard loc.horizontalAccuracy > 0, loc.horizontalAccuracy <= 50 else { continue }
+            
+            // Distancia por GPS para la métrica en vivo
+            if let prev = lastLocForDist {
+                let dv = loc.distance(from: prev)               // metros avanzados
+                let dt = loc.timestamp.timeIntervalSince(prev.timestamp)
+                if dv > 0 && dt > 0 {
+                    totalDistMeters += dv
+                    km = totalDistMeters / 1000.0
+                    liveKm = km
+
+                    let speed = dv / dt                          // m/s
+                    livePaceSecPerKm = speed > 0 ? (1000.0 / speed) : nil
+                }
+            }
+            lastLocForDist = loc
+            
+            
             if let last = routeCoords.last {
                 let d = CLLocation(latitude: last.latitude, longitude: last.longitude)
                     .distance(from: CLLocation(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude))
@@ -497,3 +596,4 @@ extension WatchWorkoutManager: CLLocationManagerDelegate {
         }
     }
 }
+#endif
