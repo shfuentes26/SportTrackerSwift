@@ -180,8 +180,12 @@ struct RunningSessionDetail: View {
                                 points: payload.points)
         }
         .task {
-            metrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
-            selectedIndex = 0 // empezamos siempre en el primer tab disponible
+            if let wm = metricsFromWatchDetail() {
+                metrics = wm
+            } else {
+                metrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
+            }
+            selectedIndex = 0
         }
         .brandHeaderSpacer()
     }
@@ -431,6 +435,55 @@ struct RunningSessionDetail: View {
             span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
         )
     }
+    
+    // 👇 Construye métricas desde lo que ya guardamos al recibir el payload del Watch
+    private func metricsFromWatchDetail() -> RunMetrics? {
+        // 1) Trae unos pocos detalles y filtra por identidad del modelo (sin #Predicate)
+        var fd = FetchDescriptor<RunningWatchDetail>()
+        fd.fetchLimit = 200
+        guard
+            let details = try? context.fetch(fd),
+            let detail = details.first(where: { $0.session?.persistentModelID == session.persistentModelID })
+        else { return nil }
+
+        // 2) HR [(t, bpm)]
+        let hr = detail.hrPoints
+            .sorted { $0.t < $1.t }
+            .map { (time: $0.t, bpm: $0.v) }
+
+        // 3) Pace: tus puntos son velocidad (m/s) -> pace (s/km) = 1000 / v
+        let pace = detail.pacePoints
+            .sorted { $0.t < $1.t }
+            .compactMap { p -> (time: Double, secPerKm: Double)? in
+                guard p.v > 0 else { return nil }
+                return (time: p.t, secPerKm: 1000.0 / p.v)
+            }
+
+        // 4) Elevation (aún no la enviamos desde el Watch)
+        let elev: [(time: Double, meters: Double)] = []
+        let totalAscent: Double = 0
+
+        // 5) Splits por km (ajusta nombres si tu modelo usa otros)
+        let splits: [RunMetrics.Split] = detail.splits
+            .sorted { $0.index < $1.index }
+            .map { .init(km: Int($0.index), seconds: $0.duration) }
+
+        // 6) Stats HR
+        let avg = hr.isEmpty ? nil : hr.map(\.bpm).reduce(0, +) / Double(hr.count)
+        let mx  = hr.map(\.bpm).max()
+
+        // 7) RunMetrics completo
+        return .init(
+            splits: splits,
+            paceSeries: pace,
+            elevationSeries: elev,
+            totalAscent: totalAscent,
+            heartRateSeries: hr,
+            avgHR: avg,
+            maxHR: mx
+        )
+    }
+
 }
 
 // Métrica grande y centrada
