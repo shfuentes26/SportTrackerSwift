@@ -396,5 +396,4 @@ struct FullScreenPaceChart: View {
             return PacePoint(date: d, paceSecPerUnit: val)
         }
     }
-    
 }
