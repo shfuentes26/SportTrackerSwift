@@ -4,7 +4,6 @@ import MapKit
 import CoreLocation
 import SwiftData
 import Charts
-// La gráfica vive en PaceHistorySection.swift (PaceHistorySection + FullScreenPaceChart)
 
 typealias RunMetrics = HealthKitImportService.RunMetrics
 
@@ -68,7 +67,7 @@ struct RunningSessionDetail: View {
         }
     }
     
-    /// Convierte un TimeInterval en "hh:mm:ss" (con cero a la izquierda)
+    /// Convierte un TimeInterval en "hh:mm:ss"
     private func timeLabel(_ t: TimeInterval) -> String {
         let h = Int(t) / 3600
         let m = (Int(t) % 3600) / 60
@@ -76,7 +75,7 @@ struct RunningSessionDetail: View {
         return String(format: "%02d:%02d:%02d", h, m, s)
     }
 
-    // Índice más cercano por eje X (TimeInterval)
+    // Índice más cercano por eje X
     private func nearestIndex(_ x: Double, in xs: [Double]) -> Int? {
         guard !xs.isEmpty else { return nil }
         var best = 0; var bestDist = abs(xs[0] - x)
@@ -87,20 +86,11 @@ struct RunningSessionDetail: View {
         return best
     }
 
-    // Qué pestañas (gráficas) hay disponibles según los datos
     private enum AnalysisTab: Int, CaseIterable {
         case pace, elevation, hr
-        
-        var title: String {
-            switch self {
-            case .pace:      return "Pace"
-            case .elevation: return "Elevation"
-            case .hr:        return "HR"
-            }
-        }
+        var title: String { self == .pace ? "Pace" : (self == .elevation ? "Elevation" : "HR") }
     }
 
-    // Devuelve las pestañas que realmente tienen datos
     private func availableTabs(for m: RunMetrics) -> [AnalysisTab] {
         var tabs: [AnalysisTab] = []
         if !m.paceSeries.isEmpty      { tabs.append(.pace) }
@@ -109,7 +99,6 @@ struct RunningSessionDetail: View {
         return tabs
     }
 
-    // Ruta decodificada (opcional)
     private var routeCoords: [CLLocationCoordinate2D]? {
         guard let poly = session.routePolyline, !poly.isEmpty else { return nil }
         return Polyline.decode(poly)
@@ -117,7 +106,6 @@ struct RunningSessionDetail: View {
     
     var body: some View {
         ScrollView {
-            // Mapa o ruta
             if let coords = routeCoords {
                 RouteMapView(coords: coords)
                     .frame(height: 260)
@@ -131,7 +119,6 @@ struct RunningSessionDetail: View {
                     .padding(.horizontal)
             }
             VStack(spacing: 20) {
-                // Métricas del run
                 Metric(value: formatDistance(session.distanceMeters), label: "Distance")
                 Metric(value: formatElapsed(session.durationSeconds), label: "Time")
                 Metric(
@@ -150,20 +137,31 @@ struct RunningSessionDetail: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                // ====== MÉTRICAS DETALLADAS (PACE / ELEV / HR) ======
+
                 analysisSection
-                // ---- Botón "Insights" (abre gráfico standalone) ----
+
+                // ---- Botón "Insights" (pill) ----
                 if let b = bucket(for: session.distanceMeters / 1000.0) {
                     let pts = fetchPaceHistory(for: b, prefersMiles: useMiles)
                     if pts.count >= 2 {
                         Button {
                             insights = .init(bucket: b, points: pts)
                         } label: {
-                            Label("Insights • \(b.display)", systemImage: "chart.xyaxis.line")
-                                .font(.headline)
+                            HStack(spacing: 10) {
+                                Image(systemName: "chart.xyaxis.line")
+                                Text("Insights").font(.headline)
+                            }
+                            .foregroundStyle(.blue)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color(uiColor: .systemBlue).opacity(0.12))
+                            )
                         }
-                        .buttonStyle(.borderedProminent)
-                        .frame(maxWidth: .infinity)
+                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
                         .padding(.top, 4)
                     }
                 }
@@ -173,7 +171,6 @@ struct RunningSessionDetail: View {
         }
         .navigationTitle("Running")
         .navigationBarTitleDisplayMode(.large)
-        // Presentación del gráfico en pantalla completa
         .sheet(item: $insights) { payload in
             FullScreenPaceChart(bucket: payload.bucket,
                                 prefersMiles: useMiles,
@@ -181,11 +178,10 @@ struct RunningSessionDetail: View {
         }
         .task {
             metrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
-            selectedIndex = 0 // empezamos siempre en el primer tab disponible
+            selectedIndex = 0
         }
     }
 
-    // Serie desde el primer run que cumple la marca hasta el último registrado
     private func fetchPaceHistory(for bucket: RecordBucket, prefersMiles: Bool) -> [PacePoint] {
         let minMeters = bucket.km * 1000.0
         let pred = #Predicate<RunningSession> { $0.distanceMeters >= minMeters }
@@ -204,45 +200,39 @@ struct RunningSessionDetail: View {
         }
     }
 
-    // Formatos básicos
     private func formatDistance(_ meters: Double) -> String {
         let km = meters / 1000.0
         return String(format: "%.2f km", km)
     }
     private func formatElapsed(_ seconds: Int) -> String {
-        let h = seconds/3600, m = (seconds%3600)/60, s = seconds%60
+        let h = seconds/3600, m = (seconds%3600)/60, s = Int(seconds%60)
         return String(format: "%d:%02d:%02d", h, m, s)
     }
 
-    /// Pace en tarjeta superior: respeta Settings (min/km o min/mi)
     private func formatPace(distanceMeters: Double, durationSeconds: Int) -> String {
         let km = max(distanceMeters / 1000.0, 0.001)
         let secPerKm = Double(durationSeconds) / km
-        let secPerUnit = useMiles ? secPerKm * 1.609344 : secPerKm // s/mi si miles
+        let secPerUnit = useMiles ? secPerKm * 1.609344 : secPerKm
         let m = Int(secPerUnit) / 60
         let s = Int(secPerUnit) % 60
         let unit = useMiles ? "min/mi" : "min/km"
         return String(format: "%d:%02d %@", m, s, unit)
     }
     
-    /// Etiqueta para valores de pace en el eje Y (mm:ss)
     private func paceLabel(_ secondsPerUnit: Double) -> String {
         let m = Int(secondsPerUnit) / 60
         let s = Int(secondsPerUnit) % 60
         return String(format: "%d:%02d", m, s)
     }
     
-    // ====== SOLO TABS CON DATOS ======
     @ViewBuilder
     private var analysisSection: some View {
         if let m = metrics {
-            // Construir tabs disponibles dinámicamente
             let tabs = availableTabs(for: m)
             if !tabs.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Analysis").font(.headline)
 
-                    // Asegurar índice válido si cambia el set de tabs
                     let safeIndex = min(selectedIndex, max(tabs.count - 1, 0))
 
                     Picker("", selection: Binding(
@@ -254,36 +244,32 @@ struct RunningSessionDetail: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .onChange(of: tabs) { _ in
-                        // Si cambian los tabs (por datos que llegan), vuelve al primero
-                        selectedIndex = 0
-                    }
+                    .onChange(of: tabs) { _ in selectedIndex = 0 }
 
                     Group {
                         switch tabs[safeIndex] {
                         case .pace:
-                            // Serie mostrada: convierte a s/mi si useMiles
-                            let paceSeriesDisplayed: [(time: Double, secPerUnit: Double)] =
-                                m.paceSeries.map { p in
-                                    let val = useMiles ? p.secPerKm * 1.609344 : p.secPerKm
-                                    return (p.time, val)
-                                }
-                            
+                            let series = m.paceSeries.map { p -> (Double, Double) in
+                                let val = useMiles ? p.secPerKm * 1.609344 : p.secPerKm
+                                return (p.time, val)
+                            }
                             Chart {
-                                ForEach(paceSeriesDisplayed.indices, id: \.self) { i in
-                                    let p = paceSeriesDisplayed[i]
-                                    LineMark(x: .value("t", p.time),
-                                             y: .value(useMiles ? "sec/mi" : "sec/km", p.secPerUnit))
-                                    PointMark(x: .value("t", p.time),
-                                              y: .value(useMiles ? "sec/mi" : "sec/km", p.secPerUnit))
-                                        .opacity(selPace?.t == p.time ? 1 : 0) // resalta el seleccionado
+                                ForEach(series.indices, id: \.self) { i in
+                                    let p = series[i]
+                                    LineMark(x: .value("t", p.0),
+                                             y: .value(useMiles ? "sec/mi" : "sec/km", p.1))
+                                    PointMark(x: .value("t", p.0),
+                                              y: .value(useMiles ? "sec/mi" : "sec/km", p.1))
+                                        .opacity(selPace?.t == p.0 ? 1 : 0)
                                 }
                             }
                             .chartYAxis {
                                 AxisMarks(preset: .extended) { v in
                                     AxisGridLine(); AxisTick()
                                     AxisValueLabel {
-                                        if let y = v.as(Double.self) { Text(paceLabel(y)) }
+                                        if let y = v.as(Double.self) {
+                                            Text(paceLabel(y))
+                                        }
                                     }
                                 }
                             }
@@ -293,17 +279,16 @@ struct RunningSessionDetail: View {
                                     let plot = geo[proxy.plotAreaFrame]
                                     Rectangle().fill(.clear).contentShape(Rectangle())
                                         .gesture(
-                                            DragGesture(minimumDistance: 0)
-                                                .onChanged { value in
-                                                    let xInPlot = value.location.x - plot.minX
-                                                    if let xVal: Double = proxy.value(atX: xInPlot) {
-                                                        let xs = paceSeriesDisplayed.map { $0.time }
-                                                        if let idx = nearestIndex(xVal, in: xs) {
-                                                            let p = paceSeriesDisplayed[idx]
-                                                            selPace = (p.time, p.secPerUnit)
-                                                        }
+                                            DragGesture(minimumDistance: 0).onChanged { value in
+                                                let xInPlot = value.location.x - plot.minX
+                                                if let xVal: Double = proxy.value(atX: xInPlot) {
+                                                    let xs = series.map { $0.0 }
+                                                    if let idx = nearestIndex(xVal, in: xs) {
+                                                        let p = series[idx]
+                                                        selPace = (p.0, p.1)
                                                     }
                                                 }
+                                            }
                                         )
                                     if let s = selPace,
                                        let px = proxy.position(forX: s.t),
@@ -311,11 +296,8 @@ struct RunningSessionDetail: View {
                                         let margin: CGFloat = 40
                                         let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
                                         let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
-                                        LocalCallout(
-                                            title: paceLabel(s.v),
-                                            subtitle: timeLabel(s.t)
-                                        )
-                                        .position(x: clampedX, y: clampedY)
+                                        LocalCallout(title: paceLabel(s.v), subtitle: timeLabel(s.t))
+                                            .position(x: clampedX, y: clampedY)
                                     }
                                 }
                             }
@@ -336,29 +318,25 @@ struct RunningSessionDetail: View {
                                     let plot = geo[proxy.plotAreaFrame]
                                     Rectangle().fill(.clear).contentShape(Rectangle())
                                         .gesture(
-                                            DragGesture(minimumDistance: 0)
-                                                .onChanged { value in
-                                                    let xInPlot = value.location.x - plot.minX
-                                                    if let xVal: Double = proxy.value(atX: xInPlot) {
-                                                        let xs = m.elevationSeries.map { $0.time }
-                                                        if let idx = nearestIndex(xVal, in: xs) {
-                                                            let p = m.elevationSeries[idx]
-                                                            selElev = (p.time, p.meters)
-                                                        }
+                                            DragGesture(minimumDistance: 0).onChanged { value in
+                                                let xInPlot = value.location.x - plot.minX
+                                                if let xVal: Double = proxy.value(atX: xInPlot) {
+                                                    let xs = m.elevationSeries.map { $0.time }
+                                                    if let idx = nearestIndex(xVal, in: xs) {
+                                                        let p = m.elevationSeries[idx]
+                                                        selElev = (p.time, p.meters)
                                                     }
                                                 }
+                                            }
                                         )
                                     if let s = selElev,
                                        let px = proxy.position(forX: s.t),
                                        let py = proxy.position(forY: s.v) {
                                         let margin: CGFloat = 40
                                         let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
-                                        let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
-                                        LocalCallout(
-                                            title: "\(Int(s.v)) m",
-                                            subtitle: timeLabel(s.t)
-                                        )
-                                        .position(x: clampedX, y: clampedY)
+                                        let clampedY = min(max(plot.origin.y + py - 28, plot.minY - margin/2), plot.maxY - margin/2)
+                                        LocalCallout(title: "\(Int(s.v)) m", subtitle: timeLabel(s.t))
+                                            .position(x: clampedX, y: clampedY)
                                     }
                                 }
                             }
@@ -379,17 +357,16 @@ struct RunningSessionDetail: View {
                                     let plot = geo[proxy.plotAreaFrame]
                                     Rectangle().fill(.clear).contentShape(Rectangle())
                                         .gesture(
-                                            DragGesture(minimumDistance: 0)
-                                                .onChanged { value in
-                                                    let xInPlot = value.location.x - plot.minX
-                                                    if let xVal: Double = proxy.value(atX: xInPlot) {
-                                                        let xs = m.heartRateSeries.map { $0.time }
-                                                        if let idx = nearestIndex(xVal, in: xs) {
-                                                            let p = m.heartRateSeries[idx]
-                                                            selHR = (p.time, p.bpm)
-                                                        }
+                                            DragGesture(minimumDistance: 0).onChanged { value in
+                                                let xInPlot = value.location.x - plot.minX
+                                                if let xVal: Double = proxy.value(atX: xInPlot) {
+                                                    let xs = m.heartRateSeries.map { $0.time }
+                                                    if let idx = nearestIndex(xVal, in: xs) {
+                                                        let p = m.heartRateSeries[idx]
+                                                        selHR = (p.time, p.bpm)
                                                     }
                                                 }
+                                            }
                                         )
                                     if let s = selHR,
                                        let px = proxy.position(forX: s.t),
@@ -397,15 +374,11 @@ struct RunningSessionDetail: View {
                                         let margin: CGFloat = 40
                                         let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
                                         let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
-                                        LocalCallout(
-                                            title: "\(Int(s.v)) bpm",
-                                            subtitle: timeLabel(s.t)
-                                        )
-                                        .position(x: clampedX, y: clampedY)
+                                        LocalCallout(title: "\(Int(s.v)) bpm", subtitle: timeLabel(s.t))
+                                            .position(x: clampedX, y: clampedY)
                                     }
                                 }
                             }
-
                         }
                     }
                     .frame(height: 220)
@@ -417,9 +390,6 @@ struct RunningSessionDetail: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                // Si no hay ningún dato, no mostramos sección
-                EmptyView()
             }
         }
     }
@@ -501,22 +471,28 @@ struct RouteMapView: UIViewRepresentable {
     }
 }
 
-// MARK: - Gym detail
+// MARK: - Gym detail + Insights
 
 struct GymSessionDetail: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Query private var settingsList: [Settings]
+    private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
 
     let session: StrengthSession
 
     @State private var showDelete = false
     @State private var showEdit = false
 
+    // Presentación hoja de insights
+    @State private var showExercisePicker = false
+    @State private var selectedExercise: Exercise? = nil   // usamos sheet(item:)
+
     var body: some View {
         List {
             Section("SETS") {
                 ForEach(sortedSets, id: \.id) { set in
-                    GymSetRow(set: set)
+                    GymSetRow(set: set, usePounds: usePounds)
                 }
             }
 
@@ -537,6 +513,32 @@ struct GymSessionDetail: View {
                         .monospacedDigit()
                 }
             }
+
+            // --- INSIGHTS (debajo de SUMMARY: pill) ---
+            if !insightExercises.isEmpty {
+                Button {
+                    if insightExercises.count == 1 {
+                        selectedExercise = insightExercises.first  // al asignar, sheet(item:) se presenta
+                    } else {
+                        showExercisePicker = true
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "chart.xyaxis.line")
+                        Text("Insights").font(.headline)
+                    }
+                    .foregroundStyle(.blue)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(uiColor: .systemBlue).opacity(0.12))
+                    )
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+            }
         }
         .navigationTitle("Gym")
         .navigationBarTitleDisplayMode(.large)
@@ -545,6 +547,15 @@ struct GymSessionDetail: View {
                 Button("Edit") { showEdit = true }
                 Button(role: .destructive) { showDelete = true } label: { Text("Delete") }
             }
+        }
+        .confirmationDialog("Choose exercise",
+                            isPresented: $showExercisePicker) {
+            ForEach(insightExercises, id: \.id) { ex in
+                Button(ex.name) {
+                    selectedExercise = ex
+                }
+            }
+            Button("Cancel", role: .cancel) {}
         }
         .confirmationDialog("Delete workout?",
                             isPresented: $showDelete,
@@ -555,6 +566,13 @@ struct GymSessionDetail: View {
                 dismiss()
             }
             Button("Cancel", role: .cancel) {}
+        }
+        .sheet(item: $selectedExercise) { ex in
+            // Se presenta SOLO cuando hay ejercicio -> no hay pantalla en blanco
+            GymExerciseInsightsView(exercise: ex,
+                                    currentSession: session,
+                                    usePounds: usePounds,
+                                    context: context)
         }
         .sheet(isPresented: $showEdit) {
             EditGymSheet(session: session)
@@ -567,23 +585,44 @@ struct GymSessionDetail: View {
             return a.id.uuidString < b.id.uuidString
         }
     }
+
+    private var insightExercises: [Exercise] {
+        var seen = Set<UUID>()
+        var result: [Exercise] = []
+        for set in session.sets {
+            let ex = set.exercise
+            if !seen.contains(ex.id), hasHistory(for: ex) {
+                seen.insert(ex.id); result.append(ex)
+            }
+        }
+        return result.sorted { $0.name < $1.name }
+    }
+
+    private func hasHistory(for ex: Exercise) -> Bool {
+        let desc = FetchDescriptor<StrengthSession>(
+            sortBy: [SortDescriptor(\StrengthSession.date, order: .reverse)]
+        )
+        guard let sessions = try? context.fetch(desc), !sessions.isEmpty else { return false }
+        var count = 0
+        for s in sessions where s.sets.contains(where: { $0.exercise.id == ex.id }) {
+            count += 1; if count >= 2 { return true }
+        }
+        return false
+    }
 }
 
 private struct GymSetRow: View {
-    // Lee lb/kg reales desde Settings (SwiftData)
-    @Query private var settingsList: [Settings]
-    private var usePounds: Bool { settingsList.first?.prefersPounds ?? false }
-
     let set: StrengthSet
+    let usePounds: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(set.exercise.name).font(.headline)
                 Text("• \(groupName(set.exercise.muscleGroup))")
                     .foregroundStyle(.secondary)
+                Spacer(minLength: 6)
             }
-
             HStack(spacing: 12) {
                 Text("Reps: \(set.reps)")
                     .font(.subheadline)
@@ -592,8 +631,8 @@ private struct GymSetRow: View {
 
                 if let wKg = set.weightKg, wKg > 0 {
                     let value = usePounds ? kgToLb(wKg) : wKg
-                    let unit  = usePounds ? "lb"      : "kg"
-                    let fmt   = usePounds ? "%.0f"    : "%.1f"
+                    let unit  = usePounds ? "lb" : "kg"
+                    let fmt   = usePounds ? "%.0f" : "%.1f"
                     Text("Weight: \(String(format: fmt, value)) \(unit)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -601,7 +640,7 @@ private struct GymSetRow: View {
                 }
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 
     private func groupName(_ g: MuscleGroup) -> String {
@@ -615,12 +654,191 @@ private struct GymSetRow: View {
     }
 }
 
-// Helpers de conversión
+// ===== MVVM: ViewModel para Gym Exercise Insights =====
+
+final class GymExerciseInsightsVM: ObservableObject {
+    enum Period: String, CaseIterable, Identifiable {
+        case ytd = "YTD", monthly = "Monthly", yearly = "Yearly"
+        var id: String { rawValue }
+    }
+
+    @Published var points: [GymPoint] = []
+    @Published var isWeighted = false
+    @Published var emptyMessage: String? = nil
+
+    struct GymPoint: Identifiable {
+        let id = UUID()
+        let date: Date
+        let valueKgOrReps: Double
+    }
+
+    private let context: ModelContext
+    private let exercise: Exercise
+    private let refDate: Date
+
+    init(context: ModelContext, exercise: Exercise, refDate: Date) {
+        self.context = context
+        self.exercise = exercise
+        self.refDate = refDate
+        self.isWeighted = exercise.isWeighted
+    }
+
+    func load(period: Period) {
+        let start = startDate(for: period, ref: refDate)
+        let end   = refDate
+
+        let pred = #Predicate<StrengthSession> { s in
+            s.date >= start && s.date <= end
+        }
+        let desc = FetchDescriptor<StrengthSession>(
+            predicate: pred,
+            sortBy: [SortDescriptor(\StrengthSession.date, order: .forward)]
+        )
+
+        let sessions = (try? context.fetch(desc)) ?? []
+
+        // Agrupado por día: mejor peso o reps de ese ejercicio
+        let cal = Calendar.current
+        var dayBest: [Date: Double] = [:]
+        for s in sessions {
+            let sets = s.sets.filter { $0.exercise.id == exercise.id }
+            guard !sets.isEmpty else { continue }
+            let day = cal.startOfDay(for: s.date)
+            let v: Double = exercise.isWeighted
+                ? (sets.compactMap { $0.weightKg }.max() ?? 0)
+                : Double(sets.map { $0.reps }.max() ?? 0)
+            dayBest[day] = max(dayBest[day] ?? 0, v)
+        }
+
+        let series = dayBest.keys.sorted().map { d in
+            GymPoint(date: d, valueKgOrReps: dayBest[d] ?? 0)
+        }
+
+        if series.count < 2 {
+            self.points = []
+            self.emptyMessage = "Not enough data to plot"
+        } else {
+            self.points = series
+            self.emptyMessage = nil
+        }
+    }
+
+    private func startDate(for p: Period, ref: Date) -> Date {
+        let cal = Calendar.current
+        switch p {
+        case .monthly:
+            return cal.date(from: cal.dateComponents([.year, .month], from: ref)) ?? ref
+        case .ytd:
+            return cal.date(from: DateComponents(year: cal.component(.year, from: ref), month: 1, day: 1)) ?? ref
+        case .yearly:
+            return cal.date(byAdding: .day, value: -365, to: ref) ?? ref
+        }
+    }
+}
+
+// ===== Hoja de Insights (View) =====
+
+private struct GymExerciseInsightsView: View {
+    typealias Period = GymExerciseInsightsVM.Period
+
+    @StateObject private var vm: GymExerciseInsightsVM
+
+    let exerciseName: String
+    let usePounds: Bool
+
+    @State private var period: Period = .ytd
+
+    // Init explícito para inyectar VM
+    init(exercise: Exercise, currentSession: StrengthSession, usePounds: Bool, context: ModelContext) {
+        _vm = StateObject(wrappedValue: GymExerciseInsightsVM(context: context,
+                                                              exercise: exercise,
+                                                              refDate: currentSession.date))
+        self.exerciseName = exercise.name
+        self.usePounds = usePounds
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Picker("Period", selection: $period) {
+                    ForEach(Period.allCases) { p in Text(p.rawValue).tag(p) }
+                }
+                .pickerStyle(.segmented)
+
+                VStack(spacing: 6) {
+                    Text(exerciseName).font(.title3).bold()
+                    Text(vm.isWeighted ? "Max weight per day" : "Max reps per day")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+                .padding(.top, 2)
+
+                if let msg = vm.emptyMessage {
+                    VStack(spacing: 8) {
+                        Image(systemName: "chart.xyaxis.line")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.secondary)
+                        Text(msg).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    Chart(vm.points) { p in
+                        LineMark(
+                            x: .value("Date", p.date),
+                            y: .value(vm.isWeighted ? (usePounds ? "lb" : "kg") : "reps",
+                                      displayValue(p.valueKgOrReps))
+                        )
+                        PointMark(
+                            x: .value("Date", p.date),
+                            y: .value(vm.isWeighted ? (usePounds ? "lb" : "kg") : "reps",
+                                      displayValue(p.valueKgOrReps))
+                        )
+                    }
+                    .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) }
+                    .chartYAxis { AxisMarks() }
+                    .frame(height: 260)
+
+                    if let last = vm.points.last {
+                        let lastStr = vm.isWeighted ? displayWeight(last.valueKgOrReps)
+                                                    : String(format: "%.0f reps", last.valueKgOrReps)
+                        let bestVal = vm.points.map(\.valueKgOrReps).max() ?? last.valueKgOrReps
+                        let bestStr = vm.isWeighted ? displayWeight(bestVal)
+                                                    : String(format: "%.0f reps", bestVal)
+                        Text("Last: \(lastStr) • Best: \(bestStr)")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 4)
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding()
+            .navigationTitle("Insights")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear { vm.load(period: period) }
+            .onChange(of: period) { newVal in vm.load(period: newVal) }
+        }
+    }
+
+    private func displayWeight(_ kg: Double) -> String {
+        let val = usePounds ? kgToLb(kg) : kg
+        let unit = usePounds ? "lb" : "kg"
+        let fmt = usePounds ? "%.0f %@" : "%.1f %@"
+        return String(format: fmt, val, unit)
+    }
+
+    private func displayValue(_ v: Double) -> Double {
+        vm.isWeighted ? (usePounds ? kgToLb(v) : v) : v
+    }
+}
+
+// Helpers
 @inline(__always) private func kgToLb(_ kg: Double) -> Double { kg * 2.2046226218 }
 @inline(__always) private func lbToKg(_ lb: Double) -> Double { lb / 2.2046226218 }
 
-// Compat: permite seguir usando init(session:)
+// Compat
 extension TrainingDetailView {
     init(session: RunningSession)  { self.init(item: .running(session)) }
     init(session: StrengthSession) { self.init(item: .gym(session)) }
 }
+

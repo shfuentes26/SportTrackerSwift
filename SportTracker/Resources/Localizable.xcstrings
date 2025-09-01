@@ -204,6 +204,9 @@
     "Chest/Back: %lld" : {
 
     },
+    "Choose exercise" : {
+
+    },
     "Close" : {
 
     },
@@ -454,9 +457,6 @@
     "Insights" : {
 
     },
-    "Insights • %@" : {
-
-    },
     "Integrations" : {
       "localizations" : {
         "es" : {
@@ -466,6 +466,9 @@
           }
         }
       }
+    },
+    "kg" : {
+
     },
     "km" : {
       "localizations" : {
@@ -501,6 +504,19 @@
     "Last import: %@" : {
 
     },
+    "Last: %@ • Best: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Last: %1$@ • Best: %2$@"
+          }
+        }
+      }
+    },
+    "lb" : {
+
+    },
     "Legs" : {
       "localizations" : {
         "es" : {
@@ -530,6 +546,12 @@
 
     },
     "Marathon" : {
+
+    },
+    "Max reps per day" : {
+
+    },
+    "Max weight per day" : {
 
     },
     "mi" : {
@@ -668,6 +690,9 @@
         }
       }
     },
+    "Period" : {
+
+    },
     "Points" : {
 
     },
@@ -695,6 +720,9 @@
           }
         }
       }
+    },
+    "reps" : {
+
     },
     "Reps" : {
       "localizations" : {
