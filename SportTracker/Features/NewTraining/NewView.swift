@@ -468,7 +468,20 @@ struct SetRow: View {
             } else {
                 Picker("Exercise", selection: selectionBinding) {
                     ForEach(allExercises, id: \.id) { ex in
-                        Text(ex.name).tag(Optional(ex.id))
+                        Text(ex.name).tag(ex.id as UUID?)   // tag del MISMO tipo que selection (UUID?)
+                    }
+                }
+                .pickerStyle(.menu)                         // menú desplegable en iPhone
+                .onAppear {
+                    // Si no hay nada guardado aún, fija una selección real
+                    if input.exerciseId == nil {
+                        input.exerciseId = allExercises.first?.id
+                    }
+                }
+                .onChange(of: allExercises.map(\.id)) { ids in
+                    // Si cambia la categoría y la selección ya no existe, usa la primera opción
+                    if let cur = input.exerciseId, !ids.contains(cur) {
+                        input.exerciseId = ids.first
                     }
                 }
             }
