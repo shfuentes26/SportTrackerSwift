@@ -132,6 +132,9 @@
         }
       }
     },
+    "Back" : {
+
+    },
     "Back to options" : {
       "localizations" : {
         "es" : {
@@ -264,6 +267,9 @@
           }
         }
       }
+    },
+    "Discard changes" : {
+
     },
     "Distance" : {
 
@@ -515,6 +521,9 @@
       }
     },
     "lb" : {
+
+    },
+    "Leave without saving?" : {
 
     },
     "Legs" : {
@@ -985,6 +994,9 @@
           }
         }
       }
+    },
+    "You have unsaved changes from this Live Run. Are you sure you want to leave?" : {
+
     },
     "Your run has been saved." : {
       "localizations" : {
