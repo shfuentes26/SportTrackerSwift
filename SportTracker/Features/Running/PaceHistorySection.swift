@@ -55,7 +55,7 @@ func pacePerUnit(seconds: Double, distanceKm: Double, prefersMiles: Bool) -> Dou
     return prefersMiles ? secPerKm * 1.609344 : secPerKm
 }
 
-// MARK: - Callout reutilizable (más claro)
+// MARK: - Callout reutilizable
 
 private struct ChartCallout: View {
     let title: String
@@ -94,7 +94,7 @@ struct PaceHistorySection: View {
                 Text("Pace trend • \(bucket.display)")
                     .font(.headline)
 
-                // Pequeño teaser: últimos puntos
+                // Teaser: últimos puntos
                 Chart {
                     ForEach(points.suffix(min(points.count, 20))) { p in
                         LineMark(
@@ -162,17 +162,15 @@ struct FullScreenPaceChart: View {
 
     private var unitLabel: String { prefersMiles ? "min/mi" : "min/km" }
 
-    // Serie según el tab seleccionado
+    // ---- Serie según el tab seleccionado ----
     private var series: [PacePoint] {
         switch scope {
         case .ytd:
-            let y = Calendar.current.component(.year, from: Date())
-            return points.filter { Calendar.current.component(.year, from: $0.date) == y }
-                         .sorted { $0.date < $1.date }
+            return ytdDailyBest(points: points)                  // mejor por día, año actual
         case .monthly:
-            return monthlyBest(points: points, lastMonths: 12)
+            return monthlyBestCurrentYear(points: points)        // mejor por mes, año actual
         case .yearly:
-            return yearlyBest(points: points)
+            return yearlyBest(points: points)                    // mejor por año, todos los años
         }
     }
 
@@ -181,145 +179,88 @@ struct FullScreenPaceChart: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
-                Picker("Scope", selection: $scope) {
-                    ForEach(ChartScope.allCases) { s in
-                        Text(s.rawValue).tag(s)
-                    }
+                Picker("", selection: $scope) {
+                    ForEach(ChartScope.allCases) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                .padding(.horizontal)
 
-                if series.isEmpty {
-                    ContentUnavailableView(
-                        "No data",
-                        systemImage: "chart.xyaxis.line",
-                        description: Text("No hay registros para \(scope.rawValue.lowercased()).")
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                } else {
-                    Chart {
-                        ForEach(series) { p in
-                            LineMark(
-                                x: .value("Date", p.date),
-                                y: .value("PacePlot", -p.paceSecPerUnit)
-                            )
-                            .interpolationMethod(.monotone)
+                Text(titleForBucket()).font(.largeTitle.bold()).frame(maxWidth: .infinity, alignment: .leading)
+                Text(labelForPeriod()).font(.subheadline).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
 
-                            PointMark(
-                                x: .value("Date", p.date),
-                                y: .value("PacePlot", -p.paceSecPerUnit)
-                            )
-                            .symbolSize(28)
-                        }
-
-                        if best.isFinite {
-                            RuleMark(y: .value("BestPlot", -best))
-                                .foregroundStyle(.secondary)
-                                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                                .annotation(position: .leading) {
-                                    Text("Best: \(paceString(best)) \(unitLabel)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                        }
+                let s = series
+                Chart {
+                    ForEach(s.indices, id: \.self) { i in
+                        let p = s[i]
+                        LineMark(x: .value("Date", p.date),
+                                 y: .value(axisTitle(), -p.paceSecPerUnit))
+                        PointMark(x: .value("Date", p.date),
+                                  y: .value(axisTitle(), -p.paceSecPerUnit))
+                        .opacity(s.count <= 1 ? 1 : (selectedPoint?.date == p.date ? 1 : 0))
+                        .symbolSize(60)
                     }
-                    .chartYScale(domain: .automatic(includesZero: false))
-                    .chartYAxis {
-                        AxisMarks(position: .leading) { value in
-                            AxisGridLine()
-                            AxisValueLabel {
-                                if let v = value.as(Double.self) {
-                                    Text(paceString(-v))
-                                }
-                            }
-                        }
-                    }
-                    .chartXAxis {
-                        if scope == .yearly {
-                            AxisMarks(values: .stride(by: .year)) { v in
-                                AxisGridLine()
-                                AxisValueLabel {
-                                    if let d = v.as(Date.self) {
-                                        Text(yearFormatter.string(from: d))
-                                    }
-                                }
-                            }
-                        } else {
-                            AxisMarks(values: .stride(by: .month)) { v in
-                                AxisGridLine()
-                                AxisValueLabel {
-                                    if let d = v.as(Date.self) {
-                                        Text(monthShortFormatter.string(from: d))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    .contentShape(Rectangle())
-                    // Overlay: gesto + callout dibujado dentro del plot y "clamp" a los bordes
-                    .chartOverlay { proxy in
-                        GeometryReader { geo in
-                            let plot = geo[proxy.plotAreaFrame]
-
-                            // Gesto de selección
-                            Rectangle().fill(.clear).contentShape(Rectangle())
-                                .gesture(
-                                    DragGesture(minimumDistance: 0)
-                                        .onChanged { value in
-                                            let locationX = value.location.x - plot.origin.x
-                                            if let date: Date = proxy.value(atX: locationX),
-                                               let nearest = nearestPoint(to: date, in: series) {
-                                                selectedPoint = nearest
-                                            }
-                                        }
-                                )
-
-                            // Callout de la selección (si hay)
-                            if let sel = selectedPoint,
-                               let x = proxy.position(forX: sel.date),
-                               let y = proxy.position(forY: -sel.paceSecPerUnit) {
-
-                                // Posición absoluta dentro del GeometryReader
-                                let px = plot.origin.x + x
-                                let py = plot.origin.y + y
-
-                                // Márgenes para que no se salga
-                                let margin: CGFloat = 40
-                                let clampedX = min(max(px, plot.minX + margin), plot.maxX - margin)
-                                // Sitúalo un poco por encima del punto, pero sin rebasar tabs ni borde superior
-                                let desiredY = py - 28
-                                let clampedY = min(max(desiredY, plot.minY + margin/2), plot.maxY - margin/2)
-
-                                ChartCallout(
-                                    title: "\(paceString(sel.paceSecPerUnit)) \(unitLabel)",
-                                    subtitle: labelForX(sel.date)
-                                )
-                                .position(x: clampedX, y: clampedY)
-                            }
-                        }
-                    }
-                    // Altura: en portrait (sizeClass vertical = .regular) ocupa ~la mitad de la pantalla.
-                    // En landscape (sizeClass vertical = .compact) lo dejamos como está (llenando).
-                    .frame(height: (vSize == .compact) ? nil : max(240, UIScreen.main.bounds.height * 0.5))
-                    .frame(maxHeight: (vSize == .compact) ? .infinity : nil, alignment: .top)
-
                 }
+                .chartXAxis {
+                    switch scope {
+                    case .ytd:     AxisMarks(values: .automatic(desiredCount: 6))
+                    case .monthly: AxisMarks(values: .stride(by: .month))
+                    case .yearly:  AxisMarks(values: .stride(by: .year))
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(preset: .extended) { v in
+                        AxisGridLine(); AxisTick()
+                        AxisValueLabel { if let y = v.as(Double.self) { Text(paceString(-y)) } }
+                    }
+                }
+                .contentShape(Rectangle())
+                .chartOverlay { proxy in
+                    GeometryReader { geo in
+                        let plot = geo[proxy.plotAreaFrame]
+                        Rectangle().fill(.clear).contentShape(Rectangle())
+                            .gesture(DragGesture(minimumDistance: 0).onChanged { value in
+                                let xInPlot = value.location.x - plot.minX
+                                if let d: Date = proxy.value(atX: xInPlot) {
+                                    let xs = s.map { $0.date.timeIntervalSince1970 }
+                                    if let idx = nearestIndex(d.timeIntervalSince1970, in: xs) {
+                                        selectedPoint = s[idx]
+                                    }
+                                }
+                            })
+                        if let sel = selectedPoint,
+                           let px = proxy.position(forX: sel.date),
+                           let py = proxy.position(forY: -sel.paceSecPerUnit) {
+                            // Guía vertical como View
+                            Rectangle()
+                                .fill(Color.secondary.opacity(0.35))
+                                .frame(width: 1, height: plot.size.height)
+                                .position(x: plot.origin.x + px, y: plot.midY)
+
+                            let margin: CGFloat = 40
+                            let clampedX = min(max(plot.origin.x + px, plot.minX + margin), plot.maxX - margin)
+                            let clampedY = min(max(plot.origin.y + py - 28, plot.minY + margin/2), plot.maxY - margin/2)
+                            ChartCallout(title: "\(paceString(sel.paceSecPerUnit)) \(unitLabel)",
+                                         subtitle: labelForX(sel.date))
+                            .position(x: clampedX, y: clampedY)
+                        }
+                    }
+                }
+                .frame(height: (vSize == .compact) ? nil : max(240, UIScreen.main.bounds.height * 0.5))
+                .frame(maxHeight: (vSize == .compact) ? .infinity : nil, alignment: .top)
+
+                if let last = s.last {
+                    let bestVal = s.map(\.paceSecPerUnit).min() ?? last.paceSecPerUnit
+                    Text("Last: \(paceString(last.paceSecPerUnit)) • Best: \(paceString(bestVal))")
+                        .font(.footnote).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Spacer(minLength: 0)
             }
+            .padding()
             .navigationTitle("\(bucket.display) pace")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Close") { dismiss() } } }
-            // IMPORTANTE: NO ignoramos safe area => las etiquetas del eje Y no quedan bajo la isla
-            .frame(
-                maxWidth: .infinity,
-                maxHeight: (vSize == .compact) ? nil : .infinity,
-                alignment: .top
-            )
-            .brandHeaderSpacer()
+            .onChange(of: scope) { _ in selectedPoint = nil }
         }
-        // Rotación habilitada en Insights (requiere OrientationSupport.swift)
-        .onAppear { OrientationLockDelegate.allowPortraitAndLandscape() }
-        .onDisappear { OrientationLockDelegate.lockPortrait() }
-        .onChange(of: scope) { _ in selectedPoint = nil }
     }
 
     // MARK: - Formatters & helpers
@@ -342,46 +283,81 @@ struct FullScreenPaceChart: View {
 
     private func labelForX(_ date: Date) -> String {
         switch scope {
-        case .ytd:     return SummaryView.formatDate(date)
+        case .ytd:     return SummaryView.formatDate(date) // formateador ya existente
         case .monthly: return monthYearFormatter.string(from: date)
         case .yearly:  return yearFormatter.string(from: date)
         }
     }
 
-    private func nearestPoint(to date: Date, in series: [PacePoint]) -> PacePoint? {
-        guard !series.isEmpty else { return nil }
-        return series.min { a, b in
-            abs(a.date.timeIntervalSince(date)) < abs(b.date.timeIntervalSince(date))
+    private func nearestIndex(_ x: Double, in xs: [Double]) -> Int? {
+        guard !xs.isEmpty else { return nil }
+        var best = 0; var bestDist = abs(xs[0] - x)
+        for i in 1..<xs.count {
+            let d = abs(xs[i] - x)
+            if d < bestDist { best = i; bestDist = d }
+        }
+        return best
+    }
+
+    // ---- Agregaciones pedidas ----
+
+    /// YTD: desde el 1 de enero del año actual hasta hoy, mejor pace por DÍA.
+    private func ytdDailyBest(points: [PacePoint]) -> [PacePoint] {
+        let cal = Calendar.current
+        let now = Date()
+        let startOfYear = cal.date(from: DateComponents(year: cal.component(.year, from: now), month: 1, day: 1))!
+        var bestByDay: [Date: Double] = [:]
+        for p in points where p.date >= startOfYear && p.date <= now {
+            let day = cal.startOfDay(for: p.date)
+            bestByDay[day] = min(bestByDay[day] ?? .infinity, p.paceSecPerUnit)
+        }
+        return bestByDay.keys.sorted().map { d in
+            PacePoint(date: d, paceSecPerUnit: bestByDay[d] ?? .infinity)
         }
     }
 
-    /// Últimos `lastMonths` meses (incluido el actual), mejor registro por mes (solo meses con datos).
-    private func monthlyBest(points: [PacePoint], lastMonths: Int) -> [PacePoint] {
+    /// Monthly: año actual hasta hoy, mejor pace por MES.
+    /// Usamos la fecha anclada al primer día del mes como clave para evitar
+    /// problemas de igualdad con DateComponents.
+    private func monthlyBestCurrentYear(points: [PacePoint]) -> [PacePoint] {
         let cal = Calendar.current
-        guard let startMonth = cal.date(from: cal.dateComponents([.year, .month], from: Date())) else { return [] }
-        guard let start = cal.date(byAdding: .month, value: -(lastMonths - 1), to: startMonth) else { return [] }
+        let now = Date()
+        let startOfYear = cal.date(from: DateComponents(year: cal.component(.year, from: now), month: 1, day: 1))!
 
-        var bestByMonth: [DateComponents: Double] = [:]
-        for p in points where p.date >= start {
+        // clave = inicio de mes (Date), valor = mejor pace de ese mes
+        var bestByMonth: [Date: Double] = [:]
+        for p in points where p.date >= startOfYear && p.date <= now {
             let comps = cal.dateComponents([.year, .month], from: p.date)
-            let key = DateComponents(year: comps.year, month: comps.month)
-            bestByMonth[key] = min(bestByMonth[key] ?? .infinity, p.paceSecPerUnit)
+            if let monthStart = cal.date(from: comps) {
+                bestByMonth[monthStart] = min(bestByMonth[monthStart] ?? .infinity, p.paceSecPerUnit)
+            }
         }
 
+        // Recorremos enero..mes actual e incluimos los meses con datos
         var result: [PacePoint] = []
-        var d = start
-        let end = Date()
-        while d <= end {
-            let comps = cal.dateComponents([.year, .month], from: d)
-            if let value = bestByMonth[comps], let anchor = cal.date(from: comps) {
-                result.append(PacePoint(date: anchor, paceSecPerUnit: value))
+        for m in monthAnchors(from: startOfYear, to: now, calendar: cal) {
+            if let v = bestByMonth[m] {
+                result.append(PacePoint(date: m, paceSecPerUnit: v))
             }
-            d = cal.date(byAdding: .month, value: 1, to: d)!
         }
         return result
     }
 
-    /// Mejor registro por año (para todos los años disponibles).
+    /// Genera anclas al primer día de cada mes entre start y end (inclusive).
+    private func monthAnchors(from start: Date, to end: Date, calendar cal: Calendar) -> [Date] {
+        var out: [Date] = []
+        var d = start
+        while d <= end {
+            if let anchor = cal.date(from: cal.dateComponents([.year, .month], from: d)) {
+                out.append(anchor)
+            }
+            d = cal.date(byAdding: .month, value: 1, to: d)!
+        }
+        return out
+    }
+
+
+    /// Yearly: mejor pace por AÑO para todos los años con datos.
     private func yearlyBest(points: [PacePoint]) -> [PacePoint] {
         let cal = Calendar.current
         var bestByYear: [Int: Double] = [:]
@@ -396,4 +372,16 @@ struct FullScreenPaceChart: View {
             return PacePoint(date: d, paceSecPerUnit: val)
         }
     }
+
+    // Etiquetas y títulos
+
+    private func titleForBucket() -> String { "\(bucket.display)" }
+    private func labelForPeriod() -> String {
+        switch scope {
+        case .ytd:     return "Best pace per day (YTD)"
+        case .monthly: return "Best pace per month"
+        case .yearly:  return "Best pace per year"
+        }
+    }
+    private func axisTitle() -> String { prefersMiles ? "min/mi (plot)" : "min/km (plot)" }
 }

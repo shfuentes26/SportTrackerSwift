@@ -154,19 +154,6 @@
     "Basics" : {
 
     },
-    "Best: %@ %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Best: %1$@ %2$@"
-          }
-        }
-      }
-    },
-    "BestPlot" : {
-
-    },
     "bpm" : {
 
     },
@@ -614,9 +601,6 @@
         }
       }
     },
-    "No data" : {
-
-    },
     "No exercises found. Add some in your library." : {
 
     },
@@ -631,9 +615,6 @@
       }
     },
     "No exercises yet" : {
-
-    },
-    "No hay registros para %@." : {
 
     },
     "No record yet" : {
@@ -784,9 +765,6 @@
 
     },
     "Saved" : {
-
-    },
-    "Scope" : {
 
     },
     "sec/km" : {
