@@ -58,7 +58,7 @@ struct GymSessionDetail: View {
 
                         // Chevron de navegación (gris)
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.blue)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 10)
