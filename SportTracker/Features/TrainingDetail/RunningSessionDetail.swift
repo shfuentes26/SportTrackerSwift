@@ -88,6 +88,7 @@ struct RunningSessionDetail: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(.horizontal)
             }
+            
 
             VStack(spacing: 20) {
                 Metric(value: formatDistance(session.distanceMeters), label: "Distance")
@@ -135,6 +136,7 @@ struct RunningSessionDetail: View {
             .padding(.horizontal)
             .padding(.top, 16)
         }
+        .brandHeaderSpacer()
         .navigationTitle("Running")
         .navigationBarTitleDisplayMode(.large)
         .sheet(item: $insights) { p in
