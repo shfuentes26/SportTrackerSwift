@@ -136,6 +136,10 @@ struct RunningSessionDetail: View {
                             HStack(spacing: 10) {
                                 Image(systemName: "chart.xyaxis.line")
                                 Text("Insights").font(.headline)
+                                Spacer()
+                                // ← Chevron al final
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
                             }
                             .foregroundStyle(.blue)
                             .frame(maxWidth: .infinity, alignment: .leading)
