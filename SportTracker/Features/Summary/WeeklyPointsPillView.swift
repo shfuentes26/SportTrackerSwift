@@ -12,9 +12,9 @@ struct WeeklyPointsPillView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("This week you have")
+            /*Text("This week you have")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.secondary)*/
 
             HStack(spacing: 4) {
                 Image(systemName: "trophy.fill")
