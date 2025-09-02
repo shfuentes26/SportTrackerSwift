@@ -139,15 +139,18 @@ struct SummaryView: View {
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
                         Spacer()
+                        // ← Nuevo: flecha de navegación
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 6)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .listRowBackground(                      // <— fondo amarillo claro SOLO para esta tarjeta
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.yellow.opacity(0.18))
-                    )
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.yellow.opacity(0.18))
+                )
             }
         } else {
             Section("Goals") {
