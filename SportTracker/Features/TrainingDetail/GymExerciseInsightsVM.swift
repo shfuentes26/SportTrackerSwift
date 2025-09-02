@@ -25,7 +25,7 @@ final class GymExerciseInsightsVM: ObservableObject {
 
     private let context: ModelContext
     private let exercise: Exercise
-    private let refDate: Date
+    private let refDate: Date   // solo para referencia; no corta el rango superior
 
     init(context: ModelContext, exercise: Exercise, refDate: Date) {
         self.context = context
@@ -35,13 +35,18 @@ final class GymExerciseInsightsVM: ObservableObject {
     }
 
     func load(period: Period) {
-        let start = startDate(for: period, ref: refDate)
-        let pred  = #Predicate<StrengthSession> { $0.date >= start && $0.date <= refDate }
-        let desc  = FetchDescriptor<StrengthSession>(predicate: pred,
-                                                     sortBy: [SortDescriptor(\StrengthSession.date, order: .forward)])
+        let now = Date()                                // SIEMPRE hasta hoy
+        let start = startDate(for: period, ref: now)    // inicio según periodo
+
+        // Traer sesiones entre 'start' y 'hoy'
+        let pred  = #Predicate<StrengthSession> { $0.date >= start && $0.date <= now }
+        let desc  = FetchDescriptor<StrengthSession>(
+            predicate: pred,
+            sortBy: [SortDescriptor(\StrengthSession.date, order: .forward)]
+        )
         let sessions = (try? context.fetch(desc)) ?? []
 
-        // Agrupado por día: mejor peso o reps de ese ejercicio
+        // Mejor valor del ejercicio por día
         let cal = Calendar.current
         var dayBest: [Date: Double] = [:]
         for s in sessions {
@@ -55,20 +60,23 @@ final class GymExerciseInsightsVM: ObservableObject {
         }
 
         let series = dayBest.keys.sorted().map { d in GymPoint(date: d, valueKgOrReps: dayBest[d] ?? 0) }
-        if series.count < 2 { points = []; emptyMessage = "Not enough data to plot" }
-        else { points = series; emptyMessage = nil }
+        self.points = series
+        self.emptyMessage = series.isEmpty ? "No data to display." : nil
+        self.isWeighted = exercise.isWeighted
     }
 
     private func startDate(for p: Period, ref: Date) -> Date {
         let cal = Calendar.current
         switch p {
-        case .monthly:
-            return cal.date(from: cal.dateComponents([.year, .month], from: ref)) ?? ref
         case .ytd:
+            // 1 de enero del año actual
+            return cal.date(from: DateComponents(year: cal.component(.year, from: ref), month: 1, day: 1)) ?? ref
+        case .monthly:
+            // TODO clave: Monthly debe cubrir el AÑO actual completo para poder agregar por MES
             return cal.date(from: DateComponents(year: cal.component(.year, from: ref), month: 1, day: 1)) ?? ref
         case .yearly:
-            return cal.date(byAdding: .day, value: -365, to: ref) ?? ref
+            // Histórico completo
+            return Date.distantPast
         }
     }
 }
-
