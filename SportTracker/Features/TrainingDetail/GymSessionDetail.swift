@@ -53,11 +53,16 @@ struct GymSessionDetail: View {
                     .foregroundStyle(.blue)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 10).padding(.horizontal, 12)
-                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(uiColor: .systemBlue).opacity(0.12)))
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(uiColor: .systemBlue).opacity(0.12))
+                    )
                 }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
+                // ↓↓↓ elimina el “recubrimiento” blanco de la fila
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden) // opcional, para quitar la línea de separación
             }
         }
         .navigationTitle("Gym")
