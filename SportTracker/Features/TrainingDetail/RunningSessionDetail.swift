@@ -87,6 +87,22 @@ struct RunningSessionDetail: View {
                     .frame(height: 200)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(.horizontal)
+                    // Mapa “deshabilitado”
+                    .grayscale(1.0)          // escala de grises
+                    .saturation(0)           // (doble seguridad para desaturar)
+                    .overlay(                 // badge sutil encima
+                        HStack(spacing: 8) {
+                            Image(systemName: "map")
+                            Text("No route recorded")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .foregroundStyle(.secondary)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        , alignment: .center
+                    )
+                    .allowsHitTesting(false) // sin interacción
             }
             
 
