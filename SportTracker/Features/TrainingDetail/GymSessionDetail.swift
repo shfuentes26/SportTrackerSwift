@@ -39,7 +39,7 @@ struct GymSessionDetail: View {
                 HStack { Text("Points"); Spacer(); Text("\(Int(session.totalPoints)) pts").foregroundStyle(.secondary).monospacedDigit() }
             }
 
-            // --- INSIGHTS (pill debajo de SUMMARY) ---
+            // --- INSIGHTS (pill con mismo ancho que las secciones de arriba) ---
             if !insightExercises.isEmpty {
                 Button {
                     if insightExercises.count == 1 {
@@ -47,23 +47,35 @@ struct GymSessionDetail: View {
                     } else { showExercisePicker = true }
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "chart.xyaxis.line")
-                        Text("Insights").font(.headline)
+                        // Texto + icono en azul
+                        HStack(spacing: 10) {
+                            Image(systemName: "chart.xyaxis.line")
+                            Text("Insights").font(.headline)
+                        }
+                        .foregroundStyle(.blue)
+
+                        Spacer()
+
+                        // Chevron de navegación (gris)
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
                     }
-                    .foregroundStyle(.blue)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 10).padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .fill(Color(uiColor: .systemBlue).opacity(0.12))
                     )
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .contentShape(Rectangle())
-                // ↓↓↓ elimina el “recubrimiento” blanco de la fila
+                // iguala el ancho a las celdas de Section (ajusta 16→20 si tu lista usa ese margen)
+                .listRowInsets(EdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6))
                 .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden) // opcional, para quitar la línea de separación
+                .listRowSeparator(.hidden)
             }
+
         }
         .navigationTitle("Gym")
         .navigationBarTitleDisplayMode(.large)

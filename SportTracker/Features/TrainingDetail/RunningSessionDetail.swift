@@ -142,6 +142,7 @@ struct RunningSessionDetail: View {
                             .padding(.vertical, 10).padding(.horizontal, 12)
                             .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(Color(uiColor: .systemBlue).opacity(0.12)))
+                            
                         }
                         .buttonStyle(.plain)
                         .contentShape(Rectangle())
