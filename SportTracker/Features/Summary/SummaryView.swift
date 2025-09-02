@@ -19,6 +19,7 @@ struct SummaryView: View {
     @Environment(\.modelContext) private var context
     @State private var editingRun: RunningSession? = nil
     @State private var editingGym: StrengthSession? = nil
+    @State private var goToPoints = false
 
     init() {}
 
@@ -107,8 +108,19 @@ struct SummaryView: View {
                     }.hidden()
                 }
             )
+            // ... dentro de var body: some View { NavigationStack { ... } }
             .navigationTitle("Summary")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {                                   // ⬅️ NUEVO
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        PointsInsightsView(runs: runs, gyms: gyms)
+                    } label: {
+                        WeeklyPointsPillView(runs: runs, gyms: gyms)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
             .brandHeaderSpacer()
             .sheet(item: $editingRun) { run in
                 EditRunningSheet(run: run)

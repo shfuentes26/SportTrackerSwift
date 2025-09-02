@@ -1,0 +1,231 @@
+//
+//  PointsInsightsView.swift
+//  SportTracker
+//
+//  Created by Satur Hernandez Fuentes on 9/2/25.
+//
+import SwiftUI
+import Charts
+
+struct PointsInsightsView: View {
+    let runs: [RunningSession]
+    let gyms: [StrengthSession]
+
+    enum Tab: String, CaseIterable { case weekly = "Weekly", monthly = "Monthly", yearly = "Yearly" }
+    @State private var tab: Tab = .weekly
+
+    // Índice del bucket seleccionado (por defecto, el último = período actual)
+    @State private var selectedIndex: Int?
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Picker("", selection: $tab) {
+                ForEach(Tab.allCases, id: \.self) { t in
+                    Text(t.rawValue).tag(t)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+
+            // --- Gráfico compacto ---
+            Chart(dataForCurrentTab) { item in
+                BarMark(
+                    x: .value("Period", item.label),
+                    y: .value("Points", item.points)
+                )
+                .foregroundStyle(itemColor(for: item))
+                .annotation(position: .top, alignment: .center) {
+                    Text("\(item.points)")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+            .chartYAxis { AxisMarks(position: .leading) }
+            .frame(height: 220)                        // altura fija
+            .padding(.horizontal)
+            .chartOverlay { proxy in
+                GeometryReader { geo in
+                    // Tocar una barra selecciona el período
+                    Rectangle().fill(.clear).contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    let plotOrigin = geo[proxy.plotAreaFrame].origin
+                                    let xInPlot = value.location.x - plotOrigin.x
+                                    if let label: String = proxy.value(atX: xInPlot) {
+                                        if let idx = dataForCurrentTab.firstIndex(where: { $0.label == label }) {
+                                            selectedIndex = idx
+                                        }
+                                    }
+                                }
+                        )
+                }
+            }
+
+            // --- Lista de entrenamientos del período seleccionado ---
+            Group {
+                if let idx = effectiveSelectedIndex,
+                   dataForCurrentTab.indices.contains(idx) {
+
+                    let sel = dataForCurrentTab[idx]
+                    let items = pointItems(for: sel.interval)
+
+                    // Encabezado
+                    HStack {
+                        Text(titleForSelected(sel))
+                            .font(.headline)
+                        Spacer()
+                        Text("\(items.reduce(0) { $0 + $1.points }) pts")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal)
+
+                    // Lista
+                    List {
+                        ForEach(items) { it in
+                            HStack(spacing: 12) {
+                                // Icono según tipo
+                                Image(systemName: it.kind == .run ? "figure.run" : "dumbbell.fill")
+                                    .imageScale(.medium)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(it.title).font(.body)
+                                    Text(dateFormatter.string(from: it.date))
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Text("\(it.points)")
+                                    .font(.subheadline.monospacedDigit())
+                            }
+                        }
+                    }
+                    .listStyle(.plain)
+                } else {
+                    // Fallback (no debería ocurrir)
+                    Text("No sessions for the selected period")
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 24)
+                }
+            }
+        }
+        .brandHeaderSpacer()
+        .navigationTitle("Points")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // seleccionar período actual por defecto
+            if selectedIndex == nil { selectedIndex = (dataForCurrentTab.count - 1) }
+        }
+        .onChange(of: tab) { _ in
+            // al cambiar de tab, seleccionamos el período actual de ese tab
+            selectedIndex = (dataForCurrentTab.count - 1)
+        }
+    }
+
+    // MARK: - Data
+    private var dataForCurrentTab: [PointBucket] {
+        switch tab {
+        case .weekly:  return buckets(by: .weekOfYear, count: 12, dateFormat: "w")
+        case .monthly: return buckets(by: .month,      count: 12, dateFormat: "MMM")
+        case .yearly:  return buckets(by: .year,       count: 7,  dateFormat: "yyyy")
+        }
+    }
+
+    private func buckets(by component: Calendar.Component, count: Int, dateFormat: String) -> [PointBucket] {
+        var cal = Calendar.current
+        cal.firstWeekday = 2 // Monday
+
+        // Últimos N periodos, incluido el actual (orden cronológico ascendente)
+        let now = Date()
+        let dates = (0..<count).compactMap { offset -> Date? in
+            cal.date(byAdding: component, value: -offset, to: now)
+        }.reversed()
+
+        let fmt = DateFormatter()
+        fmt.setLocalizedDateFormatFromTemplate(dateFormat)
+
+        return dates.map { date in
+            let di = cal.dateInterval(of: component, for: date) ?? DateInterval(start: date, duration: 1)
+            let r = runs.filter { di.contains($0.date) }.reduce(0.0) { $0 + $1.totalPoints }
+            let g = gyms.filter { di.contains($0.date) }.reduce(0.0) { $0 + $1.totalPoints }
+            return PointBucket(
+                label: fmt.string(from: di.start),
+                points: Int(r + g),
+                interval: di
+            )
+        }
+    }
+
+    // MARK: - Selection helpers
+    private var effectiveSelectedIndex: Int? {
+        if let idx = selectedIndex, dataForCurrentTab.indices.contains(idx) { return idx }
+        return dataForCurrentTab.isEmpty ? nil : dataForCurrentTab.count - 1
+    }
+
+    private func itemColor(for item: PointBucket) -> some ShapeStyle {
+        if let idx = effectiveSelectedIndex,
+           dataForCurrentTab.indices.contains(idx),
+           dataForCurrentTab[idx].id == item.id {
+            return AnyShapeStyle(.blue.opacity(0.7)) // resalta seleccionado
+        }
+        return AnyShapeStyle(Color.accentColor.opacity(0.55))
+    }
+
+    private func titleForSelected(_ bucket: PointBucket) -> String {
+        switch tab {
+        case .weekly:  return "Sessions this week (\(bucket.label))"
+        case .monthly: return "Sessions in \(bucket.label)"
+        case .yearly:  return "Sessions in \(bucket.label)"
+        }
+    }
+
+    // MARK: - Build list items for a DateInterval
+    private func pointItems(for interval: DateInterval) -> [PointItem] {
+        var items: [PointItem] = []
+
+        // Running
+        for r in runs where interval.contains(r.date) {
+            items.append(
+                PointItem(date: r.date,
+                          title: "Running session",
+                          points: Int(r.totalPoints),
+                          kind: .run)
+            )
+        }
+        // Gym
+        for g in gyms where interval.contains(g.date) {
+            items.append(
+                PointItem(date: g.date,
+                          title: "Gym session",
+                          points: Int(g.totalPoints),
+                          kind: .gym)
+            )
+        }
+
+        // más recientes primero
+        return items.sorted { $0.date > $1.date }
+    }
+
+    // MARK: - Models used for the list
+    private struct PointBucket: Identifiable {
+        let id = UUID()
+        let label: String
+        let points: Int
+        let interval: DateInterval
+    }
+
+    private enum ItemKind { case run, gym }
+
+    private struct PointItem: Identifiable {
+        let id = UUID()
+        let date: Date
+        let title: String
+        let points: Int
+        let kind: ItemKind
+    }
+
+    // MARK: - Formatters
+    private let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        return f
+    }()
+}

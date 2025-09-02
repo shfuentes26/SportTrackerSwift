@@ -30,6 +30,9 @@
     "%@ pace" : {
 
     },
+    "%lld" : {
+
+    },
     "%lld pts" : {
 
     },
@@ -144,9 +147,6 @@
           }
         }
       }
-    },
-    "Backfill missing routes" : {
-
     },
     "Backfill missing routes from Apple Health" : {
 
@@ -626,6 +626,9 @@
     "No sessions for %@" : {
 
     },
+    "No sessions for the selected period" : {
+
+    },
     "Notes" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -727,9 +730,6 @@
     "Result" : {
 
     },
-    "Routes backfill" : {
-
-    },
     "Running" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -826,6 +826,9 @@
           }
         }
       }
+    },
+    "This week you have" : {
+
     },
     "Track manually" : {
       "localizations" : {
