@@ -13,8 +13,6 @@ struct PointsInsightsView: View {
 
     enum Tab: String, CaseIterable { case weekly = "Weekly", monthly = "Monthly", yearly = "Yearly" }
     @State private var tab: Tab = .weekly
-
-    // Índice del bucket seleccionado (por defecto, el último = período actual)
     @State private var selectedIndex: Int?
 
     var body: some View {
@@ -27,41 +25,87 @@ struct PointsInsightsView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
 
-            // --- Gráfico compacto ---
-            Chart(dataForCurrentTab) { item in
-                BarMark(
-                    x: .value("Period", item.label),
-                    y: .value("Points", item.points)
-                )
-                .foregroundStyle(itemColor(for: item))
-                .annotation(position: .top, alignment: .center) {
-                    Text("\(item.points)")
-                        .font(.caption2).foregroundStyle(.secondary)
+            // --- Gráfico compacto con barras oscuras y selección destacada (sin BarMark extra) ---
+            Chart {
+                ForEach(dataForCurrentTab) { item in
+                    BarMark(
+                        x: .value("Period", item.label),
+                        y: .value("Points", item.points)
+                    )
+                    // Color único para TODAS las barras
+                    .foregroundStyle(Color.accentColor.opacity(0.75))
+                    .cornerRadius(4)
+                    // Valor arriba
+                    .annotation(position: .top, alignment: .center) {
+                        Text("\(item.points)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    // Acento SOLO para la barra seleccionada (borde + glow) sin segunda BarMark
+                    .annotation(position: .overlay, alignment: .center) {
+                        if isSelected(item) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.blue.opacity(0.9), lineWidth: 2)
+                                .shadow(color: Color.blue.opacity(0.25), radius: 3)
+                        }
+                    }
                 }
             }
-            .chartYAxis { AxisMarks(position: .leading) }
-            .frame(height: 220)                        // altura fija
+            // Eje Y
+            .chartYAxis {
+                AxisMarks(position: .leading) { _ in
+                    AxisGridLine().foregroundStyle(Color.secondary.opacity(0.35))
+                    AxisTick().foregroundStyle(Color.secondary.opacity(0.55))
+                    AxisValueLabel().foregroundStyle(.secondary)
+                }
+            }
+            // Eje X: resalta etiqueta del seleccionado
+            .chartXAxis {
+                AxisMarks(values: dataForCurrentTab.map(\.label)) { value in
+                    let label = value.as(String.self) ?? ""
+                    let selected = (label == selectedBucket?.label)
+                    AxisGridLine().foregroundStyle(.clear)
+                    AxisTick().foregroundStyle(.clear)
+                    AxisValueLabel { Text(label) }
+                        .font(selected ? .footnote.weight(.semibold) : .caption2)
+                        .foregroundStyle(selected ? .primary : .secondary)
+                }
+            }
+            .frame(height: 220)
             .padding(.horizontal)
             .chartOverlay { proxy in
                 GeometryReader { geo in
-                    // Tocar una barra selecciona el período
                     Rectangle().fill(.clear).contentShape(Rectangle())
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
-                                    let plotOrigin = geo[proxy.plotAreaFrame].origin
-                                    let xInPlot = value.location.x - plotOrigin.x
-                                    if let label: String = proxy.value(atX: xInPlot) {
-                                        if let idx = dataForCurrentTab.firstIndex(where: { $0.label == label }) {
-                                            selectedIndex = idx
-                                        }
+                                    let origin = geo[proxy.plotAreaFrame].origin
+                                    let xInPlot = value.location.x - origin.x
+                                    if let label: String = proxy.value(atX: xInPlot),
+                                       let idx = dataForCurrentTab.firstIndex(where: { $0.label == label }) {
+                                        selectedIndex = idx
                                     }
                                 }
                         )
                 }
             }
 
-            // --- Lista de entrenamientos del período seleccionado ---
+            // Faja “Viewing”
+            if let sel = selectedBucket {
+                HStack(spacing: 8) {
+                    Text("Viewing:")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text(activeTitle(for: sel))
+                        .font(.callout.weight(.semibold))
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Capsule().fill(Color.blue.opacity(0.12)))
+                        .overlay(Capsule().stroke(Color.blue.opacity(0.35)))
+                    Spacer()
+                }
+                .padding(.horizontal)
+            }
+
+            // --- Lista del período seleccionado ---
             Group {
                 if let idx = effectiveSelectedIndex,
                    dataForCurrentTab.indices.contains(idx) {
@@ -69,21 +113,17 @@ struct PointsInsightsView: View {
                     let sel = dataForCurrentTab[idx]
                     let items = pointItems(for: sel.interval)
 
-                    // Encabezado
                     HStack {
-                        Text(titleForSelected(sel))
-                            .font(.headline)
+                        Text(titleForSelected(sel)).font(.headline)
                         Spacer()
                         Text("\(items.reduce(0) { $0 + $1.points }) pts")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     .padding(.horizontal)
 
-                    // Lista
                     List {
                         ForEach(items) { it in
                             HStack(spacing: 12) {
-                                // Icono según tipo
                                 Image(systemName: it.kind == .run ? "figure.run" : "dumbbell.fill")
                                     .imageScale(.medium)
                                 VStack(alignment: .leading, spacing: 2) {
@@ -99,7 +139,6 @@ struct PointsInsightsView: View {
                     }
                     .listStyle(.plain)
                 } else {
-                    // Fallback (no debería ocurrir)
                     Text("No sessions for the selected period")
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 24)
@@ -109,14 +148,8 @@ struct PointsInsightsView: View {
         .brandHeaderSpacer()
         .navigationTitle("Points")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            // seleccionar período actual por defecto
-            if selectedIndex == nil { selectedIndex = (dataForCurrentTab.count - 1) }
-        }
-        .onChange(of: tab) { _ in
-            // al cambiar de tab, seleccionamos el período actual de ese tab
-            selectedIndex = (dataForCurrentTab.count - 1)
-        }
+        .onAppear { if selectedIndex == nil { selectedIndex = (dataForCurrentTab.count - 1) } }
+        .onChange(of: tab) { _ in selectedIndex = (dataForCurrentTab.count - 1) }
     }
 
     // MARK: - Data
@@ -128,28 +161,28 @@ struct PointsInsightsView: View {
         }
     }
 
+    private var selectedBucket: PointBucket? {
+        guard let i = effectiveSelectedIndex, dataForCurrentTab.indices.contains(i) else { return nil }
+        return dataForCurrentTab[i]
+    }
+
+    private func isSelected(_ item: PointBucket) -> Bool {
+        guard let sel = selectedBucket else { return false }
+        return sel.id == item.id
+    }
+
     private func buckets(by component: Calendar.Component, count: Int, dateFormat: String) -> [PointBucket] {
         var cal = Calendar.current
         cal.firstWeekday = 2 // Monday
-
-        // Últimos N periodos, incluido el actual (orden cronológico ascendente)
         let now = Date()
-        let dates = (0..<count).compactMap { offset -> Date? in
-            cal.date(byAdding: component, value: -offset, to: now)
-        }.reversed()
-
-        let fmt = DateFormatter()
-        fmt.setLocalizedDateFormatFromTemplate(dateFormat)
+        let dates = (0..<count).compactMap { offset in cal.date(byAdding: component, value: -offset, to: now) }.reversed()
+        let fmt = DateFormatter(); fmt.setLocalizedDateFormatFromTemplate(dateFormat)
 
         return dates.map { date in
             let di = cal.dateInterval(of: component, for: date) ?? DateInterval(start: date, duration: 1)
             let r = runs.filter { di.contains($0.date) }.reduce(0.0) { $0 + $1.totalPoints }
             let g = gyms.filter { di.contains($0.date) }.reduce(0.0) { $0 + $1.totalPoints }
-            return PointBucket(
-                label: fmt.string(from: di.start),
-                points: Int(r + g),
-                interval: di
-            )
+            return PointBucket(label: fmt.string(from: di.start), points: Int(r + g), interval: di)
         }
     }
 
@@ -159,13 +192,12 @@ struct PointsInsightsView: View {
         return dataForCurrentTab.isEmpty ? nil : dataForCurrentTab.count - 1
     }
 
-    private func itemColor(for item: PointBucket) -> some ShapeStyle {
-        if let idx = effectiveSelectedIndex,
-           dataForCurrentTab.indices.contains(idx),
-           dataForCurrentTab[idx].id == item.id {
-            return AnyShapeStyle(.blue.opacity(0.7)) // resalta seleccionado
+    private func activeTitle(for bucket: PointBucket) -> String {
+        switch tab {
+        case .weekly:  return "Week \(bucket.label)"
+        case .monthly: return bucket.label
+        case .yearly:  return bucket.label
         }
-        return AnyShapeStyle(Color.accentColor.opacity(0.55))
     }
 
     private func titleForSelected(_ bucket: PointBucket) -> String {
@@ -179,40 +211,23 @@ struct PointsInsightsView: View {
     // MARK: - Build list items for a DateInterval
     private func pointItems(for interval: DateInterval) -> [PointItem] {
         var items: [PointItem] = []
-
-        // Running
         for r in runs where interval.contains(r.date) {
-            items.append(
-                PointItem(date: r.date,
-                          title: "Running session",
-                          points: Int(r.totalPoints),
-                          kind: .run)
-            )
+            items.append(PointItem(date: r.date, title: "Running session", points: Int(r.totalPoints), kind: .run))
         }
-        // Gym
         for g in gyms where interval.contains(g.date) {
-            items.append(
-                PointItem(date: g.date,
-                          title: "Gym session",
-                          points: Int(g.totalPoints),
-                          kind: .gym)
-            )
+            items.append(PointItem(date: g.date, title: "Gym session", points: Int(g.totalPoints), kind: .gym))
         }
-
-        // más recientes primero
         return items.sorted { $0.date > $1.date }
     }
 
-    // MARK: - Models used for the list
+    // MARK: - Models
     private struct PointBucket: Identifiable {
         let id = UUID()
         let label: String
         let points: Int
         let interval: DateInterval
     }
-
     private enum ItemKind { case run, gym }
-
     private struct PointItem: Identifiable {
         let id = UUID()
         let date: Date
