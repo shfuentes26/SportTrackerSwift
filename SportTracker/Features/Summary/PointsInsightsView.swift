@@ -15,8 +15,13 @@ struct PointsInsightsView: View {
     @State private var tab: Tab = .weekly
     @State private var selectedIndex: Int?
 
+    // Paginación por chevrons para Weekly y Monthly
+    @State private var weekPage: Int = 0     // 0 = últimas 12 semanas; 1 = 12 previas; etc.
+    @State private var monthPage: Int = 0    // 0 = últimos 12 meses; 1 = 12 previos; etc.
+
     var body: some View {
         VStack(spacing: 12) {
+            // Tabs
             Picker("", selection: $tab) {
                 ForEach(Tab.allCases, id: \.self) { t in
                     Text(t.rawValue).tag(t)
@@ -25,23 +30,57 @@ struct PointsInsightsView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
 
-            // --- Gráfico compacto con barras oscuras y selección destacada (sin BarMark extra) ---
+            // Controles de paginación con chevrons (solo Weekly/Monthly)
+            if tab != .yearly {
+                HStack(spacing: 10) {
+                    Button {
+                        // IZQUIERDA = ir al pasado (más antiguo)
+                        switch tab {
+                        case .weekly:  weekPage += 1
+                        case .monthly: monthPage += 1
+                        case .yearly:  break
+                        }
+                    } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canGoOlder) // <- deshabilitar si NO hay datos más antiguos
+
+                    Text(rangeLabel)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+
+                    Button {
+                        // DERECHA = volver a recientes
+                        switch tab {
+                        case .weekly:  weekPage = max(0, weekPage - 1)
+                        case .monthly: monthPage = max(0, monthPage - 1)
+                        case .yearly:  break
+                        }
+                    } label: {
+                        Image(systemName: "chevron.right")
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isNewestPage)
+                }
+                .padding(.horizontal)
+            }
+
+            // --- Gráfico compacto con barras y selección ---
             Chart {
                 ForEach(dataForCurrentTab) { item in
                     BarMark(
                         x: .value("Period", item.label),
                         y: .value("Points", item.points)
                     )
-                    // Color único para TODAS las barras
                     .foregroundStyle(Color.accentColor.opacity(0.75))
                     .cornerRadius(4)
-                    // Valor arriba
                     .annotation(position: .top, alignment: .center) {
                         Text("\(item.points)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
-                    // Acento SOLO para la barra seleccionada (borde + glow) sin segunda BarMark
                     .annotation(position: .overlay, alignment: .center) {
                         if isSelected(item) {
                             RoundedRectangle(cornerRadius: 4)
@@ -51,7 +90,6 @@ struct PointsInsightsView: View {
                     }
                 }
             }
-            // Eje Y
             .chartYAxis {
                 AxisMarks(position: .leading) { _ in
                     AxisGridLine().foregroundStyle(Color.secondary.opacity(0.35))
@@ -59,7 +97,6 @@ struct PointsInsightsView: View {
                     AxisValueLabel().foregroundStyle(.secondary)
                 }
             }
-            // Eje X: resalta etiqueta del seleccionado
             .chartXAxis {
                 AxisMarks(values: dataForCurrentTab.map(\.label)) { value in
                     let label = value.as(String.self) ?? ""
@@ -74,18 +111,18 @@ struct PointsInsightsView: View {
             .frame(height: 220)
             .padding(.horizontal)
             .chartOverlay { proxy in
+                // Solo para seleccionar barras (sin swipe)
                 GeometryReader { geo in
                     Rectangle().fill(.clear).contentShape(Rectangle())
                         .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    let origin = geo[proxy.plotAreaFrame].origin
-                                    let xInPlot = value.location.x - origin.x
-                                    if let label: String = proxy.value(atX: xInPlot),
-                                       let idx = dataForCurrentTab.firstIndex(where: { $0.label == label }) {
-                                        selectedIndex = idx
-                                    }
+                            DragGesture(minimumDistance: 0).onChanged { value in
+                                let origin = geo[proxy.plotAreaFrame].origin
+                                let xInPlot = value.location.x - origin.x
+                                if let label: String = proxy.value(atX: xInPlot),
+                                   let idx = dataForCurrentTab.firstIndex(where: { $0.label == label }) {
+                                    selectedIndex = idx
                                 }
+                            }
                         )
                 }
             }
@@ -149,15 +186,73 @@ struct PointsInsightsView: View {
         .navigationTitle("Points")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { if selectedIndex == nil { selectedIndex = (dataForCurrentTab.count - 1) } }
-        .onChange(of: tab) { _ in selectedIndex = (dataForCurrentTab.count - 1) }
+        .onChange(of: tab) { _ in
+            selectedIndex = (dataForCurrentTab.count - 1)
+            // reset de paginación al cambiar de tab
+            if tab == .weekly { weekPage = 0 }
+            if tab == .monthly { monthPage = 0 }
+        }
+        // al paginar, selecciona el último bucket visible (más reciente de esa página)
+        .onChange(of: weekPage) { _ in selectedIndex = (dataForCurrentTab.count - 1) }
+        .onChange(of: monthPage) { _ in selectedIndex = (dataForCurrentTab.count - 1) }
     }
 
     // MARK: - Data
+
     private var dataForCurrentTab: [PointBucket] {
         switch tab {
-        case .weekly:  return buckets(by: .weekOfYear, count: 12, dateFormat: "w")
-        case .monthly: return buckets(by: .month,      count: 12, dateFormat: "MMM")
-        case .yearly:  return buckets(by: .year,       count: 7,  dateFormat: "yyyy")
+        case .weekly:
+            // 12 semanas por página; ancla desplazada weekPage * 12 semanas hacia atrás
+            return buckets(by: .weekOfYear, count: 12, dateFormat: "w",
+                           anchor: Calendar.current.date(byAdding: .weekOfYear, value: -(weekPage * 12), to: Date())!)
+        case .monthly:
+            // 12 meses por página
+            return buckets(by: .month, count: 12, dateFormat: "MMM",
+                           anchor: Calendar.current.date(byAdding: .month, value: -(monthPage * 12), to: Date())!)
+        case .yearly:
+            // años recientes (sin paginación de momento)
+            return buckets(by: .year, count: 7, dateFormat: "yyyy", anchor: Date())
+        }
+    }
+
+    // Label del rango visible para mostrar entre los chevrons
+    private var rangeLabel: String {
+        let labels = dataForCurrentTab.map(\.label)
+        guard let first = labels.first, let last = labels.last else { return "" }
+        switch tab {
+        case .weekly:  return "Weeks \(first)–\(last)"
+        case .monthly: return "\(first) – \(last)"
+        case .yearly:  return ""
+        }
+    }
+
+    // ¿Estamos ya en la página más reciente?
+    private var isNewestPage: Bool {
+        switch tab {
+        case .weekly:  return weekPage == 0
+        case .monthly: return monthPage == 0
+        case .yearly:  return true
+        }
+    }
+
+    // ¿Hay datos más antiguos que la página actual?
+    private var canGoOlder: Bool {
+        guard let oldestStart = dataForCurrentTab.first?.interval.start,
+              let earliest = earliestSessionDate else { return false }
+        // Si existe alguna sesión más antigua que el inicio del primer bucket visible,
+        // sí podemos ir a páginas más antiguas.
+        return earliest < oldestStart
+    }
+
+    // Fecha más antigua en runs/gyms
+    private var earliestSessionDate: Date? {
+        let earliestRun = runs.min(by: { $0.date < $1.date })?.date
+        let earliestGym = gyms.min(by: { $0.date < $1.date })?.date
+        switch (earliestRun, earliestGym) {
+        case let (r?, g?): return min(r, g)
+        case let (r?, nil): return r
+        case let (nil, g?): return g
+        default: return nil
         }
     }
 
@@ -165,17 +260,25 @@ struct PointsInsightsView: View {
         guard let i = effectiveSelectedIndex, dataForCurrentTab.indices.contains(i) else { return nil }
         return dataForCurrentTab[i]
     }
-
     private func isSelected(_ item: PointBucket) -> Bool {
         guard let sel = selectedBucket else { return false }
         return sel.id == item.id
     }
 
-    private func buckets(by component: Calendar.Component, count: Int, dateFormat: String) -> [PointBucket] {
+    /// Construye buckets de puntos para un componente de calendario,
+    /// tomando `count` periodos hacia atrás desde `anchor` (inclusive).
+    private func buckets(by component: Calendar.Component,
+                         count: Int,
+                         dateFormat: String,
+                         anchor: Date) -> [PointBucket] {
         var cal = Calendar.current
         cal.firstWeekday = 2 // Monday
-        let now = Date()
-        let dates = (0..<count).compactMap { offset in cal.date(byAdding: component, value: -offset, to: now) }.reversed()
+
+        // Construye las fechas "hacia atrás" desde el anchor
+        let dates: [Date] = (0..<count).compactMap { offset in
+            cal.date(byAdding: component, value: -offset, to: anchor)
+        }.reversed() // oldest -> newest
+
         let fmt = DateFormatter(); fmt.setLocalizedDateFormatFromTemplate(dateFormat)
 
         return dates.map { date in
