@@ -117,6 +117,7 @@
 		23BE56CF2E53A73100600875 /* Summary */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Summary; sourceTree = "<group>"; };
 		23BE56D02E53A73A00600875 /* NewTraining */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = NewTraining; sourceTree = "<group>"; };
 		23BE56F12E54D25F00600875 /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
+		23F691622E6661AB009BF984 /* TrainingDetail */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TrainingDetail; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,6 +166,7 @@
 		23BE56BF2E53931500600875 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				23F691622E6661AB009BF984 /* TrainingDetail */,
 				23BE56F12E54D25F00600875 /* Settings */,
 				23BE56D02E53A73A00600875 /* NewTraining */,
 				23BE56CF2E53A73100600875 /* Summary */,
@@ -282,6 +284,7 @@
 				23BE56CF2E53A73100600875 /* Summary */,
 				23BE56D02E53A73A00600875 /* NewTraining */,
 				23BE56F12E54D25F00600875 /* Settings */,
+				23F691622E6661AB009BF984 /* TrainingDetail */,
 			);
 			name = SportTracker;
 			productName = SportTracker;

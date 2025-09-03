@@ -49,4 +49,7 @@ enum UnitFormatters {
     static func kg(from userWeight: Double, inputIsPounds: Bool) -> Double {
         inputIsPounds ? userWeight / 2.20462 : userWeight
     }
+    
+    static func kgToLb(_ kg: Double) -> Double { kg * 2.2046226218 }
+    static func lbToKg(_ lb: Double) -> Double { lb / 2.2046226218 }
 }

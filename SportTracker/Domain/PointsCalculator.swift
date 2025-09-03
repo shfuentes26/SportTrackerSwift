@@ -30,13 +30,43 @@ struct PointsCalculator {
 
     static func score(strength session: StrengthSession, settings: Settings) -> Double {
         var total: Double = 0
+
         for set in session.sets {
-            if let w = set.weightKg, w > 0 {
+            let ex = set.exercise
+
+            if ex.isWeighted, let w = set.weightKg, w > 0 {
+                // Igual que ahora para ejercicios con carga
                 total += (Double(set.reps) * w) * settings.gymWeightedFactor
+                continue
+            }
+
+            // --- Bodyweight: usar benchmark "Intermediate" = 100 pts ---
+            if let target = bodyweightIntermediateTarget(for: ex) {
+                // Si tu UI guarda tiempo (p. ej. plank), usa 'set.durationSec' aquí
+                let reps = Double(set.reps) // para ejercicios por rep
+                let raw = 100.0 * (reps / target)
+                total += min(raw, 150.0)    // cap opcional
             } else {
+                // Fallback si no tenemos benchmark para ese ejercicio
                 total += Double(set.reps) * settings.gymRepsFactor
             }
         }
+
         return max(total, 0)
     }
+
+    // Mapa de benchmarks "Intermediate" (reps -> 100 pts)
+    private static func bodyweightIntermediateTarget(for ex: Exercise) -> Double? {
+        switch ex.name.lowercased() {
+        case "pull-ups", "pull ups":              return 14    // Strength Level
+        case "push ups", "push-ups":              return 41    // Strength Level (male table)
+        case "hanging leg raise":                 return 18    // Strength Level
+        case "crunches":                          return 55    // Strength Level
+        case "russian twist":                     return 45    // Strength Level
+        // Si usas plank por duración y guardas segundos en el set, cambia a duración:
+        // case "plank": return 90
+        default: return nil
+        }
+    }
+
 }

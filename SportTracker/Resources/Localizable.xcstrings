@@ -4,9 +4,6 @@
     "" : {
 
     },
-    "  " : {
-
-    },
     ":" : {
 
     },
@@ -31,6 +28,9 @@
       }
     },
     "%@ pace" : {
+
+    },
+    "%lld" : {
 
     },
     "%lld pts" : {
@@ -135,7 +135,7 @@
         }
       }
     },
-    "Avg HR: %lld bpm" : {
+    "Back" : {
 
     },
     "Back to options" : {
@@ -148,26 +148,10 @@
         }
       }
     },
-    "Backfill missing routes" : {
-
-    },
     "Backfill missing routes from Apple Health" : {
 
     },
     "Basics" : {
-
-    },
-    "Best: %@ %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Best: %1$@ %2$@"
-          }
-        }
-      }
-    },
-    "BestPlot" : {
 
     },
     "bpm" : {
@@ -208,6 +192,9 @@
       }
     },
     "Chest/Back: %lld" : {
+
+    },
+    "Choose exercise" : {
 
     },
     "Close" : {
@@ -268,7 +255,7 @@
         }
       }
     },
-    "Dismiss" : {
+    "Discard changes" : {
 
     },
     "Distance" : {
@@ -430,9 +417,6 @@
         }
       }
     },
-    "HR %lld" : {
-
-    },
     "Import" : {
       "localizations" : {
         "es" : {
@@ -453,9 +437,6 @@
         }
       }
     },
-    "Inbox (Watch)" : {
-
-    },
     "Info" : {
       "localizations" : {
         "es" : {
@@ -469,9 +450,6 @@
     "Insights" : {
 
     },
-    "Insights • %@" : {
-
-    },
     "Integrations" : {
       "localizations" : {
         "es" : {
@@ -481,6 +459,9 @@
           }
         }
       }
+    },
+    "kg" : {
+
     },
     "km" : {
       "localizations" : {
@@ -514,6 +495,22 @@
       }
     },
     "Last import: %@" : {
+
+    },
+    "Last: %@ • Best: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Last: %1$@ • Best: %2$@"
+          }
+        }
+      }
+    },
+    "lb" : {
+
+    },
+    "Leave without saving?" : {
 
     },
     "Legs" : {
@@ -604,9 +601,6 @@
         }
       }
     },
-    "No data" : {
-
-    },
     "No exercises found. Add some in your library." : {
 
     },
@@ -623,13 +617,16 @@
     "No exercises yet" : {
 
     },
-    "No hay registros para %@." : {
-
-    },
     "No record yet" : {
 
     },
+    "No route recorded" : {
+
+    },
     "No sessions for %@" : {
+
+    },
+    "No sessions for the selected period" : {
 
     },
     "Notes" : {
@@ -683,6 +680,9 @@
         }
       }
     },
+    "Period" : {
+
+    },
     "Points" : {
 
     },
@@ -711,6 +711,9 @@
         }
       }
     },
+    "reps" : {
+
+    },
     "Reps" : {
       "localizations" : {
         "es" : {
@@ -725,9 +728,6 @@
 
     },
     "Result" : {
-
-    },
-    "Routes backfill" : {
 
     },
     "Running" : {
@@ -765,9 +765,6 @@
 
     },
     "Saved" : {
-
-    },
-    "Scope" : {
 
     },
     "sec/km" : {
@@ -903,6 +900,9 @@
         }
       }
     },
+    "Viewing:" : {
+
+    },
     "Week" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -962,9 +962,6 @@
         }
       }
     },
-    "Workout summary" : {
-
-    },
     "Year" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -975,6 +972,9 @@
           }
         }
       }
+    },
+    "You have unsaved changes from this Live Run. Are you sure you want to leave?" : {
+
     },
     "Your run has been saved." : {
       "localizations" : {

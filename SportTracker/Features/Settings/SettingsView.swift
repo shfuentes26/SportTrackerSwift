@@ -62,7 +62,7 @@ struct SettingsView: View {
             }
 
             // 🔧 Maintenance (oculto cuando ya se ejecutó el backfill)
-            if !didRunRoutesBackfillOnce {
+            /*if !didRunRoutesBackfillOnce {
                 Section("Maintenance") {
                     NavigationLink {
                         MaintenanceToolsView()
@@ -79,7 +79,7 @@ struct SettingsView: View {
                         Text("Done").foregroundStyle(.secondary)
                     }
                 }
-            }
+            }*/
         }
         .navigationTitle("Settings")
         .alert("Import", isPresented: $showImportAlert) {

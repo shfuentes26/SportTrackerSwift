@@ -15,11 +15,14 @@ struct LiveRunView: View {
     @State private var showSaved = false
     @State private var navigateToSummaryAfterDismiss = false
 
+    // NUEVO: control de confirmación y cambios sin guardar
+    @State private var showExitConfirm = false
+    @State private var hasUnsavedChanges = false
+
     var body: some View {
         VStack(spacing: 16) {
-            // Métricas principales
             // Métricas principales (centradas verticalmente)
-            Spacer(minLength: 0)
+            //Spacer(minLength: 0)
 
             VStack(spacing: 26) {
                 metric(title: "Distance", value: manager.distanceFormatted)
@@ -27,7 +30,9 @@ struct LiveRunView: View {
                 metric(title: "Pace", value: manager.paceFormatted)
             }
             .multilineTextAlignment(.center)
+
             Spacer(minLength: 0)
+
             // Controles
             HStack(spacing: 12) {
                 if manager.isRunning {
@@ -47,9 +52,11 @@ struct LiveRunView: View {
                 }
                 Button(role: .destructive) {
                     manager.end { workout in
-                            saveToAppModel(workout: workout)
-                            showSaved = true
-                        }
+                        saveToAppModel(workout: workout)
+                        // al guardar ya no hay cambios pendientes
+                        hasUnsavedChanges = false
+                        showSaved = true
+                    }
                 } label: {
                     controlLabel("Finish", systemImage: "stop.fill")
                 }
@@ -58,14 +65,51 @@ struct LiveRunView: View {
         }
         .navigationTitle("Live Run")
         .brandHeaderSpacer()
+
+        // Ocultar TabBar durante el live
+        .modifier(HideTabBar())
+
+        // Desactivar gesto de retroceso si hay cambios sin guardar
+        .interactiveDismissDisabled(hasUnsavedChanges)
+
+        // Back personalizado con confirmación
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    if hasUnsavedChanges {
+                        showExitConfirm = true
+                    } else {
+                        dismiss()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                }
+            }
+        }
+        .alert("Leave without saving?", isPresented: $showExitConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Discard changes", role: .destructive) {
+                dismiss()
+            }
+        } message: {
+            Text("You have unsaved changes from this Live Run. Are you sure you want to leave?")
+        }
+
+        // Alert de guardado + navegación al summary (tu lógica existente)
         .alert("Workout saved", isPresented: $showSaved) {
             Button("OK") {
-                navigateToSummaryAfterDismiss = true   // 1) marcar
-                dismiss()                               // 2) cerrar primero
+                navigateToSummaryAfterDismiss = true
+                dismiss()
             }
         } message: {
             Text("Your run has been saved.")
-        }.onDisappear {                       // ⬅️ AÑADE ESTO AQUÍ
+        }
+        .onDisappear {
+            // Restaurar TabBar y, si procede, ir al Summary
             if navigateToSummaryAfterDismiss {
                 NotificationCenter.default.post(name: .navigateToSummary, object: nil)
                 navigateToSummaryAfterDismiss = false
@@ -75,6 +119,8 @@ struct LiveRunView: View {
             do {
                 try await manager.requestAuthorization()
                 try manager.start()
+                // Marcamos que hay cambios tan pronto como comienza la sesión
+                hasUnsavedChanges = true
             } catch {
                 print("Error starting live run:", error)
             }
@@ -83,17 +129,16 @@ struct LiveRunView: View {
 
     private func metric(title: String, value: String) -> some View {
         VStack(spacing: 6) {
-            Text(title)                          // ← primero el literal
+            Text(title)
                 .font(.title3)
                 .foregroundStyle(.secondary)
-            Text(value)                           // ← luego el valor
+            Text(value)
                 .font(.system(size: 36, weight: .semibold, design: .rounded))
                 .monospacedDigit()
         }
         .frame(maxWidth: .infinity)
         .multilineTextAlignment(.center)
     }
-
 
     private func controlLabel(_ text: String, systemImage: String) -> some View {
         Label(text, systemImage: systemImage)
@@ -115,34 +160,29 @@ struct LiveRunView: View {
         #endif
     }
 
-    // TODO: guarda tu sesión en tu modelo (RunningSession) cuando termine
+    // Guarda tu sesión en tu modelo cuando termine
     private func saveToAppModel(workout: HKWorkout?) {
-        // Métricas del manager
         let distance = manager.distanceMeters
         let duration = Int(manager.elapsed.rounded())
         let date = Date()
 
-        // Crea la sesión de carrera (puedes añadir notes o polyline si las tienes)
         let session = RunningSession(
             date: date,
             durationSeconds: duration,
             distanceMeters: distance,
             notes: nil,
-            routePolyline: manager.exportedPolyline() 
+            routePolyline: manager.exportedPolyline()
         )
 
-        // Puntuación usando Settings (distancia + tiempo + bonus por ritmo vs baseline)
         session.totalPoints = computeRunningPoints(
             distanceMeters: distance,
             durationSeconds: duration
         )
 
-        // Guarda el UUID del workout de Health como referencia (opcional)
         if let workout = workout {
             session.remoteId = workout.uuid.uuidString
         }
 
-        // Inserta y persiste
         context.insert(session)
         do {
             try context.save()
@@ -150,14 +190,9 @@ struct LiveRunView: View {
             print("Error saving RunningSession:", error)
         }
     }
-    
+
     // MARK: - Scoring
-    /// Calcula puntos según tus Settings:
-    /// - distancePts = km * runningDistanceFactor
-    /// - timePts     = (min) * runningTimeFactor
-    /// - paceBonus   = max(0, (baseline - pace)/baseline) * runningPaceFactor
     private func computeRunningPoints(distanceMeters: Double, durationSeconds: Int) -> Double {
-        // Intenta leer Settings; si no hay, usa los defaults del modelo (sin persistirlos)
         let settings: Settings = (try? context.fetch(FetchDescriptor<Settings>()).first) ?? Settings()
 
         let km = distanceMeters / 1000.0
@@ -172,3 +207,44 @@ struct LiveRunView: View {
     }
 }
 
+/// Modifier para ocultar la TabBar mientras esta vista está activa.
+private struct HideTabBar: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(EmptyView().onAppear {
+                // iOS 16+: forma nativa
+                // (No hace falta nada si usamos .toolbar(.hidden, for: .tabBar))
+                #if !os(watchOS)
+                if #available(iOS 16.0, *) {
+                    // se gestiona con .toolbar(.hidden, for: .tabBar) debajo
+                } else {
+                    // Fallback iOS 15: ocultar globalmente mientras dura la vista
+                    UITabBar.appearance().isHidden = true
+                }
+                #endif
+            }.onDisappear {
+                #if !os(watchOS)
+                if #available(iOS 16.0, *) {
+                    // nada
+                } else {
+                    UITabBar.appearance().isHidden = false
+                }
+                #endif
+            })
+            .applyIfAvailableiOS16 {
+                $0.toolbar(.hidden, for: .tabBar)
+            }
+    }
+}
+
+// Helper para aplicar condicional en iOS16+
+private extension View {
+    @ViewBuilder
+    func applyIfAvailableiOS16<T: View>(_ transform: (Self) -> T) -> some View {
+        if #available(iOS 16.0, *) {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}

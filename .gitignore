@@ -1,0 +1,17 @@
+
+# Xcode user data
+*.xcuserstate
+*.xcuserdatad/
+*.xcuserdata/
+
+# Xcode user data
+*.xcuserstate
+*.xcuserdatad/
+*.xcuserdata/
+
+# Xcode debug/user data
+*.xcuserstate
+*.xcuserdatad/
+*.xcuserdata/
+*.xcbkptlist
+xcdebugger/

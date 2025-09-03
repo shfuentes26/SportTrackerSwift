@@ -19,6 +19,7 @@ struct SummaryView: View {
     @Environment(\.modelContext) private var context
     @State private var editingRun: RunningSession? = nil
     @State private var editingGym: StrengthSession? = nil
+    @State private var goToPoints = false
 
     init() {}
 
@@ -107,8 +108,19 @@ struct SummaryView: View {
                     }.hidden()
                 }
             )
+            // ... dentro de var body: some View { NavigationStack { ... } }
             .navigationTitle("Summary")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {                                   // ⬅️ NUEVO
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        PointsInsightsView(runs: runs, gyms: gyms)
+                    } label: {
+                        WeeklyPointsPillView(runs: runs, gyms: gyms)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
             .brandHeaderSpacer()
             .sheet(item: $editingRun) { run in
                 EditRunningSheet(run: run)
@@ -139,15 +151,18 @@ struct SummaryView: View {
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
                         Spacer()
+                        // ← Nuevo: flecha de navegación
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 6)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .listRowBackground(                      // <— fondo amarillo claro SOLO para esta tarjeta
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.yellow.opacity(0.18))
-                    )
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.yellow.opacity(0.18))
+                )
             }
         } else {
             Section("Goals") {

@@ -69,7 +69,7 @@ final class Persistence {
                          exerciseDescription: "Bodyweight", iconSystemName: "figure.strengthtraining.functional", isCustom: false),
                 Exercise(name: "Assisted Pull-ups", muscleGroup: .chestBack, isWeighted: false,
                          exerciseDescription: "Machine assisted", iconSystemName: "figure.strengthtraining.functional", isCustom: false),
-                Exercise(name: "Schouder Shrug", muscleGroup: .chestBack, isWeighted: false,
+                Exercise(name: "Schouder Shrug", muscleGroup: .chestBack, isWeighted: true,
                          exerciseDescription: "Bodyweight", iconSystemName: "figure.strengthtraining.functional", isCustom: false),
 
                 // ===== Arms =====

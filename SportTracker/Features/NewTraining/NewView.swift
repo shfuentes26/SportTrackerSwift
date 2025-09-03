@@ -275,23 +275,13 @@ struct NewView: View {
                 }
             }
 
-            Section("Sets") {
-                ForEach($setInputs) { $input in
-                    SetRow(
-                        input: $input,
-                        allExercises: filteredExercises,
-                        usePounds: usePounds
-                    )
-                }
-                .onDelete { idx in
-                    setInputs.remove(atOffsets: idx)
-                }
-
-                Button {
-                    setInputs.append(SetInput())
-                } label: {
-                    Label("Add Set", systemImage: "plus.circle.fill")
-                }
+            Section("Exercise") {
+                // Un solo ejercicio/set por entrenamiento
+                SetRow(
+                    input: $setInputs[0],              // <- siempre 1
+                    allExercises: filteredExercises,
+                    usePounds: usePounds
+                )
             }
 
             Section("Notes") {
@@ -354,26 +344,33 @@ struct NewView: View {
 
         case .gym:
             // Mapea tus SetInput a DTO del VM
-            let mapped: [NewViewModel.NewTrainingSet] = setInputs.enumerated().compactMap { (idx, input) in
-                let reps = Int(input.reps) ?? 0
-                guard reps > 0 else { return nil }
-
-                let entered = Double(input.weight.replacingOccurrences(of: ",", with: "."))
-                let weightKg = entered.map { usePounds ? ($0 / 2.20462) : $0 } // lb → kg si procede
-
-                let exercise = filteredExercises.first(where: { $0.id == input.exerciseId })
-                    ?? filteredExercises.first
-                    ?? exercises.first
-
-                guard let ex = exercise else { return nil }
-
-                return .init(exercise: ex, order: idx + 1, reps: reps, weightKg: weightKg)
-            }
-
-            guard !mapped.isEmpty else {
+            guard let input = setInputs.first else {
                 errorMsg = "Add at least one set with reps."
                 return
             }
+
+            let reps = Int(input.reps) ?? 0
+            guard reps > 0 else {
+                errorMsg = "Add at least one set with reps."
+                return
+            }
+
+            let entered = Double(input.weight.replacingOccurrences(of: ",", with: "."))
+            let weightKg = entered.map { usePounds ? ($0 / 2.20462) : $0 }
+
+            let exercise = filteredExercises.first(where: { $0.id == input.exerciseId })
+                ?? filteredExercises.first
+                ?? exercises.first
+
+            guard let ex = exercise else {
+                errorMsg = "Select an exercise."
+                return
+            }
+
+            let mapped: [NewViewModel.NewTrainingSet] = [
+                .init(exercise: ex, order: 1, reps: reps, weightKg: weightKg)
+            ]
+
 
             do {
                 try vm.saveGym(
@@ -468,7 +465,20 @@ struct SetRow: View {
             } else {
                 Picker("Exercise", selection: selectionBinding) {
                     ForEach(allExercises, id: \.id) { ex in
-                        Text(ex.name).tag(Optional(ex.id))
+                        Text(ex.name).tag(ex.id as UUID?)   // tag del MISMO tipo que selection (UUID?)
+                    }
+                }
+                .pickerStyle(.menu)                         // menú desplegable en iPhone
+                .onAppear {
+                    // Si no hay nada guardado aún, fija una selección real
+                    if input.exerciseId == nil {
+                        input.exerciseId = allExercises.first?.id
+                    }
+                }
+                .onChange(of: allExercises.map(\.id)) { ids in
+                    // Si cambia la categoría y la selección ya no existe, usa la primera opción
+                    if let cur = input.exerciseId, !ids.contains(cur) {
+                        input.exerciseId = ids.first
                     }
                 }
             }
