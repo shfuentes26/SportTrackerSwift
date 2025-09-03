@@ -25,7 +25,8 @@ struct RunningLiveView: View {
     private var elapsed: TimeInterval { max(0, now.timeIntervalSince(startRef)) }
 
     private var elapsedText: String {
-        let t = Int(elapsed.rounded())
+        // antes: let t = Int(elapsed.rounded())
+        let t = Int(elapsed) // truncado → evita saltos de 2s
         let h = t / 3600, m = (t % 3600) / 60, s = t % 60
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, s)
                      : String(format: "%02d:%02d", m, s)
@@ -58,25 +59,35 @@ struct RunningLiveView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            VStack(spacing: 2) {
-                // TIEMPO — grande y centrado
-                Text(elapsedText)
-                    .font(.system(size: 52, weight: .heavy, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(brand)
-                    .frame(maxWidth: .infinity, alignment: .center)
+            // TIEMPO + DISTANCIA usando TimelineView para ticks estables de 1s
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                VStack(spacing: 2) {
+                    // TIEMPO — grande y centrado
+                    let elapsedNow = max(0, context.date.timeIntervalSince(startRef))
+                    let t = Int(elapsedNow) // truncado
+                    let h = t / 3600, m = (t % 3600) / 60, s = t % 60
+                    let timeStr = h > 0
+                        ? String(format: "%d:%02d:%02d", h, m, s)
+                        : String(format: "%02d:%02d", m, s)
 
-                // DISTANCIA — grande y centrada
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(String(format: "%.2f", distKm))
-                        .font(.system(size: 34, weight: .heavy, design: .rounded))
+                    Text(timeStr)
+                        .font(.system(size: 52, weight: .heavy, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(brand)
-                    Text("km")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(brand.opacity(0.9))
+                        .frame(maxWidth: .infinity, alignment: .center)
+
+                    // DISTANCIA — grande y centrada
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(String(format: "%.2f", distKm))
+                            .font(.system(size: 34, weight: .heavy, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(brand)
+                        Text("km")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(brand.opacity(0.9))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
             }
 
             // HR / Pace compactos
@@ -138,7 +149,7 @@ struct RunningLiveView: View {
         }
         .padding(.top, 16)
         .padding(.horizontal, 12)
-        .navigationBarBackButtonHidden(true)   
+        .navigationBarBackButtonHidden(true)
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             if !paused {
                 now = Date()
