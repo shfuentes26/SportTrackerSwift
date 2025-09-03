@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import SwiftData   // <- para consultar RunningSession al seleccionar un punto
 
 // MARK: - Tipos
 
@@ -153,12 +154,15 @@ private enum ChartScope: String, CaseIterable, Identifiable {
 struct FullScreenPaceChart: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.verticalSizeClass) private var vSize
+    @Environment(\.modelContext) private var context   // <- acceso a SwiftData
+
     let bucket: RecordBucket
     let prefersMiles: Bool
     let points: [PacePoint]
 
     @State private var scope: ChartScope = .ytd
     @State private var selectedPoint: PacePoint? = nil
+    @State private var selectedRun: RunningSession? = nil   // <- sesión mapeada al punto
 
     private var unitLabel: String { prefersMiles ? "min/mi" : "min/km" }
 
@@ -222,7 +226,10 @@ struct FullScreenPaceChart: View {
                                 if let d: Date = proxy.value(atX: xInPlot) {
                                     let xs = s.map { $0.date.timeIntervalSince1970 }
                                     if let idx = nearestIndex(d.timeIntervalSince1970, in: xs) {
-                                        selectedPoint = s[idx]
+                                        let p = s[idx]
+                                        selectedPoint = p
+                                        // Mapear el punto agregado a una sesión real del periodo
+                                        selectedRun = findRun(for: p, scope: scope, bucket: bucket, prefersMiles: prefersMiles)
                                     }
                                 }
                             })
@@ -244,8 +251,33 @@ struct FullScreenPaceChart: View {
                         }
                     }
                 }
-                .frame(height: (vSize == .compact) ? nil : max(240, UIScreen.main.bounds.height * 0.5))
+                // Más compacto: ~38% de la pantalla; mínimo 200 pt
+                .frame(height: (vSize == .compact) ? nil : max(200, UIScreen.main.bounds.height * 0.38))
                 .frame(maxHeight: (vSize == .compact) ? .infinity : nil, alignment: .top)
+
+                // --- Acceso al detalle del running seleccionado ---
+                if let run = selectedRun {
+                    NavigationLink {
+                        RunningSessionDetail(session: run)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "figure.run")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Open run details")
+                                    .font(.headline)
+                                Text(labelForX(run.date))
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color(uiColor: .secondarySystemBackground)))
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 if let last = s.last {
                     let bestVal = s.map(\.paceSecPerUnit).min() ?? last.paceSecPerUnit
@@ -259,7 +291,10 @@ struct FullScreenPaceChart: View {
             .padding()
             .navigationTitle("\(bucket.display) pace")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Close") { dismiss() } } }
-            .onChange(of: scope) { _ in selectedPoint = nil }
+            .onChange(of: scope) { _ in
+                selectedPoint = nil
+                selectedRun = nil
+            }
         }
     }
 
@@ -356,7 +391,6 @@ struct FullScreenPaceChart: View {
         return out
     }
 
-
     /// Yearly: mejor pace por AÑO para todos los años con datos.
     private func yearlyBest(points: [PacePoint]) -> [PacePoint] {
         let cal = Calendar.current
@@ -384,4 +418,51 @@ struct FullScreenPaceChart: View {
         }
     }
     private func axisTitle() -> String { prefersMiles ? "min/mi (plot)" : "min/km (plot)" }
+
+    // MARK: - Buscar la sesión (SwiftData) que corresponde al punto seleccionado
+
+    private func findRun(for point: PacePoint,
+                         scope: ChartScope,
+                         bucket: RecordBucket,
+                         prefersMiles: Bool) -> RunningSession? {
+        // Rango de fechas del periodo del punto seleccionado
+        let cal = Calendar.current
+        let start: Date
+        let end: Date
+        switch scope {
+        case .ytd:
+            start = cal.startOfDay(for: point.date)
+            end   = cal.date(byAdding: .day, value: 1, to: start)!
+        case .monthly:
+            let comps = cal.dateComponents([.year, .month], from: point.date)
+            start = cal.date(from: comps)!
+            end   = cal.date(byAdding: .month, value: 1, to: start)!
+        case .yearly:
+            let y = cal.component(.year, from: point.date)
+            start = cal.date(from: DateComponents(year: y, month: 1, day: 1))!
+            end   = cal.date(byAdding: .year, value: 1, to: start)!
+        }
+
+        // Fetch de las sesiones del periodo y bucket (>= distancia objetivo)
+        let minMeters = bucket.km * 1000.0
+        let pred = #Predicate<RunningSession> {
+            $0.date >= start && $0.date < end && $0.distanceMeters >= minMeters
+        }
+        let desc = FetchDescriptor<RunningSession>(
+            predicate: pred,
+            sortBy: [SortDescriptor(\RunningSession.date, order: .forward)]
+        )
+        let runs = (try? context.fetch(desc)) ?? []
+        guard !runs.isEmpty else { return nil }
+
+        // Elige el que tenga pace más cercano (o idéntico) al punto agregado
+        func paceSecPerUnit(_ r: RunningSession) -> Double {
+            let km = max(r.distanceMeters / 1000.0, 0.001)
+            let secPerKm = Double(r.durationSeconds) / km
+            return prefersMiles ? secPerKm * 1.609344 : secPerKm
+        }
+        let target = point.paceSecPerUnit
+        return runs.min(by: { abs(paceSecPerUnit($0) - target) < abs(paceSecPerUnit($1) - target) })
+    }
 }
+
