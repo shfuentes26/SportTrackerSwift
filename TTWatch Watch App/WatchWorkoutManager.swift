@@ -290,6 +290,13 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
     private var totalDistMeters: Double = 0
     
     @Published var isPaused = false
+    
+    private func setFrontmostTimeout(_ on: Bool) {
+    #if os(watchOS)
+        WKExtension.shared().isFrontmostTimeoutExtended = on
+    #endif
+    }
+    
 
     func pause() {
         guard isRunning, !isPaused else { return }
@@ -331,6 +338,7 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
         let cfg = HKWorkoutConfiguration()
         cfg.activityType = .running
         cfg.locationType = .outdoor
+        setFrontmostTimeout(true)
 
         do {
             let session = try HKWorkoutSession(healthStore: healthStore, configuration: cfg)
@@ -391,6 +399,8 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
     func stop() {
         isRunning = false
         location.stopUpdatingLocation()
+        
+        setFrontmostTimeout(false)
 
         let end = Date()
         let start = self.startDate ?? end
@@ -401,6 +411,20 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
         let distMetersGPS = self.totalDistMeters
         let distMeters    = max(distMetersHK, distMetersGPS)
 
+        func cleanup() {
+                location.stopUpdatingLocation()
+                setFrontmostTimeout(false)
+                // invalida timers propios si los hubiera
+                // anula referencias para que no retengan la app
+                self.builder = nil
+                self.session = nil
+            }
+
+        func sendPayloadAndCleanup() {
+            // ... tu payload ...
+            cleanup()
+        }
+        
         // Construye una función local para enviar el fichero una sola vez
         func sendPayload() {
             let payload = WorkoutPayload(
@@ -440,6 +464,15 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
                     Task { @MainActor in sendPayload() }
                 }
             }
+            // Failsafe por si los closures no vuelven (10 s)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+                        guard let self else { return }
+                        if self.session != nil || self.builder != nil {
+                            // algo quedó colgado; fuerza cierre
+                            self.session?.end()
+                            sendPayloadAndCleanup()
+                        }
+                    }
         } else {
             // Por si no había sesión activa (fall-safe)
             sendPayload()
