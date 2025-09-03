@@ -57,7 +57,7 @@ struct HomeView: View {
             VStack(spacing: 10) {
                 // Header (sin icono Wi-Fi)
                 HStack {
-                    Text("SportTracker")
+                    Text("Training Tracker")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(brand)
                     Spacer()
@@ -76,18 +76,18 @@ struct HomeView: View {
                 }
 
                 // Pills
-                HStack(spacing: 8) {
+                /*HStack(spacing: 8) {
                     PillButton(title: "History") { /* TODO */ }
                     PillButton(title: "Settings") { /* TODO */ }
-                }
+                }*/
 
                 // Last run
-                HStack {
+                /*HStack {
                     Text(lastRunLine)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(brand)
                     Spacer()
-                }
+                }*/
 
                 Spacer(minLength: 6)
                 RoundedRectangle(cornerRadius: 6, style: .continuous)

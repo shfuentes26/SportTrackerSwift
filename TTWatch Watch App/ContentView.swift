@@ -47,7 +47,7 @@ struct ContentView: View {
                 // Header
                 VStack(spacing: 2) {
                     HStack {
-                        Text("SportTracker").font(.headline)
+                        Text("Training Tracker").font(.headline)
                         Spacer()
                         // pequeño indicador WC si quieres (opcional)
                         Image(systemName: "applewatch.watchface")
