@@ -7,13 +7,17 @@
 
 import SwiftUI
 import SwiftData
+import WatchConnectivity
 
 @main
 struct SportTrackerApp: App {
     @UIApplicationDelegateAdaptor(OrientationLockDelegate.self) var appDelegate
     @State private var container: ModelContainer?
+    @ObservedObject private var phone = PhoneSession.shared
 
     init() {
+        
+        
         let brand = UIColor(named: "BrandGreen") ?? UIColor(red: 0.63, green: 0.913, blue: 0.333, alpha: 1)
         // NAV BAR
         let nav = UINavigationBarAppearance()
@@ -31,11 +35,16 @@ struct SportTrackerApp: App {
         } catch {
             assertionFailure("Failed to create ModelContainer: \(error)")
         }
+        // 🔑 Inicializa la sesión WatchConnectivity
+        _ = PhoneSession.shared
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            VStack(spacing: 8) {
+                ContentView()
+                //WorkoutInboxView()
+            }
         }
         .modelContainer(container!)
     }

@@ -4,6 +4,9 @@
     "" : {
 
     },
+    "  " : {
+
+    },
     ":" : {
 
     },
@@ -135,6 +138,9 @@
         }
       }
     },
+    "Avg HR: %lld bpm" : {
+
+    },
     "Back" : {
 
     },
@@ -256,6 +262,9 @@
       }
     },
     "Discard changes" : {
+
+    },
+    "Dismiss" : {
 
     },
     "Distance" : {
@@ -417,6 +426,9 @@
         }
       }
     },
+    "HR %lld" : {
+
+    },
     "Import" : {
       "localizations" : {
         "es" : {
@@ -436,6 +448,9 @@
           }
         }
       }
+    },
+    "Inbox (Watch)" : {
+
     },
     "Info" : {
       "localizations" : {
@@ -961,6 +976,9 @@
           }
         }
       }
+    },
+    "Workout summary" : {
+
     },
     "Year" : {
       "extractionState" : "manual",

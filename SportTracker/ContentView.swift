@@ -10,6 +10,7 @@ extension Notification.Name {
 
 struct ContentView: View {
     @State private var selectedTab: AppTab = .summary
+    @ObservedObject private var bridge = LiveWorkoutBridge.shared
 
     var body: some View {
         // ⬇️ ENLAZAMOS EL TABVIEW A selectedTab
@@ -36,7 +37,23 @@ struct ContentView: View {
                 .tabItem { Image(systemName: "gearshape.fill"); Text("Settings") }
                 .tag(AppTab.settings)  // ⬅️ TAG
         }
+        .sheet(item: Binding(
+            get: { bridge.lastSummary },
+            set: { bridge.lastSummary = $0 }
+        )) { s in
+            SummarySheet(summary: s) { _ in
+                bridge.lastSummary = nil
+            }
+            .presentationDetents([.height(220)])
+        }
         .tint(.blue)
+        .safeAreaInset(edge: .bottom) {
+            // La barrita en todas las pantallas
+            //LiveBar()
+              //  .padding(.horizontal)
+              //  .padding(.bottom, 6) // separacion visual de la tab bar
+        }
+        .onAppear { _ = PhoneSession.shared } 
         // ⬇️ AHORA SÍ, ESTO CAMBIA DE TAB AL RECIBIR LA NOTIFICACIÓN
         .onReceive(NotificationCenter.default.publisher(for: .navigateToSummary)) { _ in
             selectedTab = .summary

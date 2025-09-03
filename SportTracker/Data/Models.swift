@@ -279,3 +279,105 @@ public final class GymGoal {
         targetChestBack + targetArms + targetLegs + targetCore
     }
 }
+
+// =========================
+// WATCH RUNNING DETAIL MODELS
+// =========================
+
+@Model
+public final class RunningWatchDetail {
+    public var id: UUID
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    // Relación unidireccional: detalle -> sesión existente
+    @Relationship(deleteRule: .nullify)
+    public var session: RunningSession?
+
+    // Series opcionales
+    @Relationship(deleteRule: .cascade) public var hrPoints: [WatchHRPoint] = []
+    @Relationship(deleteRule: .cascade) public var pacePoints: [WatchPacePoint] = []
+    @Relationship(deleteRule: .cascade) public var elevationPoints: [WatchElevationPoint] = []
+
+    // Splits por kilómetro
+    @Relationship(deleteRule: .cascade) public var splits: [RunningWatchSplit] = []
+
+    // Ruta opcional (futuro)
+    public var routePolyline: String?
+
+    public init(id: UUID = UUID()) {
+        self.id = id
+        self.createdAt = Date()
+        self.updatedAt = Date()
+    }
+}
+
+// Puntos de serie (t, v) — prefijo Watch para evitar colisiones de nombres
+@Model
+public final class WatchHRPoint {
+    public var id: UUID
+    public var t: Double          // segundos desde inicio
+    public var v: Double          // bpm
+    @Relationship(deleteRule: .nullify) public var detail: RunningWatchDetail?
+
+    public init(id: UUID = UUID(), t: Double, v: Double) {
+        self.id = id; self.t = t; self.v = v
+    }
+}
+
+@Model
+public final class WatchPacePoint {
+    public var id: UUID
+    public var t: Double          // segundos desde inicio
+    public var v: Double          // m/s
+    @Relationship(deleteRule: .nullify) public var detail: RunningWatchDetail?
+
+    public init(id: UUID = UUID(), t: Double, v: Double) {
+        self.id = id; self.t = t; self.v = v
+    }
+}
+
+@Model
+public final class WatchElevationPoint {
+    public var id: UUID
+    public var t: Double          // segundos desde inicio
+    public var v: Double          // metros
+    @Relationship(deleteRule: .nullify) public var detail: RunningWatchDetail?
+
+    public init(id: UUID = UUID(), t: Double, v: Double) {
+        self.id = id; self.t = t; self.v = v
+    }
+}
+
+// Split por km
+@Model
+public final class RunningWatchSplit {
+    public var id: UUID
+    public var index: Int
+    public var startOffset: Double
+    public var endOffset: Double
+    public var duration: Double
+    public var distanceMeters: Double
+    public var avgHR: Double?
+    public var avgSpeed: Double?   // m/s
+    @Relationship(deleteRule: .nullify) public var detail: RunningWatchDetail?
+
+    public init(id: UUID = UUID(),
+                index: Int,
+                startOffset: Double,
+                endOffset: Double,
+                duration: Double,
+                distanceMeters: Double,
+                avgHR: Double?,
+                avgSpeed: Double?) {
+        self.id = id
+        self.index = index
+        self.startOffset = startOffset
+        self.endOffset = endOffset
+        self.duration = duration
+        self.distanceMeters = distanceMeters
+        self.avgHR = avgHR
+        self.avgSpeed = avgSpeed
+    }
+}
+
