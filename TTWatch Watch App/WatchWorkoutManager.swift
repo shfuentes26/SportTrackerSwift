@@ -369,6 +369,7 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
             location.delegate = self
             location.activityType = .fitness
             location.desiredAccuracy = kCLLocationAccuracyBest
+            location.distanceFilter = 5   // ignora micro-movimientos < 5 m
             if location.authorizationStatus == .notDetermined {
                 location.requestWhenInUseAuthorization()
             }
@@ -395,7 +396,10 @@ final class WatchWorkoutManager: NSObject, ObservableObject {
         let start = self.startDate ?? end
         let duration = end.timeIntervalSince(start)
         let avg = self.hrCount > 0 ? Double(self.hrSum) / Double(self.hrCount) : 0
-        let distMeters = self.km * 1000.0
+        // Distancia final: usa HK si llegó, si no, cae al GPS; y en general quédate con el mayor.
+        let distMetersHK  = self.km * 1000.0
+        let distMetersGPS = self.totalDistMeters
+        let distMeters    = max(distMetersHK, distMetersGPS)
 
         // Construye una función local para enviar el fichero una sola vez
         func sendPayload() {
@@ -573,16 +577,29 @@ extension WatchWorkoutManager: CLLocationManagerDelegate {
             
             // Distancia por GPS para la métrica en vivo
             if let prev = lastLocForDist {
-                let dv = loc.distance(from: prev)               // metros avanzados
-                let dt = loc.timestamp.timeIntervalSince(prev.timestamp)
-                if dv > 0 && dt > 0 {
-                    totalDistMeters += dv
-                    km = totalDistMeters / 1000.0
-                    liveKm = km
-
-                    let speed = dv / dt                          // m/s
-                    livePaceSecPerKm = speed > 0 ? (1000.0 / speed) : nil
+                // 2.1 Recencia (muestras muy viejas pueden “pegar saltos”):
+                guard abs(loc.timestamp.timeIntervalSinceNow) < 3 else {
+                    lastLocForDist = loc
+                    continue
                 }
+
+                let dv = loc.distance(from: prev)                  // metros avanzados
+                let dt = loc.timestamp.timeIntervalSince(prev.timestamp)
+
+                // 2.2 Paso mínimo dinámico: al menos precisión o 3 m
+                let minStep = max(3.0, loc.horizontalAccuracy)
+                guard dv >= minStep, dt > 0 else {
+                    lastLocForDist = loc
+                    continue
+                }
+
+                // 2.3 Acumula (igual que ya haces)
+                totalDistMeters += dv
+                liveKm = totalDistMeters / 1000.0
+                //liveKm = km
+
+                let speed = dv / dt                                 // m/s
+                livePaceSecPerKm = speed > 0 ? (1000.0 / speed) : nil
             }
             lastLocForDist = loc
             
