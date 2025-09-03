@@ -21,6 +21,9 @@
            <string>$(MARKETING_VERSION)</string>
            <key>CFBundleVersion</key>
            <string>$(CURRENT_PROJECT_VERSION)</string>
+           <!-- App uses only exempt encryption (e.g., HTTPS/TLS) -->
+           <key>ITSAppUsesNonExemptEncryption</key>
+           <false/>
 
            <!-- iOS -->
            <key>LSRequiresIPhoneOS</key>

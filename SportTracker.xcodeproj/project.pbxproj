@@ -580,7 +580,7 @@
 				DEVELOPMENT_TEAM = 8568JZJ3QU;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SportTracker/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Tits;
+				INFOPLIST_KEY_CFBundleDisplayName = TT;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "SportTracker reads your workouts, routes, distance, heart rate, and calories from the Health app to display and sync your sessions.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "SportTracker writes your workouts and metrics to the Health app to keep your records up to date.";
@@ -609,7 +609,7 @@
 				DEVELOPMENT_TEAM = 8568JZJ3QU;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SportTracker/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Tits;
+				INFOPLIST_KEY_CFBundleDisplayName = TT;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "SportTracker reads your workouts, routes, distance, heart rate, and calories from the Health app to display and sync your sessions.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "SportTracker writes your workouts and metrics to the Health app to keep your records up to date.";
