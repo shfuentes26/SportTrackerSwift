@@ -10,6 +10,14 @@ enum HealthKitImportService {
     static func saveToLocal(_ workouts: [HealthKitManager.ImportedWorkout],
                             context: ModelContext) throws -> Int {
         var inserted = 0
+        
+        // Obtener settings existentes (o crear uno si no hay)
+        let settings: Settings = try context.fetch(FetchDescriptor<Settings>()).first
+            ?? {
+                let s = Settings()
+                context.insert(s)
+                return s
+            }()
 
         for wk in workouts {
             // Solo running con distancia válida
@@ -21,10 +29,13 @@ enum HealthKitImportService {
                 distanceMeters: distM,
                 notes: "Imported from Apple Health"
             )
+            // 👉 Calcular y asignar puntos aquí
+            run.totalPoints = PointsCalculator.score(running: run, settings: settings)
+            
             context.insert(run)
             inserted += 1
         }
-
+        
         try context.save()
         if inserted > 0 { print("[HK][SAVE] inserted: \(inserted)") } // LOG corto
         return inserted
@@ -199,6 +210,14 @@ enum HealthKitImportService {
                                       context: ModelContext,
                                       healthStore: HKHealthStore = HKHealthStore()) async throws -> Int {
         var inserted = 0
+        
+        // Obtener settings existentes (o crear uno si no hay)
+        let settings: Settings = try context.fetch(FetchDescriptor<Settings>()).first
+            ?? {
+                let s = Settings()
+                context.insert(s)
+                return s
+            }()
 
         for wk in workouts {
             guard wk.workoutActivityType == .running else { continue }
@@ -233,6 +252,7 @@ enum HealthKitImportService {
                 notes: "Imported from Apple Health",
                 routePolyline: poly
             )
+            run.totalPoints = PointsCalculator.score(running: run, settings: settings)
             context.insert(run)
             inserted += 1
         }
