@@ -70,7 +70,13 @@ public final class Settings: SyncTracked {
     public var updatedAt: Date
     public var deletedAt: Date? = nil
     public var remoteId: String? = nil
-    public var syncState: SyncState = SyncState.localOnly
+    //public var syncState: SyncState = SyncState.localOnly
+    public var syncStateRaw: Int = SyncState.localOnly.rawValue
+    
+    public var syncState: SyncState {
+        get { SyncState(rawValue: syncStateRaw) ?? .localOnly }
+        set { syncStateRaw = newValue.rawValue }
+    }
 
     // Scoring factors (tune in UI later)
     public var runningDistanceFactor: Double = 10.0       // pts per km
