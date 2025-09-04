@@ -2,7 +2,7 @@
 //  Persistence.swift
 //  SportTracker
 //
-//  SwiftData container + seeding on first launch
+//  SwiftData container + seeding on first launch (igual que MAIN)
 //
 
 import Foundation
@@ -17,7 +17,7 @@ final class Persistence {
 
     @MainActor
     func makeModelContainer(inMemory: Bool = false) throws -> ModelContainer {
-        // Lista de modelos (actualizada para CloudKit/SwiftData)
+        // Igual que MAIN, pero usando STUserProfile (modelo actual)
         let schema = Schema([
             STUserProfile.self,
             Settings.self,
@@ -37,18 +37,17 @@ final class Persistence {
         let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)
         let container = try ModelContainer(for: schema, configurations: config)
 
-        // Seed inicial
+        // Seed inicial (mismo comportamiento que MAIN)
         let context = container.mainContext
 
         if try context.fetch(FetchDescriptor<Settings>()).isEmpty {
             context.insert(Settings())
         }
-
         if try context.fetch(FetchDescriptor<STUserProfile>()).isEmpty {
             context.insert(STUserProfile())
         }
 
-        // Sembrar ejercicios por defecto (sin duplicar por nombre)
+        // Completar ejercicios recomendados por nombre, sin duplicar (como en MAIN)
         do {
             let existing = try Set(
                 context.fetch(FetchDescriptor<Exercise>()).map { $0.name.lowercased() }
