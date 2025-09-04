@@ -118,6 +118,7 @@
 		23BE56D02E53A73A00600875 /* NewTraining */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = NewTraining; sourceTree = "<group>"; };
 		23BE56F12E54D25F00600875 /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 		23F691622E6661AB009BF984 /* TrainingDetail */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TrainingDetail; sourceTree = "<group>"; };
+		23F694C72E69D728009BF984 /* iCloud */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = iCloud; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -207,6 +208,7 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
+				23F694C72E69D728009BF984 /* iCloud */,
 				2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */,
 				2342D5362E60EE1100E696DE /* WorkoutInbox.swift */,
 				2365CB082E5F7F0500CF609C /* SummarySheet.swift */,
@@ -285,6 +287,7 @@
 				23BE56D02E53A73A00600875 /* NewTraining */,
 				23BE56F12E54D25F00600875 /* Settings */,
 				23F691622E6661AB009BF984 /* TrainingDetail */,
+				23F694C72E69D728009BF984 /* iCloud */,
 			);
 			name = SportTracker;
 			productName = SportTracker;

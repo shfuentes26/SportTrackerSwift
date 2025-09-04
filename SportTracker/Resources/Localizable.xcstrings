@@ -73,6 +73,9 @@
     "10K" : {
 
     },
+    "Actualizar lista" : {
+
+    },
     "Add" : {
       "localizations" : {
         "es" : {
@@ -158,6 +161,9 @@
 
     },
     "Basics" : {
+
+    },
+    "Borrar" : {
 
     },
     "bpm" : {
@@ -413,6 +419,9 @@
     "Gym • %@" : {
 
     },
+    "Hacer copia de Application Support" : {
+
+    },
     "Half" : {
 
     },
@@ -427,6 +436,9 @@
       }
     },
     "HR %lld" : {
+
+    },
+    "iCloud (Rescate)" : {
 
     },
     "Import" : {
@@ -743,6 +755,9 @@
       }
     },
     "Reps: %lld" : {
+
+    },
+    "Rescue" : {
 
     },
     "Result" : {

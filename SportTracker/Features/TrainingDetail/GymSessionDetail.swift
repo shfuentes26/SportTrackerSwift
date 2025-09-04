@@ -106,25 +106,39 @@ struct GymSessionDetail: View {
     }
 
     private var sortedSets: [StrengthSet] {
-        session.sets.sorted { a, b in a.order != b.order ? a.order < b.order : a.id.uuidString < b.id.uuidString }
+        (session.sets ?? []).sorted { a, b in
+            a.order != b.order ? a.order < b.order : a.id.uuidString < b.id.uuidString
+        }
     }
 
     private var insightExercises: [Exercise] {
-        var seen = Set<UUID>(); var result: [Exercise] = []
-        for set in session.sets {
-            let ex = set.exercise
-            if !seen.contains(ex.id), hasHistory(for: ex) { seen.insert(ex.id); result.append(ex) }
+        var seen = Set<UUID>()
+        var result: [Exercise] = []
+        for set in (session.sets ?? []) {
+            guard let ex = set.exercise else { continue }
+            if !seen.contains(ex.id), hasHistory(for: ex) {
+                seen.insert(ex.id)
+                result.append(ex)
+            }
         }
         return result.sorted { $0.name < $1.name }
     }
 
+
     private func hasHistory(for ex: Exercise) -> Bool {
-        let desc = FetchDescriptor<StrengthSession>(sortBy: [SortDescriptor(\StrengthSession.date, order: .reverse)])
+        let desc = FetchDescriptor<StrengthSession>(
+            sortBy: [SortDescriptor(\StrengthSession.date, order: .reverse)]
+        )
         guard let sessions = try? context.fetch(desc), !sessions.isEmpty else { return false }
+
         var count = 0
-        for s in sessions where s.sets.contains(where: { $0.exercise.id == ex.id }) { count += 1; if count >= 2 { return true } }
+        for s in sessions where (s.sets ?? []).contains(where: { $0.exercise?.id == ex.id }) {
+            count += 1
+            if count >= 2 { return true }
+        }
         return false
     }
+
 }
 
 struct GymSetRow: View {
@@ -134,12 +148,14 @@ struct GymSetRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                Text(set.exercise.name).font(.headline)
-                Text("• \(groupName(set.exercise.muscleGroup))").foregroundStyle(.secondary)
+                Text(set.exercise?.name ?? "Exercise").font(.headline)
+                Text("• \(groupName(set.exercise?.muscleGroup ?? .arms))")
+                    .foregroundStyle(.secondary)
                 Spacer(minLength: 6)
             }
             HStack(spacing: 12) {
-                Text("Reps: \(set.reps)").font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                Text("Reps: \(set.reps)")
+                    .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
                 if let wKg = set.weightKg, wKg > 0 {
                     let value = usePounds ? UnitFormatters.kgToLb(wKg) : wKg
                     let unit  = usePounds ? "lb" : "kg"
@@ -162,4 +178,5 @@ struct GymSetRow: View {
         }
     }
 }
+
 

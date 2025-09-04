@@ -34,19 +34,23 @@ struct GymView: View {
     }
 
     private func gymDetails(_ s: StrengthSession) -> String {
-        if s.sets.isEmpty { return "No sets" }
-        let items = s.sets
+       // if s.sets.isEmpty { return "No sets" }
+        //let items = s.sets
+        if (s.sets ?? []).isEmpty { return "No sets" }
+        let items = (s.sets ?? [])
             .sorted(by: { $0.order < $1.order })
             .prefix(3)
             .map { set in
                 let reps = "\(set.reps)"
                 let w = (set.weightKg ?? 0) > 0
-                    ? " @ " + UnitFormatters.weight(set.weightKg!, usePounds: usePounds)
-                    : ""
-                return "\(set.exercise.name) \(reps)\(w)"
+                ? " @ " + UnitFormatters.weight(set.weightKg!, usePounds: usePounds)
+                : ""
+                //return "\(set.exercise.name) \(reps)\(w)"
+                return "\(set.exercise?.name ?? "Exercise") \(reps)\(w)"
             }
         var line = items.joined(separator: " • ")
-        if s.sets.count > 3 { line += " …" }
+        //if s.sets.count > 3 { line += " …" }
+        if (s.sets?.count ?? 0) > 3 { line += " …" }
         return line
     }
 
@@ -57,7 +61,12 @@ struct GymView: View {
     }
 
     private func session(_ s: StrengthSession, matches cat: GymFilterCategory) -> Bool {
-        let cats = Set(s.sets.compactMap { mapGroup($0.exercise.muscleGroup) })
+        //let cats = Set(s.sets.compactMap { mapGroup($0.exercise.muscleGroup) })
+        let cats: Set<GymFilterCategory> = Set((s.sets ?? []).compactMap { set in
+            guard let g = set.exercise?.muscleGroup else { return nil }
+            return mapGroup(g)
+        })
+
         return cats.contains(cat)
     }
 
@@ -183,7 +192,8 @@ struct EditGymSheet: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    ForEach(session.sets) { set in
+                    //ForEach(session.sets) { set in
+                    ForEach(session.sets ?? []) { set in
                         SetEditorRow(set: set, exercises: exercises, usePounds: usePounds)
                     }
                     .onDelete(perform: deleteSets)
@@ -228,29 +238,37 @@ struct EditGymSheet: View {
             ex = Exercise(name: "Custom", muscleGroup: .core, isWeighted: false, isCustom: true)
             context.insert(ex)
         }
-        let newOrder = (session.sets.map(\.order).max() ?? 0) + 1
+        //let newOrder = (session.sets.map(\.order).max() ?? 0) + 1
+        let newOrder = ((session.sets ?? []).map(\.order).max() ?? 0) + 1
+
         let newSet = StrengthSet(exercise: ex, order: newOrder, reps: 10, weightKg: nil)
         newSet.session = session
-        session.sets.append(newSet)
+        //session.sets.append(newSet)
+        if session.sets == nil { session.sets = [] }
+        session.sets!.append(newSet)
     }
 
     private func deleteSets(at offsets: IndexSet) {
-        for index in offsets {
-            let set = session.sets[index]
-            context.delete(set)
+        if var arr = session.sets {
+            for index in offsets {
+                let set = arr[index]
+                context.delete(set)
+            }
+            arr.remove(atOffsets: offsets)
+            session.sets = arr
         }
-        session.sets.remove(atOffsets: offsets)
         renumberOrders()
     }
 
     private func moveSets(from source: IndexSet, to destination: Int) {
-        session.sets.move(fromOffsets: source, toOffset: destination)
+        //session.sets.move(fromOffsets: source, toOffset: destination)
+        session.sets?.move(fromOffsets: source, toOffset: destination)
         renumberOrders()
     }
 
     private func renumberOrders() {
-        for (i, set) in session.sets.enumerated() {
-            set.order = i + 1
+        if let arr = session.sets {
+            for (i, set) in arr.enumerated() { set.order = i + 1 }
         }
     }
 
@@ -287,13 +305,13 @@ private struct SetEditorRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Picker("Exercise", selection: Binding(
-                get: { set.exercise.id },
-                set: { newId in
+            Picker("Exercise", selection: Binding<UUID>(
+                    get: { set.exercise?.id ?? exercises.first?.id ?? UUID() },
+                    set: { newId in
                     if let found = exercises.first(where: { $0.id == newId }) {
-                        set.exercise = found
-                    }
-                }
+                      set.exercise = found
+                  }
+               }
             )) {
                 ForEach(exercises, id: \.id) { ex in
                     Text(ex.name).tag(ex.id)

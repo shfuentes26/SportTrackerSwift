@@ -269,7 +269,8 @@ struct SummaryView: View {
         let sessions = gyms.filter { di.contains($0.date) }
         var cb = 0, arms = 0, legs = 0, core = 0
         for s in sessions {
-            let groups = Set(s.sets.map { $0.exercise.muscleGroup })
+            //let groups = Set(s.sets.map { $0.exercise.muscleGroup })
+            let groups = Set((s.sets ?? []).compactMap { $0.exercise?.muscleGroup })
             if groups.contains(.chestBack) { cb += 1 }
             if groups.contains(.arms) { arms += 1 }
             if groups.contains(.legs) { legs += 1 }
@@ -299,8 +300,10 @@ struct SummaryView: View {
     }
 
     private func gymDetails(_ s: StrengthSession) -> String {
-        if s.sets.isEmpty { return "No sets" }
-        let items = s.sets
+        //if s.sets.isEmpty { return "No sets" }
+        if (s.sets ?? []).isEmpty { return "No sets" }
+        //let items = s.sets
+        let items = (s.sets ?? [])
             .sorted(by: { $0.order < $1.order })
             .prefix(3)
             .map { set in
@@ -308,10 +311,13 @@ struct SummaryView: View {
                 let w = (set.weightKg ?? 0) > 0
                     ? " @ " + UnitFormatters.weight(set.weightKg!, usePounds: usePounds)
                     : ""
-                return "\(set.exercise.name) \(reps)\(w)"
+                //return "\(set.exercise.name) \(reps)\(w)"
+                return "\(set.exercise?.name ?? "Exercise") \(reps)\(w)"
+
             }
         var line = items.joined(separator: " • ")
-        if s.sets.count > 3 { line += " …" }
+        //if s.sets.count > 3 { line += " …" }
+        if (s.sets?.count ?? 0) > 3 { line += " …" }
         return line
     }
 

@@ -4,11 +4,12 @@
 //
 //  Created by Satur Hernandez Fuentes on 8/20/25.
 //
+
 import SwiftUI
 import Charts
 import SwiftData
 
-// Make sure this enum exists only once in the project.
+// Asegúrate de que esta enum exista solo una vez en el proyecto.
 enum GymGroup: String, CaseIterable, Identifiable {
     case chestBack = "Chest/Back"
     case arms      = "Arms"
@@ -17,7 +18,7 @@ enum GymGroup: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-// Fixed palette so colors stay consistent across tabs
+// Paleta fija para que los colores sean consistentes
 struct GymChartPalette {
     static let domain = [
         GymGroup.chestBack.rawValue,
@@ -30,7 +31,7 @@ struct GymChartPalette {
 
 private struct StackPoint: Identifiable {
     let id = UUID()
-    let label: String       // X bucket (day label, week range or month)
+    let label: String       // bucket del eje X (día, rango de semana o mes)
     let group: GymGroup
     let value: Int
 }
@@ -47,16 +48,17 @@ struct GymHistoryChart: View {
     @State private var xDomain: [String] = []
     @State private var maxY: Double = 0
 
+    // Qué métrica acumulamos por grupo
     private let metric: Metric = .uniqueExercises
     private enum Metric { case uniqueExercises, sets, points }
 
     var body: some View {
         VStack(spacing: 10) {
-            // Header a todo el ancho
+            // Cabecera
             header
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Chart a todo el ancho
+            // Gráfico
             Chart(data) { dp in
                 BarMark(
                     x: .value("Bucket", dp.label),
@@ -70,25 +72,20 @@ struct GymHistoryChart: View {
             .chartLegend(position: .bottom, alignment: .leading, spacing: 8)
             .chartForegroundStyleScale(domain: GymChartPalette.domain, range: GymChartPalette.colors)
             .frame(height: 160)
-            .frame(maxWidth: .infinity)      // ⬅️ fuerza el ancho
+            .frame(maxWidth: .infinity)
         }
         .padding(.vertical, 4)
-        // .padding(.horizontal)
         .onAppear { reload() }
         .onChange(of: mode) { _ in reload() }
         .onChange(of: anchor) { _ in reload() }
-        // Después
-        .task(id: sessions.map(\.id)) {
-            reload()
-        }
-        .task(id: sessions.flatMap { $0.sets.map(\.id) }) {
-            reload()
-        }
+        // Recalcula si cambian las sesiones o sus sets
+        .task(id: sessions.map(\.id)) { reload() }
+        .task(id: sessions.flatMap { ($0.sets ?? []).map(\.id) }) { reload() }
         .animation(.snappy, value: mode)
         .animation(.snappy, value: anchor)
     }
 
-    // MARK: Header (picker + chevrons + period title)
+    // MARK: Header (picker + chevrons + título del periodo)
     private var header: some View {
         HStack(spacing: 12) {
             Picker("", selection: $mode) {
@@ -112,10 +109,8 @@ struct GymHistoryChart: View {
                 .buttonStyle(.plain)
                 .disabled(isCurrentPeriod)
         }
-        .padding(.horizontal, 16)   // ✅ igual que Running
-        // ⛔️ quita cualquier `.padding(.top, ...)` aquí
+        .padding(.horizontal, 16)
     }
-
 
     // MARK: Period helpers
     private var start: Date {
@@ -182,15 +177,26 @@ struct GymHistoryChart: View {
                 switch metric {
                 case .uniqueExercises:
                     var seen: [GymGroup: Set<UUID>] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { seen[g, default: []].insert(set.exercise.id) } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        seen[g, default: []].insert(ex.id)
+                    }
                     for (g, uniq) in seen { map[key]?[g, default: 0] += uniq.count }
+
                 case .sets:
                     var counts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { counts[g, default: 0] += 1 } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        counts[g, default: 0] += 1
+                    }
                     for (g, c) in counts { map[key]?[g, default: 0] += c }
+
                 case .points:
                     var pts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { pts[g, default: 0] += max(1, set.reps) } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        pts[g, default: 0] += max(1, set.reps)
+                    }
                     for (g, p) in pts { map[key]?[g, default: 0] += p }
                 }
             }
@@ -203,7 +209,7 @@ struct GymHistoryChart: View {
             maxY = data.reduce(into: [String: Int]()) { acc, dp in acc[dp.label, default: 0] += dp.value }.values.max().map(Double.init) ?? 0
 
         case .month:
-            // Week buckets inside the month (clamped to the month)
+            // Semanas dentro del mes (recortadas al mes)
             var weekStarts: [Date] = []
             var ws = from.startOfWeekEN
             while ws < to { weekStarts.append(ws); ws = c.date(byAdding: .day, value: 7, to: ws)! }
@@ -219,18 +225,30 @@ struct GymHistoryChart: View {
                 let ws = c.startOfWeek(for: sess.date)
                 let we = min(c.date(byAdding: .day, value: 7, to: ws)!, to)
                 let label = weekRangeLabel(from: max(ws, from), to: we)
+
                 switch metric {
                 case .uniqueExercises:
                     var seen: [GymGroup: Set<UUID>] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { seen[g, default: []].insert(set.exercise.id) } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        seen[g, default: []].insert(ex.id)
+                    }
                     for (g, uniq) in seen { map[label]?[g, default: 0] += uniq.count }
+
                 case .sets:
                     var counts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { counts[g, default: 0] += 1 } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        counts[g, default: 0] += 1
+                    }
                     for (g, c) in counts { map[label]?[g, default: 0] += c }
+
                 case .points:
                     var pts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { pts[g, default: 0] += max(1, set.reps) } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        pts[g, default: 0] += max(1, set.reps)
+                    }
                     for (g, p) in pts { map[label]?[g, default: 0] += p }
                 }
             }
@@ -252,18 +270,30 @@ struct GymHistoryChart: View {
             for sess in inRange {
                 let m = c.component(.month, from: sess.date)
                 let label = months[max(0, min(11, m - 1))]
+
                 switch metric {
                 case .uniqueExercises:
                     var seen: [GymGroup: Set<UUID>] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { seen[g, default: []].insert(set.exercise.id) } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        seen[g, default: []].insert(ex.id)
+                    }
                     for (g, uniq) in seen { map[label]?[g, default: 0] += uniq.count }
+
                 case .sets:
                     var counts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { counts[g, default: 0] += 1 } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        counts[g, default: 0] += 1
+                    }
                     for (g, c) in counts { map[label]?[g, default: 0] += c }
+
                 case .points:
                     var pts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { pts[g, default: 0] += max(1, set.reps) } }
+                    for set in sess.safeSets {
+                        guard let ex = set.exercise, let g = mapGroup(ex.muscleGroup) else { continue }
+                        pts[g, default: 0] += max(1, set.reps)
+                    }
                     for (g, p) in pts { map[label]?[g, default: 0] += p }
                 }
             }
@@ -283,7 +313,7 @@ struct GymHistoryChart: View {
         case .chestBack: return .chestBack
         case .arms:      return .arms
         case .legs:      return .legs
-        default:         return nil
+        @unknown default: return nil
         }
     }
 }
@@ -331,4 +361,9 @@ private func weekRangeLabel(from: Date, to: Date) -> String {
     let s = Calendar.enUSPOSIX.component(.day, from: from)
     let e = Calendar.enUSPOSIX.component(.day, from: incEnd)
     return "\(s)–\(e)"
+}
+
+// Helper: colección segura
+private extension StrengthSession {
+    var safeSets: [StrengthSet] { sets ?? [] }
 }

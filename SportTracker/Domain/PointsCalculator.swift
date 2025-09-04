@@ -31,9 +31,12 @@ struct PointsCalculator {
     static func score(strength session: StrengthSession, settings: Settings) -> Double {
         var total: Double = 0
 
-        for set in session.sets {
-            let ex = set.exercise
+       // for set in session.sets {
+       //     let ex = set.exercise
+        for set in (session.sets ?? []) {
+            guard let ex = set.exercise else { continue }
 
+        
             if ex.isWeighted, let w = set.weightKg, w > 0 {
                 // Igual que ahora para ejercicios con carga
                 total += (Double(set.reps) * w) * settings.gymWeightedFactor

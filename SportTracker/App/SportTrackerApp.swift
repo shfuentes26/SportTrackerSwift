@@ -46,6 +46,9 @@ struct SportTrackerApp: App {
                 //WorkoutInboxView()
             }
         }
-        .modelContainer(container!)
+        .modelContainer({
+            guard let c = container else { fatalError("[SwiftData] container == nil") }
+            return c
+        }())
     }
 }

@@ -9,6 +9,10 @@ struct SettingsView: View {
     @State private var isImporting = false
     @State private var importResult: String?
     @State private var showImportAlert = false
+    // En tu SettingsView (solo ejemplo mínimo)
+    @StateObject private var vm = BackupViewModel()
+    @State private var useICloudBackup = true  // opcional: puedes quitar el toggle en esta build
+
 
     // 🔒 Ocultar Maintenance cuando el backfill ya se ejecutó una vez
     @AppStorage("didRunRoutesBackfillOnce") private var didRunRoutesBackfillOnce = false
@@ -60,6 +64,38 @@ struct SettingsView: View {
                 Toggle("Show miles (min/mi)", isOn: $sb.prefersMiles)
                 Toggle("Show pounds (lb)",    isOn: $sb.prefersPounds)
             }
+            
+            
+            // --- iCloud (Rescate) ---
+            Section("iCloud (Rescate)") {
+                Button {
+                    vm.makeBackup()
+                } label: {
+                    // Importante: if/else en lugar de operador ternario
+                    if vm.isWorking {
+                        ProgressView()
+                    } else {
+                        Text("Hacer copia de Application Support")
+                    }
+                }
+
+                Button("Actualizar lista") { vm.refreshList() }
+
+                if !vm.backups.isEmpty {
+                    ForEach(vm.backups, id: \.self) { url in
+                        HStack {
+                            Text(url.lastPathComponent).lineLimit(1)
+                            Spacer()
+                            Button(role: .destructive) { vm.deleteBackup(url) } label: { Text("Borrar") }
+                        }
+                    }
+                }
+
+                if let msg = vm.lastResult {
+                    Text(msg).font(.footnote)
+                }
+            }
+            .onAppear { vm.refreshList() }
 
             // 🔧 Maintenance (oculto cuando ya se ejecutó el backfill)
             /*if !didRunRoutesBackfillOnce {

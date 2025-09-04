@@ -139,7 +139,9 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
                 let p = WatchHRPoint(t: s.t, v: s.v)
                 p.detail = detail
                 context.insert(p)
-                detail.hrPoints.append(p)
+                //detail.hrPoints.append(p)
+                if detail.hrPoints == nil { detail.hrPoints = [] }
+                detail.hrPoints!.append(p)
             }
         }
 
@@ -149,7 +151,9 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
                 let p = WatchPacePoint(t: s.t, v: s.v)
                 p.detail = detail
                 context.insert(p)
-                detail.pacePoints.append(p)
+                //detail.pacePoints.append(p)
+                if detail.pacePoints == nil { detail.pacePoints = [] }
+                detail.pacePoints!.append(p)
             }
         }
 
@@ -160,7 +164,9 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
                 let p = WatchElevationPoint(t: s.t, v: s.v) // modelo igual que HR/Pace
                 p.detail = detail
                 context.insert(p)
-                detail.elevationPoints.append(p)
+                //detail.elevationPoints.append(p)
+                if detail.elevationPoints == nil { detail.elevationPoints = [] }
+                detail.elevationPoints!.append(p)
             }
         }
         
@@ -176,7 +182,9 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
                                           avgSpeed: sp.avgSpeed)
                 e.detail = detail
                 context.insert(e)
-                detail.splits.append(e)
+                //detail.splits.append(e)
+                if detail.splits == nil { detail.splits = [] }
+                detail.splits!.append(e)
             }
         }
 

@@ -63,7 +63,9 @@ final class NewViewModel {
                                   reps: s.reps,
                                   weightKg: s.weightKg)
             set.session = session
-            session.sets.append(set)
+            //session.sets.append(set)
+            if session.sets == nil { session.sets = [] }
+            session.sets!.append(set)
         }
 
         let settings = try fetchOrCreateSettings()

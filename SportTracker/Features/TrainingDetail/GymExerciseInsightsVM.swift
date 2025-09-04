@@ -35,10 +35,9 @@ final class GymExerciseInsightsVM: ObservableObject {
     }
 
     func load(period: Period) {
-        let now = Date()                                // SIEMPRE hasta hoy
-        let start = startDate(for: period, ref: now)    // inicio según periodo
+        let now = Date()
+        let start = startDate(for: period, ref: now)
 
-        // Traer sesiones entre 'start' y 'hoy'
         let pred  = #Predicate<StrengthSession> { $0.date >= start && $0.date <= now }
         let desc  = FetchDescriptor<StrengthSession>(
             predicate: pred,
@@ -49,21 +48,30 @@ final class GymExerciseInsightsVM: ObservableObject {
         // Mejor valor del ejercicio por día
         let cal = Calendar.current
         var dayBest: [Date: Double] = [:]
+
         for s in sessions {
-            let sets = s.sets.filter { $0.exercise.id == exercise.id }
-            guard !sets.isEmpty else { continue }
+            // Filtra sets del ejercicio actual manejando opcionales
+            let setsForExercise = (s.sets ?? [])
+                .filter { $0.exercise?.id == exercise.id }
+
+            guard !setsForExercise.isEmpty else { continue }
+
             let day = cal.startOfDay(for: s.date)
             let v: Double = exercise.isWeighted
-                ? (sets.compactMap { $0.weightKg }.max() ?? 0)
-                : Double(sets.map { $0.reps }.max() ?? 0)
+                ? (setsForExercise.compactMap { $0.weightKg }.max() ?? 0)
+                : Double(setsForExercise.map { $0.reps }.max() ?? 0)
+
             dayBest[day] = max(dayBest[day] ?? 0, v)
         }
 
-        let series = dayBest.keys.sorted().map { d in GymPoint(date: d, valueKgOrReps: dayBest[d] ?? 0) }
+        let series = dayBest.keys.sorted().map { d in
+            GymPoint(date: d, valueKgOrReps: dayBest[d] ?? 0)
+        }
         self.points = series
         self.emptyMessage = series.isEmpty ? "No data to display." : nil
         self.isWeighted = exercise.isWeighted
     }
+
 
     private func startDate(for p: Period, ref: Date) -> Date {
         let cal = Calendar.current
