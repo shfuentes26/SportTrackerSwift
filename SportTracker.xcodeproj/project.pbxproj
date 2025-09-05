@@ -110,6 +110,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2365CAEC2E5F348700CF609C /* TTWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "TTWatch Watch App"; sourceTree = "<group>"; };
+		23AA64E02E6B3E7400E7AF01 /* iCloud */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = iCloud; sourceTree = "<group>"; };
 		23BE56CA2E53A53800600875 /* Domain */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Domain; sourceTree = "<group>"; };
 		23BE56CB2E53A55B00600875 /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2342D5332E60D57800E696DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
 		23BE56CC2E53A56700600875 /* Resources */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (23BE56D32E53A76B00600875 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Resources; sourceTree = "<group>"; };
@@ -207,6 +208,7 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
+				23AA64E02E6B3E7400E7AF01 /* iCloud */,
 				2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */,
 				2342D5362E60EE1100E696DE /* WorkoutInbox.swift */,
 				2365CB082E5F7F0500CF609C /* SummarySheet.swift */,
@@ -277,6 +279,7 @@
 				2365CAF42E5F348900CF609C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				23AA64E02E6B3E7400E7AF01 /* iCloud */,
 				23BE56CA2E53A53800600875 /* Domain */,
 				23BE56CB2E53A55B00600875 /* Shared */,
 				23BE56CC2E53A56700600875 /* Resources */,
@@ -472,12 +475,13 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "watchsimulator watchos";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -589,10 +593,12 @@
 				INFOPLIST_KEY_NSMotionUsageDescription = "We use motion data to improve pace and distance estimates during workouts.";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker;
 				PRODUCT_NAME = SportTracker;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG CLOUD_SYNC";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -618,6 +624,7 @@
 				INFOPLIST_KEY_NSMotionUsageDescription = "We use motion data to improve pace and distance estimates during workouts.";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.satcom.SportTracker;
 				PRODUCT_NAME = SportTracker;
 				SDKROOT = iphoneos;

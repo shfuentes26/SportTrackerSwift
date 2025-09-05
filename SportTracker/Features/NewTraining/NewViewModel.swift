@@ -63,6 +63,9 @@ final class NewViewModel {
                                   reps: s.reps,
                                   weightKg: s.weightKg)
             set.session = session
+
+            // ⬇️ Inicializar array opcional antes de append (no tocamos otras clases)
+            if session.sets == nil { session.sets = [] }
             session.sets.append(set)
         }
 

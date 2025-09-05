@@ -12,6 +12,11 @@ struct SettingsView: View {
 
     // 🔒 Ocultar Maintenance cuando el backfill ya se ejecutó una vez
     @AppStorage("didRunRoutesBackfillOnce") private var didRunRoutesBackfillOnce = false
+    
+    // ✅ Preferencia de iCloud (no requiere cambios de modelo)
+      @AppStorage("useICloudSync") private var useICloudSync = false
+      @State private var showICloudToggleNote = false
+
 
     // Crea el registro de Settings si no existe
     private func ensureSettings() -> Settings {
@@ -27,6 +32,18 @@ struct SettingsView: View {
         @Bindable var sb = s           // bindings sobre el modelo Settings
 
         Form {
+            // STORAGE / SYNC
+            Section("Storage & Sync") {
+                Toggle("Sync with iCloud", isOn: $useICloudSync)
+                    .onChange(of: useICloudSync) { _, _ in
+                        // Nota: el contenedor SwiftData se crea al arrancar.
+                        // Cambiar esta opción requiere reiniciar la app para re-crear el container.
+                        showICloudToggleNote = true
+                    }
+                Text(useICloudSync ? "iCloud sync: ON" : "iCloud sync: OFF")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
             // HealthKit manual import
             Section(header: Text("Integrations")) {
                 Button {

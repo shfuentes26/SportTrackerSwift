@@ -1,60 +1,38 @@
-//
-//  Models.swift (fixed defaults for SwiftData)
-//  SportTracker
-//
-
 import Foundation
 import SwiftData
 
 // MARK: - Enums
 
-public enum UnitSystem: String, Codable, CaseIterable {
+enum UnitSystem: String, Codable, CaseIterable {
     case metric, imperial
 }
 
-public enum MuscleGroup: Int, Codable, CaseIterable {
-    case chestBack = 1  // 1 Pecho/Espalda
-    case arms = 2       // 2 Brazos
-    case legs = 3       // 3 Piernas
-    case core = 4       // 4 Core
+enum MuscleGroup: Int, Codable, CaseIterable {
+    case chestBack = 1
+    case arms = 2
+    case legs = 3
+    case core = 4
 }
 
-public enum SyncState: Int, Codable {
+enum SyncState: Int, Codable {
     case localOnly = 0
     case pending
     case synced
     case conflict
 }
 
-// MARK: - Base protocol for sync metadata
-public protocol SyncTracked {
-    var id: UUID { get set }
-    var createdAt: Date { get set }
-    var updatedAt: Date { get set }
-    var deletedAt: Date? { get set }
-    var remoteId: String? { get set }
-    var syncState: SyncState { get set }
-}
-
-extension SyncTracked {
-    public mutating func markUpdated() { updatedAt = Date() }
-}
-
 // MARK: - Settings & User
 
 @Model
-public final class UserProfile: SyncTracked {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
-    public var deletedAt: Date? = nil
-    public var remoteId: String? = nil
-    public var syncState: SyncState = SyncState.localOnly
+final class UserProfile {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
-    public var displayName: String?
-    public var unitSystem: UnitSystem = UnitSystem.metric
+    var displayName: String? = nil
+    var unitSystem: UnitSystem = UnitSystem.metric
 
-    public init(id: UUID = UUID(), displayName: String? = nil, unitSystem: UnitSystem = UnitSystem.metric) {
+    init(id: UUID = UUID(), displayName: String? = nil, unitSystem: UnitSystem = UnitSystem.metric) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -64,59 +42,68 @@ public final class UserProfile: SyncTracked {
 }
 
 @Model
-public final class Settings: SyncTracked {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
-    public var deletedAt: Date? = nil
-    public var remoteId: String? = nil
-    //public var syncState: SyncState = SyncState.localOnly
-    public var syncStateRaw: Int = SyncState.localOnly.rawValue
-    
-    public var syncState: SyncState {
+final class Settings {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
+
+    var syncStateRaw: Int = SyncState.localOnly.rawValue
+    var syncState: SyncState {
         get { SyncState(rawValue: syncStateRaw) ?? .localOnly }
         set { syncStateRaw = newValue.rawValue }
     }
 
-    // Scoring factors (tune in UI later)
-    public var runningDistanceFactor: Double = 10.0       // pts per km
-    public var runningTimeFactor: Double = 0.5            // pts per minute
-    public var runningPaceBaselineSecPerKm: Double = 360  // 6:00 min/km baseline
-    public var runningPaceFactor: Double = 50.0           // weight of pace score
+    // Scoring factors (defaults)
+    var runningDistanceFactor: Double = 10.0
+    var runningTimeFactor: Double = 0.5
+    var runningPaceBaselineSecPerKm: Double = 360
+    var runningPaceFactor: Double = 50.0
 
-    public var gymRepsFactor: Double = 1.0                // bodyweight: pts per rep
-    public var gymWeightedFactor: Double = 0.1            // weighted: (kg * reps) * factor
+    var gymRepsFactor: Double = 1.0
+    var gymWeightedFactor: Double = 0.1
 
-    public init(id: UUID = UUID()) {
+    var prefersMiles: Bool = false
+    var prefersPounds: Bool = false
+
+    init(id: UUID = UUID()) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
     }
-    var prefersMiles: Bool = false     // false = km; true = miles
-    var prefersPounds: Bool = false    // false = kg; true = lb
 }
 
 // MARK: - Exercise Library
 
 @Model
-public final class Exercise: SyncTracked {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
-    public var deletedAt: Date? = nil
-    public var remoteId: String? = nil
-    public var syncState: SyncState = SyncState.localOnly
+final class Exercise {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
-    public var name: String
-    public var muscleGroup: MuscleGroup
-    public var isWeighted: Bool
-    public var exerciseDescription: String?
-    public var iconSystemName: String?   // SF Symbol name if any
-    public var imageData: Data?          // Optional user photo/icon
-    public var isCustom: Bool = true
-    public var notes: String = ""
+    var name: String = ""
+    var muscleGroup: MuscleGroup = MuscleGroup.chestBack
+    var isWeighted: Bool = false
+    var exerciseDescription: String? = nil
+    var iconSystemName: String? = nil
+    var imageData: Data? = nil
+    var isCustom: Bool = true
+    var notes: String = ""
 
-    public init(id: UUID = UUID(), name: String, muscleGroup: MuscleGroup, isWeighted: Bool, exerciseDescription: String? = nil, iconSystemName: String? = nil, imageData: Data? = nil, isCustom: Bool = true,notes: String = "") {
+    // Inversa hacia el campo persistido opcional del set (_exercise)
+    @Relationship(deleteRule: .nullify, inverse: \StrengthSet._exercise)
+    var usedInSets: [StrengthSet]? = nil
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        muscleGroup: MuscleGroup,
+        isWeighted: Bool,
+        exerciseDescription: String? = nil,
+        iconSystemName: String? = nil,
+        imageData: Data? = nil,
+        isCustom: Bool = true,
+        notes: String = ""
+    ) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -131,33 +118,63 @@ public final class Exercise: SyncTracked {
     }
 }
 
-// MARK: - Strength (Gym) Sessions
+// MARK: - Strength (Gym)
 
 @Model
-public final class StrengthSet: SyncTracked {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
-    public var deletedAt: Date? = nil
-    public var remoteId: String? = nil
-    public var syncState: SyncState = SyncState.localOnly
+final class StrengthSet {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
-    @Relationship(deleteRule: .nullify, inverse: \StrengthSession.sets)
-    public var session: StrengthSession?
+    // Inversa al campo persistido de la sesión (_sets)
+    @Relationship(deleteRule: .nullify, inverse: \StrengthSession._sets)
+    var session: StrengthSession? = nil
 
+    // ⚙️ Persistido (opcional) para cumplir CloudKit
     @Relationship(deleteRule: .noAction)
-    public var exercise: Exercise
+    var _exercise: Exercise? = nil
 
-    public var order: Int
-    public var reps: Int
-    public var weightKg: Double?  // nil for bodyweight
-    public var restSeconds: Int?
+    // 👁️ Público (compatibilidad con el resto del código)
+    //  - Antes hacía force-unwrap y crasheaba si _exercise era nil en datos antiguos.
+    //  - Ahora: si falta, creamos un Exercise “placeholder” y lo asignamos para curar el dato.
+    @Transient
+    var exercise: Exercise {
+        get {
+            if let ex = _exercise { return ex }
+            // Auto-heal para registros antiguos sin exercise
+            let placeholder = Exercise(
+                name: "(missing exercise)",
+                muscleGroup: MuscleGroup.arms,
+                isWeighted: false,
+                exerciseDescription: "Auto-repaired placeholder",
+                iconSystemName: nil,
+                imageData: nil,
+                isCustom: true,
+                notes: ""
+            )
+            _exercise = placeholder
+            return placeholder
+        }
+        set { _exercise = newValue }
+    }
 
-    public init(id: UUID = UUID(), exercise: Exercise, order: Int, reps: Int, weightKg: Double? = nil, restSeconds: Int? = nil) {
+    var order: Int = 0
+    var reps: Int = 0
+    var weightKg: Double? = nil
+    var restSeconds: Int? = nil
+
+    init(
+        id: UUID = UUID(),
+        exercise: Exercise,
+        order: Int,
+        reps: Int,
+        weightKg: Double? = nil,
+        restSeconds: Int? = nil
+    ) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
-        self.exercise = exercise
+        self._exercise = exercise
         self.order = order
         self.reps = reps
         self.weightKg = weightKg
@@ -166,23 +183,29 @@ public final class StrengthSet: SyncTracked {
 }
 
 @Model
-public final class StrengthSession: SyncTracked {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
-    public var deletedAt: Date? = nil
-    public var remoteId: String? = nil
-    public var syncState: SyncState = SyncState.localOnly
+final class StrengthSession {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
-    public var date: Date
-    public var durationSeconds: Int?
-    public var notes: String?
+    var date: Date = Date()
+    var durationSeconds: Int? = nil
+    var notes: String? = nil
+
+    // ⚙️ Persistido (opcional) para CloudKit
     @Relationship(deleteRule: .cascade)
-    public var sets: [StrengthSet] = []
+    var _sets: [StrengthSet]? = nil
 
-    public var totalPoints: Double = 0
+    // 👁️ Público no opcional (compatibilidad con Views/lógica)
+    @Transient
+    var sets: [StrengthSet] {
+        get { _sets ?? [] }
+        set { _sets = newValue }
+    }
 
-    public init(id: UUID = UUID(), date: Date = Date(), durationSeconds: Int? = nil, notes: String? = nil) {
+    var totalPoints: Double = 0
+
+    init(id: UUID = UUID(), date: Date = Date(), durationSeconds: Int? = nil, notes: String? = nil) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -192,28 +215,37 @@ public final class StrengthSession: SyncTracked {
     }
 }
 
-// MARK: - Running Sessions
+// MARK: - Running
 
 @Model
-public final class RunningSession: SyncTracked {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
-    public var deletedAt: Date? = nil
-    public var remoteId: String? = nil
-    public var syncState: SyncState = SyncState.localOnly
+final class RunningSession {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
-    public var date: Date
-    public var durationSeconds: Int
-    public var distanceMeters: Double
-    public var notes: String?
+    var remoteId: String? = nil
 
-    // Optional GPS route encoded as a polyline string (Google encoded polyline or similar)
-    public var routePolyline: String?
+    var date: Date = Date()
+    var durationSeconds: Int = 0
+    var distanceMeters: Double = 0
+    var notes: String? = nil
 
-    public var totalPoints: Double = 0
+    var routePolyline: String? = nil
+    var totalPoints: Double = 0
 
-    public init(id: UUID = UUID(), date: Date = Date(), durationSeconds: Int, distanceMeters: Double, notes: String? = nil, routePolyline: String? = nil) {
+    // Inversa con RunningWatchDetail.session
+    @Relationship(deleteRule: .nullify, inverse: \RunningWatchDetail.session)
+    var watchDetail: RunningWatchDetail? = nil
+
+    init(
+        id: UUID = UUID(),
+        date: Date = Date(),
+        durationSeconds: Int,
+        distanceMeters: Double,
+        notes: String? = nil,
+        routePolyline: String? = nil,
+        remoteId: String? = nil
+    ) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -222,32 +254,29 @@ public final class RunningSession: SyncTracked {
         self.distanceMeters = distanceMeters
         self.notes = notes
         self.routePolyline = routePolyline
+        self.remoteId = remoteId
     }
 
-    // Computed helpers (not persisted)
-    public var paceSecondsPerKm: Double {
+    var paceSecondsPerKm: Double {
         guard distanceMeters > 0 else { return 0 }
         let km = distanceMeters / 1000.0
         return Double(durationSeconds) / km
     }
 
-    public var distanceKm: Double {
-        return distanceMeters / 1000.0
-    }
+    var distanceKm: Double { distanceMeters / 1000.0 }
 }
 
 // MARK: - Goals
 
 @Model
-public final class RunningGoal {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
+final class RunningGoal {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
-    /// Objetivo de kilómetros por semana
-    public var weeklyKilometers: Double
+    var weeklyKilometers: Double = 0
 
-    public init(id: UUID = UUID(), weeklyKilometers: Double = 0) {
+    init(id: UUID = UUID(), weeklyKilometers: Double = 0) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -256,22 +285,23 @@ public final class RunningGoal {
 }
 
 @Model
-public final class GymGoal {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
+final class GymGoal {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
-    /// Objetivos por grupo muscular: nº de entrenos/semana
-    public var targetChestBack: Int
-    public var targetArms: Int
-    public var targetLegs: Int
-    public var targetCore: Int
+    var targetChestBack: Int = 0
+    var targetArms: Int = 0
+    var targetLegs: Int = 0
+    var targetCore: Int = 0
 
-    public init(id: UUID = UUID(),
-                targetChestBack: Int = 0,
-                targetArms: Int = 0,
-                targetLegs: Int = 0,
-                targetCore: Int = 0) {
+    init(
+        id: UUID = UUID(),
+        targetChestBack: Int = 0,
+        targetArms: Int = 0,
+        targetLegs: Int = 0,
+        targetCore: Int = 0
+    ) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
@@ -281,101 +311,120 @@ public final class GymGoal {
         self.targetCore = targetCore
     }
 
-    public var totalWeeklyTarget: Int {
+    var totalWeeklyTarget: Int {
         targetChestBack + targetArms + targetLegs + targetCore
     }
 }
 
-// =========================
-// WATCH RUNNING DETAIL MODELS
-// =========================
+// MARK: - Watch Running Detail
 
 @Model
-public final class RunningWatchDetail {
-    public var id: UUID
-    public var createdAt: Date
-    public var updatedAt: Date
+final class RunningWatchDetail {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
-    // Relación unidireccional: detalle -> sesión existente
     @Relationship(deleteRule: .nullify)
-    public var session: RunningSession?
+    var session: RunningSession? = nil
 
-    // Series opcionales
-    @Relationship(deleteRule: .cascade) public var hrPoints: [WatchHRPoint] = []
-    @Relationship(deleteRule: .cascade) public var pacePoints: [WatchPacePoint] = []
-    @Relationship(deleteRule: .cascade) public var elevationPoints: [WatchElevationPoint] = []
+    // ⚙️ Persistidos (opcionales) para CloudKit
+    @Relationship(deleteRule: .cascade, inverse: \WatchHRPoint.detail)
+    var _hrPoints: [WatchHRPoint]? = nil
 
-    // Splits por kilómetro
-    @Relationship(deleteRule: .cascade) public var splits: [RunningWatchSplit] = []
+    @Relationship(deleteRule: .cascade, inverse: \WatchPacePoint.detail)
+    var _pacePoints: [WatchPacePoint]? = nil
 
-    // Ruta opcional (futuro)
-    public var routePolyline: String?
+    @Relationship(deleteRule: .cascade, inverse: \WatchElevationPoint.detail)
+    var _elevationPoints: [WatchElevationPoint]? = nil
 
-    public init(id: UUID = UUID()) {
+    @Relationship(deleteRule: .cascade, inverse: \RunningWatchSplit.detail)
+    var _splits: [RunningWatchSplit]? = nil
+
+    // 👁️ Públicas no opcionales
+    @Transient var hrPoints: [WatchHRPoint] {
+        get { _hrPoints ?? [] }
+        set { _hrPoints = newValue }
+    }
+    @Transient var pacePoints: [WatchPacePoint] {
+        get { _pacePoints ?? [] }
+        set { _pacePoints = newValue }
+    }
+    @Transient var elevationPoints: [WatchElevationPoint] {
+        get { _elevationPoints ?? [] }
+        set { _elevationPoints = newValue }
+    }
+    @Transient var splits: [RunningWatchSplit] {
+        get { _splits ?? [] }
+        set { _splits = newValue }
+    }
+
+    var routePolyline: String? = nil
+
+    init(id: UUID = UUID()) {
         self.id = id
         self.createdAt = Date()
         self.updatedAt = Date()
     }
 }
 
-// Puntos de serie (t, v) — prefijo Watch para evitar colisiones de nombres
 @Model
-public final class WatchHRPoint {
-    public var id: UUID
-    public var t: Double          // segundos desde inicio
-    public var v: Double          // bpm
-    @Relationship(deleteRule: .nullify) public var detail: RunningWatchDetail?
+final class WatchHRPoint {
+    var id: UUID = UUID()
+    var t: Double = 0
+    var v: Double = 0
+    @Relationship(deleteRule: .nullify) var detail: RunningWatchDetail? = nil
 
-    public init(id: UUID = UUID(), t: Double, v: Double) {
+    init(id: UUID = UUID(), t: Double, v: Double) {
         self.id = id; self.t = t; self.v = v
     }
 }
 
 @Model
-public final class WatchPacePoint {
-    public var id: UUID
-    public var t: Double          // segundos desde inicio
-    public var v: Double          // m/s
-    @Relationship(deleteRule: .nullify) public var detail: RunningWatchDetail?
+final class WatchPacePoint {
+    var id: UUID = UUID()
+    var t: Double = 0
+    var v: Double = 0
+    @Relationship(deleteRule: .nullify) var detail: RunningWatchDetail? = nil
 
-    public init(id: UUID = UUID(), t: Double, v: Double) {
+    init(id: UUID = UUID(), t: Double, v: Double) {
         self.id = id; self.t = t; self.v = v
     }
 }
 
 @Model
-public final class WatchElevationPoint {
-    public var id: UUID
-    public var t: Double          // segundos desde inicio
-    public var v: Double          // metros
-    @Relationship(deleteRule: .nullify) public var detail: RunningWatchDetail?
+final class WatchElevationPoint {
+    var id: UUID = UUID()
+    var t: Double = 0
+    var v: Double = 0
+    @Relationship(deleteRule: .nullify) var detail: RunningWatchDetail? = nil
 
-    public init(id: UUID = UUID(), t: Double, v: Double) {
+    init(id: UUID = UUID(), t: Double, v: Double) {
         self.id = id; self.t = t; self.v = v
     }
 }
 
-// Split por km
 @Model
-public final class RunningWatchSplit {
-    public var id: UUID
-    public var index: Int
-    public var startOffset: Double
-    public var endOffset: Double
-    public var duration: Double
-    public var distanceMeters: Double
-    public var avgHR: Double?
-    public var avgSpeed: Double?   // m/s
-    @Relationship(deleteRule: .nullify) public var detail: RunningWatchDetail?
+final class RunningWatchSplit {
+    var id: UUID = UUID()
+    var index: Int = 0
+    var startOffset: Double = 0
+    var endOffset: Double = 0
+    var duration: Double = 0
+    var distanceMeters: Double = 0
+    var avgHR: Double? = nil
+    var avgSpeed: Double? = nil
+    @Relationship(deleteRule: .nullify) var detail: RunningWatchDetail? = nil
 
-    public init(id: UUID = UUID(),
-                index: Int,
-                startOffset: Double,
-                endOffset: Double,
-                duration: Double,
-                distanceMeters: Double,
-                avgHR: Double?,
-                avgSpeed: Double?) {
+    init(
+        id: UUID = UUID(),
+        index: Int,
+        startOffset: Double,
+        endOffset: Double,
+        duration: Double,
+        distanceMeters: Double,
+        avgHR: Double?,
+        avgSpeed: Double?
+    ) {
         self.id = id
         self.index = index
         self.startOffset = startOffset
@@ -386,4 +435,3 @@ public final class RunningWatchSplit {
         self.avgSpeed = avgSpeed
     }
 }
-

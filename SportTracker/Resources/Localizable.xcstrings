@@ -429,6 +429,12 @@
     "HR %lld" : {
 
     },
+    "iCloud sync: OFF" : {
+
+    },
+    "iCloud sync: ON" : {
+
+    },
     "Import" : {
       "localizations" : {
         "es" : {
@@ -812,10 +818,16 @@
     "Start Workout" : {
 
     },
+    "Storage & Sync" : {
+
+    },
     "Summary" : {
 
     },
     "SUMMARY" : {
+
+    },
+    "Sync with iCloud" : {
 
     },
     "t" : {

@@ -118,7 +118,7 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
         }
         let context = container.mainContext
 
-        // 1) Crea la RunningSession base (no rompe tu flujo actual)
+        // 1) Crea la RunningSession base
         let session = RunningSession(
             date: payload.start,
             durationSeconds: Int(payload.duration),
@@ -139,54 +139,58 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
                 let p = WatchHRPoint(t: s.t, v: s.v)
                 p.detail = detail
                 context.insert(p)
-                detail.hrPoints.append(p)
+
+                // Antes: if detail.hrPoints == nil { detail.hrPoints = [] }
+                //        detail.hrPoints!.append(p)
+                detail.hrPoints.append(p)           // ← ahora es NO opcional
             }
         }
 
-        // Pace series (m/s)
+        // Pace series
         if let paces = payload.paceSeries {
             for s in paces {
                 let p = WatchPacePoint(t: s.t, v: s.v)
                 p.detail = detail
                 context.insert(p)
-                detail.pacePoints.append(p)
+                detail.pacePoints.append(p)         // ← sin '!'
             }
         }
 
-        // Elevación (cuando llegue en el payload)
-        // Elevación (si viene en el payload)
+        // Elevation
         if let elev = payload.elevationSeries {
             for s in elev {
-                let p = WatchElevationPoint(t: s.t, v: s.v) // modelo igual que HR/Pace
+                let p = WatchElevationPoint(t: s.t, v: s.v)
                 p.detail = detail
                 context.insert(p)
-                detail.elevationPoints.append(p)
+                detail.elevationPoints.append(p)    // ← sin '!'
             }
         }
-        
+
         // Splits por km
         if let splits = payload.kmSplits {
             for sp in splits {
-                let e = RunningWatchSplit(index: sp.index,
-                                          startOffset: sp.startOffset,
-                                          endOffset: sp.endOffset,
-                                          duration: sp.duration,
-                                          distanceMeters: sp.distanceMeters,
-                                          avgHR: sp.avgHR,
-                                          avgSpeed: sp.avgSpeed)
+                let e = RunningWatchSplit(
+                    index: sp.index,
+                    startOffset: sp.startOffset,
+                    endOffset: sp.endOffset,
+                    duration: sp.duration,
+                    distanceMeters: sp.distanceMeters,
+                    avgHR: sp.avgHR,
+                    avgSpeed: sp.avgSpeed
+                )
                 e.detail = detail
                 context.insert(e)
-                detail.splits.append(e)
+                detail.splits.append(e)             // ← sin '!'
             }
         }
 
         do {
             try context.save()
             Task { @MainActor in
-                // Rellena routePolyline en las sesiones que no la tengan (incluida la que acabas de crear)
+                // Rellena routePolyline en sesiones que no la tengan
                 _ = try? await HealthKitImportService.backfillMissingRoutes(
                     context: Persistence.shared.appContainer!.mainContext,
-                    limit: 1   // basta con 1 run reciente
+                    limit: 1
                 )
             }
             print("[SwiftData] Saved RunningSession + Watch detail")

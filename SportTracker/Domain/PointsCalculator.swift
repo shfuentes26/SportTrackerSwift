@@ -1,12 +1,3 @@
-//
-//  PointsCalculator.swift
-//  SportTracker
-//
-//  Scoring utilities based on user's rules.
-//  Running -> distance, time, and pace (lower pace = more points)
-//  Gym -> bodyweight: more reps; weighted: more weight & reps
-//
-
 import Foundation
 import SwiftData
 
@@ -16,10 +7,9 @@ struct PointsCalculator {
         let km = running.distanceKm
         let minutes = Double(running.durationSeconds) / 60.0
 
-        // Pace score: faster than baseline => >1, slower => <1 (min clamp)
         let pace = running.paceSecondsPerKm
         let baseline = max(settings.runningPaceBaselineSecPerKm, 1)
-        let paceRatio = baseline / max(pace, 1) // if pace = baseline -> 1.0
+        let paceRatio = baseline / max(pace, 1)
 
         let points = (km * settings.runningDistanceFactor)
                    + (minutes * settings.runningTimeFactor)
@@ -29,44 +19,39 @@ struct PointsCalculator {
     }
 
     static func score(strength session: StrengthSession, settings: Settings) -> Double {
-        var total: Double = 0
+            var total: Double = 0
 
-        for set in session.sets {
-            let ex = set.exercise
+            // sets ahora es NO opcional (vía @Transient)
+            for set in session.sets {
+                // exercise también es NO opcional (vía @Transient)
+                let ex = set.exercise
 
-            if ex.isWeighted, let w = set.weightKg, w > 0 {
-                // Igual que ahora para ejercicios con carga
-                total += (Double(set.reps) * w) * settings.gymWeightedFactor
-                continue
+                if ex.isWeighted, let w = set.weightKg, w > 0 {
+                    total += (Double(set.reps) * w) * settings.gymWeightedFactor
+                    continue
+                }
+
+                if let target = bodyweightIntermediateTarget(for: ex) {
+                    let reps = Double(set.reps)
+                    let raw = 100.0 * (reps / target)
+                    total += min(raw, 150.0)
+                } else {
+                    total += Double(set.reps) * settings.gymRepsFactor
+                }
             }
 
-            // --- Bodyweight: usar benchmark "Intermediate" = 100 pts ---
-            if let target = bodyweightIntermediateTarget(for: ex) {
-                // Si tu UI guarda tiempo (p. ej. plank), usa 'set.durationSec' aquí
-                let reps = Double(set.reps) // para ejercicios por rep
-                let raw = 100.0 * (reps / target)
-                total += min(raw, 150.0)    // cap opcional
-            } else {
-                // Fallback si no tenemos benchmark para ese ejercicio
-                total += Double(set.reps) * settings.gymRepsFactor
-            }
+            return max(total, 0)
         }
 
-        return max(total, 0)
-    }
-
-    // Mapa de benchmarks "Intermediate" (reps -> 100 pts)
     private static func bodyweightIntermediateTarget(for ex: Exercise) -> Double? {
         switch ex.name.lowercased() {
-        case "pull-ups", "pull ups":              return 14    // Strength Level
-        case "push ups", "push-ups":              return 41    // Strength Level (male table)
-        case "hanging leg raise":                 return 18    // Strength Level
-        case "crunches":                          return 55    // Strength Level
-        case "russian twist":                     return 45    // Strength Level
-        // Si usas plank por duración y guardas segundos en el set, cambia a duración:
-        // case "plank": return 90
+        case "pull-ups", "pull ups": return 14
+        case "push ups", "push-ups": return 41
+        case "hanging leg raise":    return 18
+        case "crunches":             return 55
+        case "russian twist":        return 45
+        // case "plank": return 90 // si usas duración
         default: return nil
         }
     }
-
 }
