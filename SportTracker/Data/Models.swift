@@ -18,7 +18,31 @@ final class STUserProfile {
 
     var displayName: String? = nil
 
-    // Raw + computed
+    var unitSystemRaw: String = UnitSystem.metric.rawValue
+    var unitSystem: UnitSystem {
+        get { UnitSystem(rawValue: unitSystemRaw) ?? .metric }
+        set { unitSystemRaw = newValue.rawValue }
+    }
+
+    var syncStateRaw: Int = SyncState.localOnly.rawValue
+    var syncState: SyncState {
+        get { SyncState(rawValue: syncStateRaw) ?? .localOnly }
+        set { syncStateRaw = newValue.rawValue }
+    }
+
+    init() {}
+}
+
+
+@Model
+final class UserProfile {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
+
+    var displayName: String? = nil
+
+    // Raw + computed (mismo layout que STUserProfile)
     var unitSystemRaw: String = UnitSystem.metric.rawValue
     var unitSystem: UnitSystem {
         get { UnitSystem(rawValue: unitSystemRaw) ?? .metric }
