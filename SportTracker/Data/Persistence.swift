@@ -86,18 +86,21 @@ final class Persistence {
             }
         }
         func dedupeSingletons(_ context: ModelContext) throws {
-            func dedupe<T: PersistentModel>(_ t: T.Type) throws {
-                var all = try context.fetch(FetchDescriptor<T>())
-                guard all.count > 1 else { return }
-                all.sort {
-                    let u0 = ($0 as AnyObject).value(forKey: "updatedAt") as? Date ?? .distantPast
-                    let u1 = ($1 as AnyObject).value(forKey: "updatedAt") as? Date ?? .distantPast
-                    return u0 > u1
-                }
-                for x in all.dropFirst() { context.delete(x) }
+            // Mantén solo el Settings más reciente
+            var settings = try context.fetch(FetchDescriptor<Settings>())
+            if settings.count > 1 {
+                settings.sort { $0.updatedAt > $1.updatedAt }
+                for s in settings.dropFirst() { context.delete(s) }
             }
-            try dedupe(Settings.self); try dedupe(UserProfile.self)
+
+            // Mantén solo el UserProfile más reciente
+            var users = try context.fetch(FetchDescriptor<UserProfile>())
+            if users.count > 1 {
+                users.sort { $0.updatedAt > $1.updatedAt }
+                for u in users.dropFirst() { context.delete(u) }
+            }
         }
+
         try seedBasicsIfEmpty(cx); try dedupeSingletons(cx); try cx.save()
 
         // --- iCloud vía CKRecord (no mirroring de SwiftData) ---
