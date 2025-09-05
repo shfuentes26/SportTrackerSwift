@@ -18,10 +18,11 @@ final class Persistence {
             WatchElevationPoint.self, RunningWatchSplit.self,
             RunningGoal.self, GymGoal.self
         ]
-
         let localSchema = Schema(localModels)
-        let localCfg = ModelConfiguration("LocalOnly", schema: localSchema, isStoredInMemoryOnly: inMemory)
-        let container = try ModelContainer(for: localSchema, configurations: localCfg)
+
+        // ✅ Usa la configuración por defecto (SIN nombre) para abrir el MISMO fichero que ya usa MAIN
+        let config = ModelConfiguration(schema: localSchema, isStoredInMemoryOnly: inMemory)
+        let container = try ModelContainer(for: localSchema, configurations: config)
         self.appContainer = container
 
         // --- seed & dedupe (idéntico a lo que tenías) ---
