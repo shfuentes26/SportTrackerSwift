@@ -343,7 +343,3 @@ fileprivate extension Calendar {
     }
 }
 
-#Preview {
-    GymView()
-        .modelContainer(try! Persistence.shared.makeModelContainer(inMemory: true))
-}

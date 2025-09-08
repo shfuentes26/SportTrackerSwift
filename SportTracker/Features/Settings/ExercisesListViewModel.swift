@@ -1,58 +1,45 @@
-//
-//  ExercisesListViewModel.swift
-//  SportTracker
-//
-//  Created by ChatGPT on 8/24/25.
-//
-
 import Foundation
 import SwiftUI
+import SwiftData
 
-/// A simple view model to drive ``ExercisesListView``.
-///
-/// This type encapsulates the state for the search text and the
-/// currently selected muscle group. It also exposes a method to
-/// filter a list of exercises based on those properties. Moving
-/// this state and filtering logic out of the view makes the view
-/// itself simpler and adheres to the MVVM pattern.
 @MainActor
 final class ExercisesListViewModel: ObservableObject {
-
-    /// The current search string. Updating this value will automatically
-    /// refresh any views bound to it thanks to the ``@Published`` property
-    /// wrapper.
     @Published var search: String = ""
-
-    /// The currently selected muscle group. A value of `nil` represents
-    /// the "All" category.
     @Published var selected: MuscleGroup? = nil
 
-    /// Returns a filtered array of ``Exercise`` values based on the current
-    /// ``search`` and ``selected`` values.
-    ///
-    /// - Parameter allExercises: The complete list of exercises to filter.
-    /// - Returns: A new array containing only those exercises that match
-    ///   the current search string and selected muscle group.
     func filteredExercises(from allExercises: [Exercise]) -> [Exercise] {
         let trimmed = search.trimmingCharacters(in: .whitespacesAndNewlines)
         return allExercises.filter { ex in
-            // When a specific category is selected, ensure the exercise
-            // belongs to that category. Otherwise accept all.
-            let categoryMatches: Bool
-            if let sel = selected {
-                categoryMatches = ex.muscleGroup == sel
-            } else {
-                categoryMatches = true
-            }
-            // When the search string is empty, accept all names; otherwise
-            // perform a case‑insensitive substring search.
-            let nameMatches: Bool
-            if trimmed.isEmpty {
-                nameMatches = true
-            } else {
-                nameMatches = ex.name.localizedCaseInsensitiveContains(trimmed)
-            }
+            let categoryMatches = selected == nil || ex.muscleGroup == selected
+            let nameMatches = trimmed.isEmpty || ex.name.localizedCaseInsensitiveContains(trimmed)
             return categoryMatches && nameMatches
+        }
+    }
+
+    // 🔎 Helpers de diagnóstico
+    static func slug(_ s: String) -> String {
+        s.trimmingCharacters(in: .whitespacesAndNewlines)
+         .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+         .lowercased()
+    }
+
+    static func logDuplicates(context: ModelContext, tag: String = "ExercisesListView") {
+        do {
+            let all = try context.fetch(FetchDescriptor<Exercise>())
+            var groups: [String: [Exercise]] = [:]
+            for e in all { groups[slug(e.name), default: []].append(e) }
+            let dups = groups.filter { $0.value.count > 1 }
+            if dups.isEmpty {
+                print("[DBG][\(tag)] no duplicates ✅ (total=\(all.count))")
+            } else {
+                let pretty = dups
+                    .sorted { $0.value.count > $1.value.count }
+                    .map { "\($0.key)×\($0.value.count)" }
+                    .joined(separator: ", ")
+                print("[DBG][\(tag)] duplicates → \(pretty) (total=\(all.count))")
+            }
+        } catch {
+            print("[DBG][\(tag)] fetch error:", String(describing: error))
         }
     }
 }

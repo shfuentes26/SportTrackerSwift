@@ -1,8 +1,3 @@
-//
-//  CKSyncManager.swift
-//  SportTracker
-//
-
 import Foundation
 import CloudKit
 import SwiftData
@@ -38,10 +33,21 @@ final class CKSyncManager {
     private let lastRunIDsKey = "cksync.lastRunIDs"
     private let lastGymIDsKey = "cksync.lastGymIDs"
 
+    // MARK: - Normalización de nombres
+    private func slug(_ s: String) -> String {
+        s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+         .trimmingCharacters(in: .whitespacesAndNewlines)
+         .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+         .lowercased()
+    }
+
     // MARK: - API
     func start(using container: ModelContainer) async {
         self.container = container
-
+        if !isEnabled {
+                print("[iCloud] Sync is OFF → CKSyncManager not started")
+                return
+        }
         // Si el switch está OFF, no arrancamos nada
         guard isEnabled else { return }
 
@@ -52,7 +58,6 @@ final class CKSyncManager {
         loopTask?.cancel()
         loopTask = Task.detached { [weak self] in
             while let self, !Task.isCancelled {
-                // ⚠️ Estamos fuera del MainActor: leer isEnabled requiere await
                 if await !self.isEnabled {
                     try? await Task.sleep(nanoseconds: 5 * 1_000_000_000)
                     continue
@@ -64,7 +69,6 @@ final class CKSyncManager {
     }
 
     private func syncOnce() async {
-        // No ejecutar si está OFF o aún no tenemos container
         guard isEnabled, container != nil else { return }
 
         await pushSettingsUserGoals()
@@ -90,7 +94,7 @@ final class CKSyncManager {
     private func recNameRun(_ id: UUID) -> String { "run:\(id.uuidString)" }
     private func recNameGym(_ id: UUID) -> String { "gym:\(id.uuidString)" }
     private func recNameSet(gymID: UUID, setID: UUID) -> String { "gymset:\(gymID.uuidString):\(setID.uuidString)" }
-    private func recNameExercise(_ name: String) -> String { "ex:\(name.lowercased().trimmingCharacters(in: .whitespaces))" }
+    private func recNameExercise(_ name: String) -> String { "ex:\(slug(name))" }
 
     // MARK: - CloudKit util
     private func fetchOne(_ type: String, name: String) async -> CKRecord? {
@@ -195,7 +199,7 @@ final class CKSyncManager {
 
             for s in g.sets {
                 let sName = recNameSet(gymID: g.id, setID: s.id)
-                let ex = s.exerciseResolved // ✅ evita opcional
+                let ex = s.exerciseResolved
                 await upsert(RT.gymSet, name: sName) { rec in
                     rec["gymRef"] = gName as CKRecordValue
                     rec["order"] = s.order as CKRecordValue
@@ -211,8 +215,10 @@ final class CKSyncManager {
         }
     }
 
-    // MARK: - Pull/Merge: Settings/User/Goals
+    // MARK: - Pull/Merge: Settings/User/Goals (igual que antes)
+
     private func pullSettingsUserGoalsAndMerge() async {
+        // ... (sin cambios funcionales)
         if let rec = await fetchOne(RT.settings, name: "singleton"),
            let s = ((try? ctx.fetch(FetchDescriptor<Settings>())) ?? []).first,
            let cloudDate = rec["updatedAt"] as? Date,
@@ -261,7 +267,8 @@ final class CKSyncManager {
         }
     }
 
-    // MARK: - Pull/Merge: Runs
+    // MARK: - Pull/Merge: Runs (igual)
+
     private func pullRunsAndMerge() async {
         let recs = await queryAll(RT.run)
         let locals: [RunningSession] = (try? ctx.fetch(FetchDescriptor<RunningSession>())) ?? []
@@ -298,24 +305,26 @@ final class CKSyncManager {
         try? ctx.save()
     }
 
-    // MARK: - Pull/Merge: Gyms & Sets
+    // MARK: - Pull/Merge: Gyms & Sets (normalizado + sin duplicar ejercicios)
+
+    // Idempotent merge: crea a lo sumo 1 Exercise por nombre normalizado (slug)
     private func pullGymsAndSetsAndMerge() async {
         let gymRecs = await queryAll(RT.gym)
         let setRecs = await queryAll(RT.gymSet)
 
+        // Index de sesiones locales por ID
         let locals: [StrengthSession] = (try? ctx.fetch(FetchDescriptor<StrengthSession>())) ?? []
         var gymByID = Dictionary(uniqueKeysWithValues: locals.map { ($0.id, $0) })
 
-        // Índice de ejercicios por nombre (igualdad exacta)
+        // 🔑 Index de ejercicios por SLUG (nombre normalizado)
         let localExs: [Exercise] = (try? ctx.fetch(FetchDescriptor<Exercise>())) ?? []
-        func key(_ s: String) -> String { s }
-        var exByName = Dictionary(uniqueKeysWithValues: localExs.map { (key($0.name), $0) })
+        var exByName = Dictionary(uniqueKeysWithValues: localExs.map { (slug($0.name), $0) })
 
-        // 1) UPSERT Gym sessions
+        // UPSERT de gym sessions (igual que antes)
         for r in gymRecs {
-            guard let name = r.recordID.recordName.split(separator: "_").last,
-                  name.hasPrefix("gym:"),
-                  let uuid = UUID(uuidString: String(name.dropFirst(4))) else { continue }
+            guard let tail = r.recordID.recordName.split(separator: "_").last,
+                  tail.hasPrefix("gym:"),
+                  let uuid = UUID(uuidString: String(tail.dropFirst(4))) else { continue }
 
             let inc = StrengthSession(
                 id: uuid,
@@ -336,13 +345,14 @@ final class CKSyncManager {
             }
         }
 
-        // 2) Reconstruir sets por gymRef
+        // Agrupa sets por gymRef
         var setsByGymRef: [String: [CKRecord]] = [:]
         for s in setRecs {
             guard let gymRef = s["gymRef"] as? String else { continue }
             setsByGymRef[gymRef, default: []].append(s)
         }
 
+        // Reconstrucción de sets (creación idempotente de Exercise)
         for (gymRef, recs) in setsByGymRef {
             guard gymRef.hasPrefix("gym:"),
                   let uuid = UUID(uuidString: String(gymRef.dropFirst(4))),
@@ -351,41 +361,48 @@ final class CKSyncManager {
             let ordered = recs.sorted { ($0["order"] as? Int ?? 0) < ($1["order"] as? Int ?? 0) }
 
             for sr in ordered {
-                let exName = (sr["exerciseName"] as? String ?? "")
-                let exKey  = key(exName)
-                let exWeighted = (sr["exerciseWeighted"] as? Bool) ?? false
-                let exMG = MuscleGroup(rawValue: (sr["muscleGroup"] as? Int) ?? MuscleGroup.arms.rawValue) ?? .arms
+                let rawName   = (sr["exerciseName"] as? String ?? "")
+                let key       = slug(rawName)                       // ← nombre normalizado
+                let weighted  = (sr["exerciseWeighted"] as? Bool) ?? false
+                let groupRaw  = (sr["muscleGroup"] as? Int) ?? MuscleGroup.arms.rawValue
+                let group     = MuscleGroup(rawValue: groupRaw) ?? .arms
 
-                let exercise: Exercise
-                if let found = exByName[exKey] {
-                    if !found.isWeighted { found.isWeighted = exWeighted }
-                    exercise = found
-                } else {
-                    let created = Exercise(name: exName.isEmpty ? "(Unnamed)" : exName,
-                                           muscleGroup: exMG,
-                                           isWeighted: exWeighted,
-                                           exerciseDescription: nil,
-                                           iconSystemName: nil,
-                                           imageData: nil,
-                                           isCustom: true,
-                                           notes: "")
-                    ctx.insert(created)
-                    exByName[exKey] = created
-                    exercise = created
-                }
+                // Reusar si existe; crear UNA vez si falta y cachear en exByName
+                let exercise: Exercise = {
+                    if let found = exByName[key] {
+                        if !found.isWeighted { found.isWeighted = weighted } // merge suave
+                        return found
+                    } else {
+                        let nameToUse = rawName.isEmpty ? "(Unnamed)" : rawName
+                        let created = Exercise(
+                            name: nameToUse,
+                            muscleGroup: group,
+                            isWeighted: weighted,
+                            exerciseDescription: nil,
+                            iconSystemName: nil,
+                            imageData: nil,
+                            isCustom: true,
+                            notes: ""
+                        )
+                        ctx.insert(created)
+                        exByName[key] = created      // 👈 clave: los siguientes sets ya reusan éste
+                        return created
+                    }
+                }()
 
                 let order = sr["order"] as? Int ?? 0
                 let reps  = sr["reps"] as? Int ?? 0
-                let weight = (sr["weightKg"] as? Double).flatMap { $0 > 0 ? $0 : nil }
-                let rest   = (sr["restSeconds"] as? Int).flatMap { $0 > 0 ? $0 : nil }
+                let w     = (sr["weightKg"] as? Double).flatMap { $0 > 0 ? $0 : nil }
+                let rest  = (sr["restSeconds"] as? Int).flatMap { $0 > 0 ? $0 : nil }
 
+                // Evita sets duplicados idénticos
                 let exists = session.sets.contains {
                     $0.order == order && $0.reps == reps &&
-                    $0.weightKg == weight && $0.restSeconds == rest &&
+                    $0.weightKg == w && $0.restSeconds == rest &&
                     ($0.exercise?.name == exercise.name)
                 }
                 if !exists {
-                    let newSet = StrengthSet(exercise: exercise, order: order, reps: reps, weightKg: weight, restSeconds: rest)
+                    let newSet = StrengthSet(exercise: exercise, order: order, reps: reps, weightKg: w, restSeconds: rest)
                     newSet.session = session
                     session.sets.append(newSet)
                     ctx.insert(newSet)
@@ -393,11 +410,11 @@ final class CKSyncManager {
             }
         }
 
-        dedupeExercisesByExactName()
         try? ctx.save()
     }
 
-    // MARK: - Borrados remotos según borrados locales
+
+    // MARK: - Borrados remotos según borrados locales (igual)
     private func propagateLocalDeletions() async {
         let nowRunIDs = Set(((try? ctx.fetch(FetchDescriptor<RunningSession>())) ?? []).map { $0.id.uuidString })
         let nowGymIDs = Set(((try? ctx.fetch(FetchDescriptor<StrengthSession>())) ?? []).map { $0.id.uuidString })
@@ -429,24 +446,24 @@ final class CKSyncManager {
         UserDefaults.standard.set(gyms.map { $0.id.uuidString }, forKey: lastGymIDsKey)
     }
 
-    // Une ejercicios con el MISMO name exacto
-    private func dedupeExercisesByExactName() {
+    // MARK: - Dedupe por nombre normalizado (mergea sets y borra perdedores)
+    private func dedupeExercisesByNormalizedName() {
         let allExercises: [Exercise] = (try? ctx.fetch(FetchDescriptor<Exercise>())) ?? []
         guard allExercises.count > 1 else { return }
 
         var groups: [String: [Exercise]] = [:]
-        for e in allExercises { groups[e.name, default: []].append(e) }
+        for e in allExercises { groups[slug(e.name), default: []].append(e) }
 
         var allSets: [StrengthSet] = (try? ctx.fetch(FetchDescriptor<StrengthSet>())) ?? []
 
         for (_, g) in groups where g.count > 1 {
             let winner = g.sorted {
-                if $0.isCustom != $1.isCustom { return $1.isCustom } // false (no custom) primero
+                if $0.isCustom != $1.isCustom { return $1.isCustom } // no-custom primero
                 return $0.updatedAt > $1.updatedAt
             }.first!
 
             for loser in g where loser.id != winner.id {
-                for s in allSets where s.exercise?.id == loser.id { // ✅ opcional
+                for s in allSets where s.exercise?.id == loser.id {
                     s.exercise = winner
                 }
                 if !winner.isWeighted { winner.isWeighted = loser.isWeighted }

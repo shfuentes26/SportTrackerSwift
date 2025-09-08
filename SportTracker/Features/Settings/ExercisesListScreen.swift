@@ -1,20 +1,13 @@
-//
-//  ExercisesListScreen.swift
-//  SportTracker
-//
-//  Created by Satur Hernandez Fuentes on 8/19/25.
-//
-
 import SwiftUI
+import SwiftData
 
 struct ExercisesListScreen: View {
-    @StateObject private var store = ExercisesStore()
-
     var body: some View {
         NavigationStack {
-            ExercisesListView()      // usa tu vista existente
+            // Tu vista existente que ya tira de SwiftData (@Query / modelContext)
+            ExercisesListView()
                 .navigationTitle("Exercises")
-                .navigationBarTitleDisplayMode(.inline) 
+                .navigationBarTitleDisplayMode(.inline)
         }
         .brandNavBar()
         .brandHeaderSpacer()

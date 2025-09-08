@@ -251,7 +251,4 @@ private func formatDistance(_ km: Double) -> String {
     return "\(SummaryView.formatNumber(value)) \(unit)"
 }
 
-#Preview {
-    RunningView()
-        .modelContainer(try! Persistence.shared.makeModelContainer(inMemory: true))
-}
+

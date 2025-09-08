@@ -576,10 +576,3 @@ extension NewView {
         }
     }
 }
-
-// MARK: - Preview
-
-#Preview {
-    NewView()
-        .modelContainer(try! Persistence.shared.makeModelContainer(inMemory: true))
-}

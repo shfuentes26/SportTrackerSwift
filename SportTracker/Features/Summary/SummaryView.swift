@@ -463,8 +463,3 @@ private struct EditRunningSheet: View {
     }
 }
 
-
-#Preview {
-    SummaryView()
-        .modelContainer(try! Persistence.shared.makeModelContainer(inMemory: true))
-}
