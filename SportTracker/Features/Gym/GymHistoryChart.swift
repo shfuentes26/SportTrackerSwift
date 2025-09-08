@@ -70,20 +70,14 @@ struct GymHistoryChart: View {
             .chartLegend(position: .bottom, alignment: .leading, spacing: 8)
             .chartForegroundStyleScale(domain: GymChartPalette.domain, range: GymChartPalette.colors)
             .frame(height: 160)
-            .frame(maxWidth: .infinity)      // ⬅️ fuerza el ancho
+            .frame(maxWidth: .infinity)
         }
         .padding(.vertical, 4)
-        // .padding(.horizontal)
         .onAppear { reload() }
         .onChange(of: mode) { _ in reload() }
         .onChange(of: anchor) { _ in reload() }
-        // Después
-        .task(id: sessions.map(\.id)) {
-            reload()
-        }
-        .task(id: sessions.flatMap { $0.sets.map(\.id) }) {
-            reload()
-        }
+        .task(id: sessions.map(\.id)) { reload() }
+        .task(id: sessions.flatMap { $0.sets.map(\.id) }) { reload() }
         .animation(.snappy, value: mode)
         .animation(.snappy, value: anchor)
     }
@@ -112,10 +106,8 @@ struct GymHistoryChart: View {
                 .buttonStyle(.plain)
                 .disabled(isCurrentPeriod)
         }
-        .padding(.horizontal, 16)   // ✅ igual que Running
-        // ⛔️ quita cualquier `.padding(.top, ...)` aquí
+        .padding(.horizontal, 16)
     }
-
 
     // MARK: Period helpers
     private var start: Date {
@@ -142,7 +134,7 @@ struct GymHistoryChart: View {
     }
     private var title: String {
         switch mode {
-        case .week:  return weekTitle(from: start, toExclusive: end)            // “Aug 18 – Aug 24”
+        case .week:  return weekTitle(from: start, toExclusive: end)
         case .month:
             let f = DateFormatter(); f.locale = .enUSPOSIX; f.setLocalizedDateFormatFromTemplate("MMMM yyyy")
             return f.string(from: start)
@@ -171,7 +163,7 @@ struct GymHistoryChart: View {
         case .week:
             let labels: [String] = (0..<7).map { i in
                 let d = c.date(byAdding: .day, value: i, to: from)!
-                return d.weekdayLabelEN // M, Tu, W, Th, F, Sa, Su
+                return d.weekdayLabelEN
             }
             xDomain = labels
 
@@ -182,15 +174,24 @@ struct GymHistoryChart: View {
                 switch metric {
                 case .uniqueExercises:
                     var seen: [GymGroup: Set<UUID>] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { seen[g, default: []].insert(set.exercise.id) } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { seen[g, default: []].insert(ex.id) }
+                    }
                     for (g, uniq) in seen { map[key]?[g, default: 0] += uniq.count }
                 case .sets:
                     var counts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { counts[g, default: 0] += 1 } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { counts[g, default: 0] += 1 }
+                    }
                     for (g, c) in counts { map[key]?[g, default: 0] += c }
                 case .points:
                     var pts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { pts[g, default: 0] += max(1, set.reps) } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { pts[g, default: 0] += max(1, set.reps) }
+                    }
                     for (g, p) in pts { map[key]?[g, default: 0] += p }
                 }
             }
@@ -203,7 +204,6 @@ struct GymHistoryChart: View {
             maxY = data.reduce(into: [String: Int]()) { acc, dp in acc[dp.label, default: 0] += dp.value }.values.max().map(Double.init) ?? 0
 
         case .month:
-            // Week buckets inside the month (clamped to the month)
             var weekStarts: [Date] = []
             var ws = from.startOfWeekEN
             while ws < to { weekStarts.append(ws); ws = c.date(byAdding: .day, value: 7, to: ws)! }
@@ -222,15 +222,24 @@ struct GymHistoryChart: View {
                 switch metric {
                 case .uniqueExercises:
                     var seen: [GymGroup: Set<UUID>] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { seen[g, default: []].insert(set.exercise.id) } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { seen[g, default: []].insert(ex.id) }
+                    }
                     for (g, uniq) in seen { map[label]?[g, default: 0] += uniq.count }
                 case .sets:
                     var counts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { counts[g, default: 0] += 1 } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { counts[g, default: 0] += 1 }
+                    }
                     for (g, c) in counts { map[label]?[g, default: 0] += c }
                 case .points:
                     var pts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { pts[g, default: 0] += max(1, set.reps) } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { pts[g, default: 0] += max(1, set.reps) }
+                    }
                     for (g, p) in pts { map[label]?[g, default: 0] += p }
                 }
             }
@@ -255,15 +264,24 @@ struct GymHistoryChart: View {
                 switch metric {
                 case .uniqueExercises:
                     var seen: [GymGroup: Set<UUID>] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { seen[g, default: []].insert(set.exercise.id) } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { seen[g, default: []].insert(ex.id) }
+                    }
                     for (g, uniq) in seen { map[label]?[g, default: 0] += uniq.count }
                 case .sets:
                     var counts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { counts[g, default: 0] += 1 } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { counts[g, default: 0] += 1 }
+                    }
                     for (g, c) in counts { map[label]?[g, default: 0] += c }
                 case .points:
                     var pts: [GymGroup: Int] = [:]
-                    for set in sess.sets { if let g = mapGroup(set.exercise.muscleGroup) { pts[g, default: 0] += max(1, set.reps) } }
+                    for set in sess.sets {
+                        let ex = set.exerciseResolved
+                        if let g = mapGroup(ex.muscleGroup) { pts[g, default: 0] += max(1, set.reps) }
+                    }
                     for (g, p) in pts { map[label]?[g, default: 0] += p }
                 }
             }
@@ -318,14 +336,12 @@ private extension Date {
     }
 }
 
-// “Aug 18 – Aug 24”
 private func weekTitle(from start: Date, toExclusive end: Date) -> String {
     let incEnd = Calendar.enUSPOSIX.date(byAdding: .day, value: -1, to: end) ?? end
     let f = DateFormatter(); f.locale = .enUSPOSIX; f.setLocalizedDateFormatFromTemplate("MMM d")
     return "\(f.string(from: start)) – \(f.string(from: incEnd))"
 }
 
-// “18–24”
 private func weekRangeLabel(from: Date, to: Date) -> String {
     let incEnd = Calendar.enUSPOSIX.date(byAdding: .day, value: -1, to: to) ?? to
     let s = Calendar.enUSPOSIX.component(.day, from: from)

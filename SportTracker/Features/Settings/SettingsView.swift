@@ -14,9 +14,16 @@ struct SettingsView: View {
     @AppStorage("didRunRoutesBackfillOnce") private var didRunRoutesBackfillOnce = false
     
     // ✅ Preferencia de iCloud (no requiere cambios de modelo)
-      @AppStorage("useICloudSync") private var useICloudSync = false
-      @State private var showICloudToggleNote = false
+    @AppStorage("useICloudSync") private var useICloudSync = false
+    @State private var showICloudToggleNote = false
 
+    // --- Admin: estados de confirmación y progreso ---
+    @State private var confirmDeleteAll = false
+    @State private var confirmDeleteRunning = false
+    @State private var confirmDeleteGym = false
+    @State private var isWiping = false
+    @State private var wipeResultMessage: String?
+    @State private var showWipeResult = false
 
     // Crea el registro de Settings si no existe
     private func ensureSettings() -> Settings {
@@ -44,7 +51,8 @@ struct SettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            // HealthKit manual import
+
+            // Integraciones
             Section(header: Text("Integrations")) {
                 Button {
                     Task { await importFromAppleHealth() }
@@ -57,8 +65,6 @@ struct SettingsView: View {
                 }
                 .disabled(isImporting)
 
-                // Si ya tienes una fecha "lastImportDate" en tu manager,
-                // cámbialo por esa propiedad. De momento mostramos hora actual a modo informativo.
                 Text("Last import: \(Date().formatted(date: .abbreviated, time: .shortened))")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -78,8 +84,41 @@ struct SettingsView: View {
                 Toggle("Show pounds (lb)",    isOn: $sb.prefersPounds)
             }
 
-            // 🔧 Maintenance (oculto cuando ya se ejecutó el backfill)
-            /*if !didRunRoutesBackfillOnce {
+            // --- Admin ---
+            Section("Admin") {
+                Button(role: .destructive) {
+                    confirmDeleteAll = true
+                } label: {
+                    if isWiping {
+                        ProgressView()
+                    } else {
+                        Label("Delete all trainings (Running + Gym)", systemImage: "trash")
+                    }
+                }
+                .disabled(isWiping)
+
+                Button(role: .destructive) {
+                    confirmDeleteRunning = true
+                } label: {
+                    Label("Delete all running", systemImage: "trash")
+                }
+                .disabled(isWiping)
+
+                Button(role: .destructive) {
+                    confirmDeleteGym = true
+                } label: {
+                    Label("Delete all gym", systemImage: "trash")
+                }
+                .disabled(isWiping)
+
+                Text("These actions delete local data and will also be removed from iCloud on next sync.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            // 🔧 Maintenance (si lo reactivas más adelante)
+            /*
+            if !didRunRoutesBackfillOnce {
                 Section("Maintenance") {
                     NavigationLink {
                         MaintenanceToolsView()
@@ -88,7 +127,6 @@ struct SettingsView: View {
                     }
                 }
             } else {
-                // (Opcional) Muestra estado de que ya se ejecutó
                 Section("Maintenance") {
                     HStack {
                         Label("Routes backfill", systemImage: "wrench.and.screwdriver")
@@ -96,13 +134,43 @@ struct SettingsView: View {
                         Text("Done").foregroundStyle(.secondary)
                     }
                 }
-            }*/
+            }
+            */
         }
         .navigationTitle("Settings")
         .alert("Import", isPresented: $showImportAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(importResult ?? "Operation completed")
+        }
+        .alert("Restart required", isPresented: $showICloudToggleNote) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Please restart the app to apply iCloud changes.")
+        }
+        // Confirmaciones Admin
+        .alert("Delete all trainings?", isPresented: $confirmDeleteAll) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) { Task { await wipeAllTrainings() } }
+        } message: {
+            Text("This will permanently delete ALL Running and Gym sessions (including watch details).")
+        }
+        .alert("Delete all running?", isPresented: $confirmDeleteRunning) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) { Task { await wipeAllRunning() } }
+        } message: {
+            Text("This will permanently delete all running sessions and associated watch data.")
+        }
+        .alert("Delete all gym?", isPresented: $confirmDeleteGym) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) { Task { await wipeAllGym() } }
+        } message: {
+            Text("This will permanently delete all gym sessions and sets (exercises catalog will be kept).")
+        }
+        .alert("Admin", isPresented: $showWipeResult) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(wipeResultMessage ?? "Done")
         }
         .brandHeaderSpacer()
     }
@@ -136,7 +204,7 @@ extension SettingsView {
 
             var totalInserted = insertedWithRoutes
 
-            // 3) SEGUNDO INTENTO (legado): si no llegó nada, usar tu flujo previo (sin rutas)
+            // 3) SEGUNDO INTENTO (legado)
             if totalInserted == 0 {
                 let newWk = try await HealthKitManager.shared.fetchNewWorkouts()
                 let supported = HealthKitManager.shared.filterSupported(newWk)
@@ -147,7 +215,7 @@ extension SettingsView {
                 totalInserted += insertedLegacy
             }
 
-            // 4) TERCER INTENTO (fallback por muestras): reconstruir desde distanceWalkingRunning
+            // 4) TERCER INTENTO (fallback por muestras)
             if totalInserted == 0 {
                 let insertedFallback = try await HealthKitImportService.importFromDistanceSamples(
                     context: context,
@@ -170,5 +238,86 @@ extension SettingsView {
             importResult = "Error: \(error.localizedDescription)"
         }
         showImportAlert = true
+    }
+}
+
+// MARK: - Admin wipes
+extension SettingsView {
+    @MainActor
+    private func wipeAllTrainings() async {
+        await performWipe {
+            // RUNNING
+            try deleteAllRunningObjects()
+            // GYM
+            try deleteAllGymObjects()
+        }
+    }
+
+    @MainActor
+    private func wipeAllRunning() async {
+        await performWipe {
+            try deleteAllRunningObjects()
+        }
+    }
+
+    @MainActor
+    private func wipeAllGym() async {
+        await performWipe {
+            try deleteAllGymObjects()
+        }
+    }
+
+    // --- helpers ---
+    @MainActor
+    private func performWipe(_ work: () throws -> Void) async {
+        isWiping = true
+        defer { isWiping = false }
+        do {
+            try work()
+            try context.save()
+
+            // Opcional: avisar a tu gestor de iCloud para empujar cambios
+            #if os(iOS) && CLOUD_SYNC
+            // Ajusta al API real de tu CKSyncManager si existe:
+            // await CKSyncManager.shared.notifyLocalDatabaseReset()
+            #endif
+
+            wipeResultMessage = "Deletion completed."
+        } catch {
+            wipeResultMessage = "Error: \(error.localizedDescription)"
+        }
+        showWipeResult = true
+    }
+
+    @MainActor
+    private func deleteAllRunningObjects() throws {
+        // 1) Detalles de watch y sus puntos/splits (cascade en modelo)
+        var dFD = FetchDescriptor<RunningWatchDetail>()
+        dFD.includePendingChanges = true
+        let details = try context.fetch(dFD)
+        for d in details { context.delete(d) }
+
+        // 2) Sessions de running
+        var rFD = FetchDescriptor<RunningSession>()
+        rFD.includePendingChanges = true
+        let runs = try context.fetch(rFD)
+        for r in runs { context.delete(r) }
+    }
+
+    @MainActor
+    private func deleteAllGymObjects() throws {
+        // 1) Sets
+        var setFD = FetchDescriptor<StrengthSet>()
+        setFD.includePendingChanges = true
+        let sets = try context.fetch(setFD)
+        for s in sets { context.delete(s) }
+
+        // 2) Sessions
+        var gsFD = FetchDescriptor<StrengthSession>()
+        gsFD.includePendingChanges = true
+        let gses = try context.fetch(gsFD)
+        for g in gses { context.delete(g) }
+
+        // Nota: NO borramos Exercise (catálogo) a propósito
     }
 }

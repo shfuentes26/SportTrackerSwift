@@ -50,7 +50,8 @@ final class GymExerciseInsightsVM: ObservableObject {
         let cal = Calendar.current
         var dayBest: [Date: Double] = [:]
         for s in sessions {
-            let sets = s.sets.filter { $0.exercise.id == exercise.id }
+            // ejercicio ahora es opcional en el modelo: usa el proxy no opcional
+            let sets = s.sets.filter { $0.exerciseResolved.id == exercise.id }
             guard !sets.isEmpty else { continue }
             let day = cal.startOfDay(for: s.date)
             let v: Double = exercise.isWeighted
@@ -72,7 +73,7 @@ final class GymExerciseInsightsVM: ObservableObject {
             // 1 de enero del año actual
             return cal.date(from: DateComponents(year: cal.component(.year, from: ref), month: 1, day: 1)) ?? ref
         case .monthly:
-            // TODO clave: Monthly debe cubrir el AÑO actual completo para poder agregar por MES
+            // Monthly cubre el año actual completo para agregar por mes
             return cal.date(from: DateComponents(year: cal.component(.year, from: ref), month: 1, day: 1)) ?? ref
         case .yearly:
             // Histórico completo

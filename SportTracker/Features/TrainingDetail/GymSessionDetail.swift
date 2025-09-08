@@ -39,7 +39,6 @@ struct GymSessionDetail: View {
                 HStack { Text("Points"); Spacer(); Text("\(Int(session.totalPoints)) pts").foregroundStyle(.secondary).monospacedDigit() }
             }
 
-            // --- INSIGHTS (pill con mismo ancho que las secciones de arriba) ---
             if !insightExercises.isEmpty {
                 Button {
                     if insightExercises.count == 1 {
@@ -47,18 +46,13 @@ struct GymSessionDetail: View {
                     } else { showExercisePicker = true }
                 } label: {
                     HStack(spacing: 10) {
-                        // Texto + icono en azul
                         HStack(spacing: 10) {
                             Image(systemName: "chart.xyaxis.line")
                             Text("Insights").font(.headline)
                         }
                         .foregroundStyle(.blue)
-
                         Spacer()
-
-                        // Chevron de navegación (gris)
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(.blue)
+                        Image(systemName: "chevron.right").foregroundStyle(.blue)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 10)
@@ -70,7 +64,6 @@ struct GymSessionDetail: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                // iguala el ancho a las celdas de Section (ajusta 16→20 si tu lista usa ese margen)
                 .listRowInsets(EdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
@@ -112,7 +105,7 @@ struct GymSessionDetail: View {
     private var insightExercises: [Exercise] {
         var seen = Set<UUID>(); var result: [Exercise] = []
         for set in session.sets {
-            let ex = set.exercise
+            let ex = set.exerciseResolved
             if !seen.contains(ex.id), hasHistory(for: ex) { seen.insert(ex.id); result.append(ex) }
         }
         return result.sorted { $0.name < $1.name }
@@ -122,7 +115,9 @@ struct GymSessionDetail: View {
         let desc = FetchDescriptor<StrengthSession>(sortBy: [SortDescriptor(\StrengthSession.date, order: .reverse)])
         guard let sessions = try? context.fetch(desc), !sessions.isEmpty else { return false }
         var count = 0
-        for s in sessions where s.sets.contains(where: { $0.exercise.id == ex.id }) { count += 1; if count >= 2 { return true } }
+        for s in sessions where s.sets.contains(where: { $0.exerciseResolved.id == ex.id }) {
+            count += 1; if count >= 2 { return true }
+        }
         return false
     }
 }
@@ -134,8 +129,8 @@ struct GymSetRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                Text(set.exercise.name).font(.headline)
-                Text("• \(groupName(set.exercise.muscleGroup))").foregroundStyle(.secondary)
+                Text(set.exerciseResolved.name).font(.headline)
+                Text("• \(groupName(set.exerciseResolved.muscleGroup))").foregroundStyle(.secondary)
                 Spacer(minLength: 6)
             }
             HStack(spacing: 12) {
@@ -162,4 +157,3 @@ struct GymSetRow: View {
         }
     }
 }
-

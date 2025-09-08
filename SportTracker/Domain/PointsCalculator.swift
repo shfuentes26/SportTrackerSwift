@@ -19,29 +19,27 @@ struct PointsCalculator {
     }
 
     static func score(strength session: StrengthSession, settings: Settings) -> Double {
-            var total: Double = 0
+        var total: Double = 0
 
-            // sets ahora es NO opcional (vía @Transient)
-            for set in session.sets {
-                // exercise también es NO opcional (vía @Transient)
-                let ex = set.exercise
+        for set in session.sets {
+            let ex = set.exerciseResolved
 
-                if ex.isWeighted, let w = set.weightKg, w > 0 {
-                    total += (Double(set.reps) * w) * settings.gymWeightedFactor
-                    continue
-                }
-
-                if let target = bodyweightIntermediateTarget(for: ex) {
-                    let reps = Double(set.reps)
-                    let raw = 100.0 * (reps / target)
-                    total += min(raw, 150.0)
-                } else {
-                    total += Double(set.reps) * settings.gymRepsFactor
-                }
+            if ex.isWeighted, let w = set.weightKg, w > 0 {
+                total += (Double(set.reps) * w) * settings.gymWeightedFactor
+                continue
             }
 
-            return max(total, 0)
+            if let target = bodyweightIntermediateTarget(for: ex) {
+                let reps = Double(set.reps)
+                let raw = 100.0 * (reps / target)
+                total += min(raw, 150.0)
+            } else {
+                total += Double(set.reps) * settings.gymRepsFactor
+            }
         }
+
+        return max(total, 0)
+    }
 
     private static func bodyweightIntermediateTarget(for ex: Exercise) -> Double? {
         switch ex.name.lowercased() {
@@ -50,7 +48,6 @@ struct PointsCalculator {
         case "hanging leg raise":    return 18
         case "crunches":             return 55
         case "russian twist":        return 45
-        // case "plank": return 90 // si usas duración
         default: return nil
         }
     }

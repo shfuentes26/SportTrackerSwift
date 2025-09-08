@@ -108,10 +108,9 @@ struct SummaryView: View {
                     }.hidden()
                 }
             )
-            // ... dentro de var body: some View { NavigationStack { ... } }
             .navigationTitle("Summary")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {                                   // ⬅️ NUEVO
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         PointsInsightsView(runs: runs, gyms: gyms)
@@ -139,10 +138,9 @@ struct SummaryView: View {
         let rg = runningGoals.first
         let gg = gymGoals.first
 
-        // No goals todavía → tarjeta "Create a goal"
         if (rg?.weeklyKilometers ?? 0) <= 0 && (gg?.totalWeeklyTarget ?? 0) <= 0 {
             Section {
-                Button { goToRunningGoal = true } label: {   // abrimos en pestaña Running por defecto
+                Button { goToRunningGoal = true } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "target").font(.title2)
                         VStack(alignment: .leading) {
@@ -151,7 +149,6 @@ struct SummaryView: View {
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        // ← Nuevo: flecha de navegación
                         Image(systemName: "chevron.right")
                             .foregroundStyle(.secondary)
                     }
@@ -166,7 +163,6 @@ struct SummaryView: View {
             }
         } else {
             Section("Goals") {
-                // Ambos objetivos → dos anillos clicables (cada uno navega a su detalle)
                 if let rg = rg, rg.weeklyKilometers > 0,
                    let gg = gg, gg.totalWeeklyTarget > 0 {
 
@@ -208,7 +204,6 @@ struct SummaryView: View {
                     .padding(.vertical, 6)
 
                 } else if let rg = rg, rg.weeklyKilometers > 0 {
-                    // Solo Running
                     let kmThisWeek = runningKilometersThisWeek
                     let p = min(kmThisWeek / rg.weeklyKilometers, 1)
                     Button { goToRunningGoal = true } label: {
@@ -224,7 +219,6 @@ struct SummaryView: View {
                     .buttonStyle(.plain)
 
                 } else if let gg = gg, gg.totalWeeklyTarget > 0 {
-                    // Solo Gym
                     let counts = gymCountsThisWeek()
                     let met = min(counts.chestBack, gg.targetChestBack)
                            + min(counts.arms, gg.targetArms)
@@ -269,7 +263,8 @@ struct SummaryView: View {
         let sessions = gyms.filter { di.contains($0.date) }
         var cb = 0, arms = 0, legs = 0, core = 0
         for s in sessions {
-            let groups = Set(s.sets.map { $0.exercise.muscleGroup })
+            // ✅ usar el proxy no opcional
+            let groups = Set(s.sets.map { $0.exerciseResolved.muscleGroup })
             if groups.contains(.chestBack) { cb += 1 }
             if groups.contains(.arms) { arms += 1 }
             if groups.contains(.legs) { legs += 1 }
@@ -308,7 +303,8 @@ struct SummaryView: View {
                 let w = (set.weightKg ?? 0) > 0
                     ? " @ " + UnitFormatters.weight(set.weightKg!, usePounds: usePounds)
                     : ""
-                return "\(set.exercise.name) \(reps)\(w)"
+                // ✅ usar el proxy
+                return "\(set.exerciseResolved.name) \(reps)\(w)"
             }
         var line = items.joined(separator: " • ")
         if s.sets.count > 3 { line += " …" }
@@ -360,7 +356,6 @@ struct SummaryView: View {
         return String(format: "%d:%02d %@", mm, ss, useMiles ? "/mi" : "/km")
     }
     
-    // Mezcla runs y gyms con su tipo para poder abrir detalle o hacer swipe
     private enum PastRow: Identifiable {
         case run(RunningSession)
         case gym(StrengthSession)
@@ -453,7 +448,6 @@ private struct EditRunningSheet: View {
         run.durationSeconds = sec
         run.notes = notes.isEmpty ? nil : notes
 
-        // Recalcular puntos con Settings
         let settings = (try? context.fetch(FetchDescriptor<Settings>()).first) ?? Settings()
         if settings.persistentModelID == nil { context.insert(settings) }
         let km = dist

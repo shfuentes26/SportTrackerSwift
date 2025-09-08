@@ -20,20 +20,32 @@ final class Persistence {
         ]
         let localSchema = Schema(localModels)
 
-        // ✅ Usa la configuración por defecto (SIN nombre) para abrir el MISMO fichero que ya usa MAIN
         let config = ModelConfiguration(schema: localSchema, isStoredInMemoryOnly: inMemory)
         let container = try ModelContainer(for: localSchema, configurations: config)
         self.appContainer = container
 
-        // --- seed & dedupe (idéntico a lo que tenías) ---
+        // 🧹 Migración one-shot (ref → exercise) para builds de prueba previas
         let cx = container.mainContext
+        try migrateExerciseRefLinkIfNeeded(context: cx)
 
+        // seed/dedupe…
         func seedBasicsIfEmpty(_ context: ModelContext) throws {
             if try context.fetch(FetchDescriptor<Settings>()).isEmpty { context.insert(Settings()) }
             if try context.fetch(FetchDescriptor<UserProfile>()).isEmpty {
                 context.insert(UserProfile(displayName: "User", unitSystem: .metric))
             }
-            if try context.fetch(FetchDescriptor<Exercise>()).isEmpty {
+
+            let iCloudOn = UserDefaults.standard.bool(forKey: "useICloudSync")
+            let kv = NSUbiquitousKeyValueStore.default
+            let seedKey = "catalogSeededV1"
+
+            let shouldSeedCatalog: Bool = {
+                if !iCloudOn { return true }
+                return kv.bool(forKey: seedKey) == false
+            }()
+
+            var exFD = FetchDescriptor<Exercise>(); exFD.fetchLimit = 1
+            if try context.fetch(exFD).isEmpty, shouldSeedCatalog {
                 let defaults: [Exercise] = [
                     Exercise(name: "Bench Press", muscleGroup: .chestBack, isWeighted: true,
                              exerciseDescription: "Barbell bench press", iconSystemName: "dumbbell", isCustom: false),
@@ -83,17 +95,17 @@ final class Persistence {
                              exerciseDescription: "Floor/Medicine ball", iconSystemName: "figure.strengthtraining.functional", isCustom: false),
                 ]
                 for ex in defaults { context.insert(ex) }
+
+                if iCloudOn { kv.set(true, forKey: seedKey); kv.synchronize() }
             }
         }
+
         func dedupeSingletons(_ context: ModelContext) throws {
-            // Mantén solo el Settings más reciente
             var settings = try context.fetch(FetchDescriptor<Settings>())
             if settings.count > 1 {
                 settings.sort { $0.updatedAt > $1.updatedAt }
                 for s in settings.dropFirst() { context.delete(s) }
             }
-
-            // Mantén solo el UserProfile más reciente
             var users = try context.fetch(FetchDescriptor<UserProfile>())
             if users.count > 1 {
                 users.sort { $0.updatedAt > $1.updatedAt }
@@ -103,7 +115,6 @@ final class Persistence {
 
         try seedBasicsIfEmpty(cx); try dedupeSingletons(cx); try cx.save()
 
-        // --- iCloud vía CKRecord (no mirroring de SwiftData) ---
         #if os(iOS) && CLOUD_SYNC
         if UserDefaults.standard.bool(forKey: "useICloudSync") {
             Task { await CKSyncManager.shared.start(using: container) }

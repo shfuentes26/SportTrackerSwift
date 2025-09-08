@@ -99,6 +99,9 @@
     "Add your first exercise with the + button." : {
 
     },
+    "Admin" : {
+
+    },
     "All" : {
       "localizations" : {
         "es" : {
@@ -250,6 +253,24 @@
           }
         }
       }
+    },
+    "Delete all gym" : {
+
+    },
+    "Delete all gym?" : {
+
+    },
+    "Delete all running" : {
+
+    },
+    "Delete all running?" : {
+
+    },
+    "Delete all trainings (Running + Gym)" : {
+
+    },
+    "Delete all trainings?" : {
+
     },
     "Delete workout?" : {
       "localizations" : {
@@ -707,6 +728,9 @@
     "Period" : {
 
     },
+    "Please restart the app to apply iCloud changes." : {
+
+    },
     "Points" : {
 
     },
@@ -749,6 +773,9 @@
       }
     },
     "Reps: %lld" : {
+
+    },
+    "Restart required" : {
 
     },
     "Result" : {
@@ -856,6 +883,18 @@
           }
         }
       }
+    },
+    "These actions delete local data and will also be removed from iCloud on next sync." : {
+
+    },
+    "This will permanently delete all gym sessions and sets (exercises catalog will be kept)." : {
+
+    },
+    "This will permanently delete ALL Running and Gym sessions (including watch details)." : {
+
+    },
+    "This will permanently delete all running sessions and associated watch data." : {
+
     },
     "Track manually" : {
       "localizations" : {

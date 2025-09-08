@@ -43,7 +43,8 @@ struct GymView: View {
                 let w = (set.weightKg ?? 0) > 0
                     ? " @ " + UnitFormatters.weight(set.weightKg!, usePounds: usePounds)
                     : ""
-                return "\(set.exercise.name) \(reps)\(w)"
+                // ✅ ejercicio opcional → usa proxy resolvido
+                return "\(set.exerciseResolved.name) \(reps)\(w)"
             }
         var line = items.joined(separator: " • ")
         if s.sets.count > 3 { line += " …" }
@@ -57,7 +58,8 @@ struct GymView: View {
     }
 
     private func session(_ s: StrengthSession, matches cat: GymFilterCategory) -> Bool {
-        let cats = Set(s.sets.compactMap { mapGroup($0.exercise.muscleGroup) })
+        // ✅ ejercicio opcional → usa proxy resolvido
+        let cats = Set(s.sets.compactMap { mapGroup($0.exerciseResolved.muscleGroup) })
         return cats.contains(cat)
     }
 
@@ -67,7 +69,7 @@ struct GymView: View {
         case .chestBack:  return .chestBack
         case .arms:       return .arms
         case .legs:       return .legs
-        default:          return nil
+        @unknown default: return nil
         }
     }
 
@@ -287,8 +289,9 @@ private struct SetEditorRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Picker("Exercise", selection: Binding(
-                get: { set.exercise.id },
+            // ✅ selección por UUID sin invocar `.id` sobre un Optional
+            Picker("Exercise", selection: Binding<UUID>(
+                get: { set.exercise?.id ?? exercises.first?.id ?? UUID() },
                 set: { newId in
                     if let found = exercises.first(where: { $0.id == newId }) {
                         set.exercise = found
