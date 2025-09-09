@@ -142,7 +142,9 @@ struct GymExerciseInsightsView: View {
                                 let plotRect = geo[proxy.plotAreaFrame]
                                 let clampedX = min(max(plot.origin.x + px, plotRect.minX + margin), plotRect.maxX - margin)
                                 let clampedY = min(max(plot.origin.y + py - 28, plotRect.minY + margin/2), plotRect.maxY - margin/2)
-                                let title = vm.isWeighted ? displayWeight(s.value) : String(format: "%.0f reps", s.value)
+                                let title = vm.isWeighted
+                                  ? String(format: usePounds ? "%.0f lb" : "%.1f kg", s.value) // 👈 NO reconvertir
+                                  : String(format: "%.0f reps", s.value)
                                 let subtitle = SummaryView.formatDate(s.date)
                                 LocalCallout(title: title, subtitle: subtitle)
                                     .position(x: clampedX, y: clampedY)
@@ -152,9 +154,13 @@ struct GymExerciseInsightsView: View {
                     .frame(height: 260)
 
                     if let last = series.last {
-                        let lastStr = vm.isWeighted ? displayWeight(last.1) : String(format: "%.0f reps", last.1)
+                        let lastStr = vm.isWeighted
+                          ? String(format: usePounds ? "%.0f lb" : "%.1f kg", last.1)
+                          : String(format: "%.0f reps", last.1)
                         let bestVal = series.map { $0.1 }.max() ?? last.1
-                        let bestStr = vm.isWeighted ? displayWeight(bestVal) : String(format: "%.0f reps", bestVal)
+                        let bestStr = vm.isWeighted
+                          ? String(format: usePounds ? "%.0f lb" : "%.1f kg", bestVal)
+                          : String(format: "%.0f reps", bestVal)
                         Text("Last: \(lastStr) • Best: \(bestStr)")
                             .font(.footnote).foregroundStyle(.secondary).padding(.top, 4)
                     }
