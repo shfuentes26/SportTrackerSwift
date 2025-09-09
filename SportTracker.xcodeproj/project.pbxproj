@@ -7,16 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2342D5372E60EE1800E696DE /* WorkoutInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2342D5362E60EE1100E696DE /* WorkoutInbox.swift */; };
-		2342D5392E60EE3A00E696DE /* WorkoutInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */; };
 		235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235697172E5D0189006409D8 /* PaceHistorySection.swift */; };
 		2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */; };
 		2365CAF52E5F348900CF609C /* TTWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		2365CB012E5F4B6A00CF609C /* PhoneSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB002E5F4B6600CF609C /* PhoneSession.swift */; };
-		2365CB032E5F4F6900CF609C /* LiveWorkoutBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */; };
-		2365CB052E5F4F9500CF609C /* LiveBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB042E5F4F9200CF609C /* LiveBar.swift */; };
-		2365CB072E5F5FE200CF609C /* LiveWorkoutSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB062E5F5FD700CF609C /* LiveWorkoutSummary.swift */; };
-		2365CB092E5F7F0B00CF609C /* SummarySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2365CB082E5F7F0500CF609C /* SummarySheet.swift */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
@@ -25,7 +18,6 @@
 		23BE56C62E53932000600875 /* RunningRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56C22E53932000600875 /* RunningRepository.swift */; };
 		23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56C32E53932000600875 /* StrengthRepository.swift */; };
 		23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE57572E5522B800600875 /* RunningHistoryChart.swift */; };
-		23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE575A2E55466D00600875 /* HealthKitManager.swift */; };
 		23BE57602E55FFD100600875 /* RunningRecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE575F2E55FFC200600875 /* RunningRecordsView.swift */; };
 		23BE57B22E563CA700600875 /* GymHistoryChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE57B12E563C8E00600875 /* GymHistoryChart.swift */; };
 		23BE57BD2E57C38300600875 /* RunningLiveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE57BC2E57C38000600875 /* RunningLiveManager.swift */; };
@@ -60,16 +52,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		2342D5362E60EE1100E696DE /* WorkoutInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutInbox.swift; sourceTree = "<group>"; };
-		2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutInboxView.swift; sourceTree = "<group>"; };
 		235697172E5D0189006409D8 /* PaceHistorySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceHistorySection.swift; sourceTree = "<group>"; };
 		2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDistanceFilter.swift; sourceTree = "<group>"; };
 		2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TTWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		2365CB002E5F4B6600CF609C /* PhoneSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneSession.swift; sourceTree = "<group>"; };
-		2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWorkoutBridge.swift; sourceTree = "<group>"; };
-		2365CB042E5F4F9200CF609C /* LiveBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveBar.swift; sourceTree = "<group>"; };
-		2365CB062E5F5FD700CF609C /* LiveWorkoutSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWorkoutSummary.swift; sourceTree = "<group>"; };
-		2365CB082E5F7F0500CF609C /* SummarySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummarySheet.swift; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
@@ -79,7 +64,6 @@
 		23BE56C32E53932000600875 /* StrengthRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrengthRepository.swift; sourceTree = "<group>"; };
 		23BE57572E5522B800600875 /* RunningHistoryChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningHistoryChart.swift; sourceTree = "<group>"; };
 		23BE57592E5545BF00600875 /* SportTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SportTracker.entitlements; sourceTree = "<group>"; };
-		23BE575A2E55466D00600875 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		23BE575F2E55FFC200600875 /* RunningRecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningRecordsView.swift; sourceTree = "<group>"; };
 		23BE57B12E563C8E00600875 /* GymHistoryChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymHistoryChart.swift; sourceTree = "<group>"; };
 		23BE57BC2E57C38000600875 /* RunningLiveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningLiveManager.swift; sourceTree = "<group>"; };
@@ -111,6 +95,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2365CAEC2E5F348700CF609C /* TTWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "TTWatch Watch App"; sourceTree = "<group>"; };
 		23AA68AA2E70992500E7AF01 /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
+		23AA68C22E70CAA200E7AF01 /* Health Kit */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Health Kit"; sourceTree = "<group>"; };
+		23AA68C32E70CAC200E7AF01 /* Watch iOS files */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Watch iOS files"; sourceTree = "<group>"; };
 		23BE56CA2E53A53800600875 /* Domain */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Domain; sourceTree = "<group>"; };
 		23BE56CB2E53A55B00600875 /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2342D5332E60D57800E696DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
 		23BE56CC2E53A56700600875 /* Resources */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (23BE56D32E53A76B00600875 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Resources; sourceTree = "<group>"; };
@@ -207,14 +193,8 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
-				2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */,
-				2342D5362E60EE1100E696DE /* WorkoutInbox.swift */,
-				2365CB082E5F7F0500CF609C /* SummarySheet.swift */,
-				2365CB062E5F5FD700CF609C /* LiveWorkoutSummary.swift */,
-				2365CB042E5F4F9200CF609C /* LiveBar.swift */,
-				2365CB022E5F4F6000CF609C /* LiveWorkoutBridge.swift */,
-				2365CB002E5F4B6600CF609C /* PhoneSession.swift */,
-				23BE575A2E55466D00600875 /* HealthKitManager.swift */,
+				23AA68C32E70CAC200E7AF01 /* Watch iOS files */,
+				23AA68C22E70CAA200E7AF01 /* Health Kit */,
 				23BE57592E5545BF00600875 /* SportTracker.entitlements */,
 				23BE56CD2E53A57600600875 /* App */,
 				23BE56CC2E53A56700600875 /* Resources */,
@@ -278,6 +258,8 @@
 			);
 			fileSystemSynchronizedGroups = (
 				23AA68AA2E70992500E7AF01 /* Settings */,
+				23AA68C22E70CAA200E7AF01 /* Health Kit */,
+				23AA68C32E70CAC200E7AF01 /* Watch iOS files */,
 				23BE56CA2E53A53800600875 /* Domain */,
 				23BE56CB2E53A55B00600875 /* Shared */,
 				23BE56CC2E53A56700600875 /* Resources */,
@@ -357,7 +339,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2365CB072E5F5FE200CF609C /* LiveWorkoutSummary.swift in Sources */,
 				23BE57602E55FFD100600875 /* RunningRecordsView.swift in Sources */,
 				23BE56B42E53706C00600875 /* Persistence.swift in Sources */,
 				A000002 /* ContentView.swift in Sources */,
@@ -370,15 +351,8 @@
 				A000006 /* RunningView.swift in Sources */,
 				23BE56C62E53932000600875 /* RunningRepository.swift in Sources */,
 				23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */,
-				2365CB012E5F4B6A00CF609C /* PhoneSession.swift in Sources */,
-				2365CB032E5F4F6900CF609C /* LiveWorkoutBridge.swift in Sources */,
-				2365CB052E5F4F9500CF609C /* LiveBar.swift in Sources */,
 				235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
-				2342D5392E60EE3A00E696DE /* WorkoutInboxView.swift in Sources */,
-				23BE575B2E55467F00600875 /* HealthKitManager.swift in Sources */,
-				2365CB092E5F7F0B00CF609C /* SummarySheet.swift in Sources */,
-				2342D5372E60EE1800E696DE /* WorkoutInbox.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
 				23BE57BD2E57C38300600875 /* RunningLiveManager.swift in Sources */,
 			);

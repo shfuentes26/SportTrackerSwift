@@ -137,7 +137,7 @@ final class RunningLiveManager: NSObject, ObservableObject {
         let secPerKm = elapsed / km
         let m = Int(secPerKm) / 60
         let s = Int(secPerKm) % 60
-        return String(format: "%d:%02d /%@", m, s, useMiles ? "mi" : "km")
+        return String(format: "%d:%02d min/%@", m, s, useMiles ? "mi" : "km")
     }
 }
 
