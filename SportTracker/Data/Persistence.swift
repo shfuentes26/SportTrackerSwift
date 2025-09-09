@@ -33,7 +33,8 @@ final class Persistence {
             WatchHRPoint.self,
             WatchPacePoint.self,
             WatchElevationPoint.self,
-            RunningWatchSplit.self
+            RunningWatchSplit.self,
+            BodyMeasurement.self
         ])
 
         let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)

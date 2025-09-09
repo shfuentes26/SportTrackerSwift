@@ -110,13 +110,13 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2365CAEC2E5F348700CF609C /* TTWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "TTWatch Watch App"; sourceTree = "<group>"; };
+		23AA68AA2E70992500E7AF01 /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 		23BE56CA2E53A53800600875 /* Domain */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Domain; sourceTree = "<group>"; };
 		23BE56CB2E53A55B00600875 /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2342D5332E60D57800E696DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
 		23BE56CC2E53A56700600875 /* Resources */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (23BE56D32E53A76B00600875 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Resources; sourceTree = "<group>"; };
 		23BE56CD2E53A57600600875 /* App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = App; sourceTree = "<group>"; };
 		23BE56CF2E53A73100600875 /* Summary */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Summary; sourceTree = "<group>"; };
 		23BE56D02E53A73A00600875 /* NewTraining */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = NewTraining; sourceTree = "<group>"; };
-		23BE56F12E54D25F00600875 /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 		23F691622E6661AB009BF984 /* TrainingDetail */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TrainingDetail; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -167,11 +167,11 @@
 			isa = PBXGroup;
 			children = (
 				23F691622E6661AB009BF984 /* TrainingDetail */,
-				23BE56F12E54D25F00600875 /* Settings */,
 				23BE56D02E53A73A00600875 /* NewTraining */,
 				23BE56CF2E53A73100600875 /* Summary */,
 				23BE56BC2E53931500600875 /* Gym */,
 				23BE56BE2E53931500600875 /* Running */,
+				23AA68AA2E70992500E7AF01 /* Settings */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -277,13 +277,13 @@
 				2365CAF42E5F348900CF609C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				23AA68AA2E70992500E7AF01 /* Settings */,
 				23BE56CA2E53A53800600875 /* Domain */,
 				23BE56CB2E53A55B00600875 /* Shared */,
 				23BE56CC2E53A56700600875 /* Resources */,
 				23BE56CD2E53A57600600875 /* App */,
 				23BE56CF2E53A73100600875 /* Summary */,
 				23BE56D02E53A73A00600875 /* NewTraining */,
-				23BE56F12E54D25F00600875 /* Settings */,
 				23F691622E6661AB009BF984 /* TrainingDetail */,
 			);
 			name = SportTracker;

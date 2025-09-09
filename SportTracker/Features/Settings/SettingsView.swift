@@ -46,6 +46,10 @@ struct SettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+            // Navegación a gestión de medidas corporales
+            Section("Measurements") {
+                NavigationLink("Body measurements") { MeasurementsHomeView() }
+            }
 
             // Navegación a gestión de ejercicios
             Section("Training") {

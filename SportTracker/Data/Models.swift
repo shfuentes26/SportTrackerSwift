@@ -387,3 +387,60 @@ public final class RunningWatchSplit {
     }
 }
 
+
+// MARK: - Body Measurements
+
+public enum MeasurementKind: String, CaseIterable, Identifiable, Codable {
+    case weight
+    case waist, chest, hips
+    case biceps, forearm
+    case thigh, calf
+    case neck, shoulders
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .weight:   return "Weight"
+        case .waist:    return "Waist"
+        case .chest:    return "Chest"
+        case .hips:     return "Hips"
+        case .biceps:   return "Biceps"
+        case .forearm:  return "Forearm"
+        case .thigh:    return "Thigh"
+        case .calf:     return "Calf"
+        case .neck:     return "Neck"
+        case .shoulders:return "Shoulders"
+        }
+    }
+
+    /// true si es longitud (cm/in); false si es peso (kg/lb)
+    public var isLength: Bool { self != .weight }
+}
+
+@Model
+public final class BodyMeasurement {
+    public var id: UUID
+    public var date: Date
+    /// Guardamos el tipo como raw para consultas sencillas
+    public var kindRaw: String
+    /// Valor **normalizado**:
+    ///  - cm para longitudes
+    ///  - kg para peso
+    public var value: Double
+    public var note: String?
+
+    public init(id: UUID = UUID(), date: Date, kind: MeasurementKind, value: Double, note: String? = nil) {
+        self.id = id
+        self.date = date
+        self.kindRaw = kind.rawValue
+        self.value = value
+        self.note = note
+    }
+
+    public var kind: MeasurementKind {
+        get { MeasurementKind(rawValue: kindRaw) ?? .waist }
+        set { kindRaw = newValue.rawValue }
+    }
+}
+
