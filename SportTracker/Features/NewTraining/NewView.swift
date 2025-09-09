@@ -70,7 +70,7 @@ struct NewView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding(.horizontal)
+                //.padding(.vertical, 8)
 
                 if selectedType == .running {
                     runningForm
@@ -94,6 +94,7 @@ struct NewView: View {
                     .padding(.bottom)
                 }
             }
+            
             .navigationTitle("New Training")
             .brandHeaderSpacer()
             .alert("Training saved successfully", isPresented: $showSaved) {
@@ -132,7 +133,6 @@ struct NewView: View {
 
     // MARK: - Running form
     
-    // MARK: - Running form
     @State private var hh = ""
     @State private var mm = ""
     @State private var ss = ""
@@ -178,8 +178,8 @@ struct NewView: View {
                         Button {
                             runningMode = .manual
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    focusedField = .runDistance
-                                }
+                                focusedField = .runDistance
+                            }
                         } label: {
                             Text("Track manually")
                                 .font(.headline)
@@ -260,14 +260,20 @@ struct NewView: View {
 
             // \uD83D\uDD39 Componente combinado: tabs de categoría + selector de ejercicio en la MISMA tarjeta
             Section("Exercise") {
+                // Fila 1: tabs ocupando todo el ancho de la tarjeta
                 Picker("Category", selection: $selectedGymCategory) {
                     Text("Core").tag(ExerciseCategory.core)
                     Text("Chest/Back").tag(ExerciseCategory.chestBack)
                     Text("Arms").tag(ExerciseCategory.arms)
                     Text("Legs").tag(ExerciseCategory.legs)
                 }
+                .padding(.horizontal, 8)
                 .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(maxWidth: .infinity)
+                .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
 
+                // Fila 2: selector de ejercicio + campos
                 SetRow(
                     input: $setInputs[0],              // ← siempre 1 ejercicio
                     allExercises: filteredExercises,
