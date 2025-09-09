@@ -18,7 +18,6 @@ struct NewView: View {
 
     // Categoría del selector de Gym (tipo compartido)
     @State private var selectedGymCategory: ExerciseCategory = .core
-    @State private var showAddExercise: Bool = false
 
     // --- Running inputs ---
     @State private var runDate: Date = Date()
@@ -253,13 +252,14 @@ struct NewView: View {
         }
     }
 
-    // MARK: - Gym form
+    // MARK: - Gym form (refactor)
 
     private var gymForm: some View {
         Form {
             DatePicker("Date", selection: $gymDate, displayedComponents: [.date, .hourAndMinute])
 
-            Section("Category") {
+            // \uD83D\uDD39 Componente combinado: tabs de categoría + selector de ejercicio en la MISMA tarjeta
+            Section("Exercise") {
                 Picker("Category", selection: $selectedGymCategory) {
                     Text("Core").tag(ExerciseCategory.core)
                     Text("Chest/Back").tag(ExerciseCategory.chestBack)
@@ -268,34 +268,43 @@ struct NewView: View {
                 }
                 .pickerStyle(.segmented)
 
-                Button {
-                    showAddExercise = true
-                } label: {
-                    Label("Add Exercise", systemImage: "plus.circle.fill")
-                }
-            }
-
-            Section("Exercise") {
-                // Un solo ejercicio/set por entrenamiento
                 SetRow(
-                    input: $setInputs[0],              // <- siempre 1
+                    input: $setInputs[0],              // ← siempre 1 ejercicio
                     allExercises: filteredExercises,
                     usePounds: usePounds
                 )
+            }
+
+            // \uD83D\uDD39 NUEVA tarjeta: última vez que se hizo el ejercicio seleccionado
+            if let currentExercise = currentSelectedExercise {
+                Section("Last time") {
+                    if let last = lastSet(for: currentExercise) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(formatDate(last.date))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            HStack(spacing: 16) {
+                                Label("\(last.reps) reps", systemImage: "repeat")
+                                if let w = last.weightKg {
+                                    Text(weightString(kg: w))
+                                }
+                            }
+                            .font(.headline)
+                        }
+                    } else {
+                        Text("No previous sets for this exercise")
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
 
             Section("Notes") {
                 TextField("Optional", text: $gymNotes, axis: .vertical)
             }
         }
-        .sheet(isPresented: $showAddExercise) {
-            AddExerciseSheet(selectedCategory: $selectedGymCategory)
-        }
         // 👇 mismos cierres de teclado que ya pusimos en running manual
-        .scrollDismissesKeyboard(.interactively)                     // arrastrar para cerrar
-        //.contentShape(Rectangle())                                    // toda el área recibe taps
-        //.simultaneousGesture(TapGesture().onEnded { endEditing() })   // tap para cerrar
-        .toolbar {                                                     // botón Done en el teclado
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar {
             ToolbarItem(placement: .keyboard) {
                 HStack {
                     Spacer()
@@ -405,6 +414,44 @@ struct NewView: View {
             mapGroup(ex.muscleGroup) == selectedGymCategory
         }
     }
+
+    private var currentSelectedExercise: Exercise? {
+        guard let id = setInputs.first?.exerciseId else { return filteredExercises.first }
+        return filteredExercises.first(where: { $0.id == id })
+    }
+
+    private func lastSet(for exercise: Exercise) -> (date: Date, reps: Int, weightKg: Double?)? {
+        // Busca la última sesión (por fecha) que contenga un set de este ejercicio
+        do {
+            var fd = FetchDescriptor<StrengthSession>(sortBy: [SortDescriptor(\StrengthSession.date, order: .reverse)])
+            fd.fetchLimit = 50 // límite razonable; ajustable
+            let sessions = try context.fetch(fd)
+            for s in sessions {
+                if let found = s.sets.first(where: { $0.exercise.id == exercise.id }) {
+                    return (s.date, found.reps, found.weightKg)
+                }
+            }
+        } catch {
+            print("lastSet fetch error: \(error)")
+        }
+        return nil
+    }
+
+    private func weightString(kg: Double) -> String {
+        if usePounds {
+            let lb = kg * 2.20462
+            return String(format: "%.0f lb", lb.rounded())
+        } else {
+            return String(format: "%.1f kg", kg)
+        }
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let df = DateFormatter()
+        df.dateStyle = .medium
+        df.timeStyle = .short
+        return df.string(from: date)
+    }
 }
 
 // MARK: - TimeBox (cajitas hh:mm:ss)
@@ -490,89 +537,6 @@ struct SetRow: View {
                 TextField("Weight (\(usePounds ? "lb" : "kg"))", text: $input.weight)
                     .keyboardType(.decimalPad)
             }
-        }
-    }
-    
-}
-
-// MARK: - AddExerciseSheet (anidada) ----------------------------------------
-
-extension NewView {
-    struct AddExerciseSheet: View {
-        @Environment(\.dismiss) private var dismiss
-        @Environment(\.modelContext) private var context
-
-        @Binding var selectedCategory: ExerciseCategory
-
-        @State private var name: String = ""
-        @State private var weighted: Bool = false
-        @State private var chestBackChoice: ChestBack = .chest
-
-        private enum ChestBack: String, CaseIterable, Identifiable {
-            case chest = "Chest"
-            case back  = "Back"
-            var id: String { rawValue }
-        }
-
-        var body: some View {
-            NavigationStack {
-                Form {
-                    Section("Info") {
-                        TextField("Name", text: $name)
-                        Toggle("Weighted (kg)", isOn: $weighted)
-                    }
-
-                    if selectedCategory == .chestBack {
-                        Section("Group") {
-                            Picker("Group", selection: $chestBackChoice) {
-                                ForEach(ChestBack.allCases) { c in
-                                    Text(c.rawValue).tag(c)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                        }
-                    }
-
-                    Section {
-                        Text("Will be added to \(selectedCategory.rawValue)")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .navigationTitle("Add Exercise")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") { save() }
-                            .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                }
-            }
-        }
-
-        private func save() {
-            // Mapear ExerciseCategory -> MuscleGroup del modelo
-            let group: MuscleGroup = {
-                switch selectedCategory {
-                case .core:      return .core
-                case .arms:      return .arms
-                case .legs:      return .legs
-                case .chestBack: return .chestBack
-                case .all:       return .chestBack // no debería llegar, pero asignamos algo sensato
-                }
-            }()
-
-            let ex = Exercise(
-                name: name.trimmingCharacters(in: .whitespaces),
-                muscleGroup: group,
-                isWeighted: weighted,
-                isCustom: true
-            )
-            context.insert(ex)
-            do { try context.save() } catch { print("Save exercise error: \(error)") }
-            dismiss()
         }
     }
 }

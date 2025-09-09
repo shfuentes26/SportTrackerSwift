@@ -49,6 +49,9 @@
         }
       }
     },
+    "%lld reps" : {
+
+    },
     "%lld%%" : {
 
     },
@@ -84,6 +87,7 @@
       }
     },
     "Add Exercise" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -453,6 +457,7 @@
 
     },
     "Info" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -510,6 +515,9 @@
       }
     },
     "Last import: %@" : {
+
+    },
+    "Last time" : {
 
     },
     "Last: %@ • Best: %@" : {
@@ -630,6 +638,9 @@
       }
     },
     "No exercises yet" : {
+
+    },
+    "No previous sets for this exercise" : {
 
     },
     "No record yet" : {
@@ -962,9 +973,6 @@
       }
     },
     "Weighted (kg)" : {
-
-    },
-    "Will be added to %@" : {
 
     },
     "Working…" : {
