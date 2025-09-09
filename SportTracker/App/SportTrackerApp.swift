@@ -31,6 +31,8 @@ struct SportTrackerApp: App {
 
         do {
             let c = try Persistence.shared.makeModelContainer()
+            PersistenceDiagnostics.dumpInitialStats(using: c, tag: "BOOT")
+            PersistenceDiagnostics.startLiveProbe(using: c, seconds: 45)
             // 🔎 LOG: identidad (puntero) del container inyectado a toda la app
             let ptr = Unmanaged.passUnretained(c).toOpaque()
             print("[APP] ModelContainer injected ptr =", ptr)

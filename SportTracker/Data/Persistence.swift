@@ -17,6 +17,7 @@ final class Persistence {
 
     @MainActor
     func makeModelContainer(inMemory: Bool = false) throws -> ModelContainer {
+        print("[Persistence][makeModelContainer] called")
         let localModels: [any PersistentModel.Type] = [
             UserProfile.self, Settings.self,
             Exercise.self, RunningSession.self,
@@ -31,6 +32,8 @@ final class Persistence {
         let container = try ModelContainer(for: localSchema, configurations: config)
         self.appContainer = container
         let cx = container.mainContext
+        
+        
 
         // Migración one-shot
         let migKey = "didRun_migrateRefLink_v1"
@@ -72,6 +75,7 @@ final class Persistence {
         }
 
         #if os(iOS) && CLOUD_SYNC
+        print("[Persistence][this part of the code is enable because of CLOUD_SYNC called")
         let flag = UserDefaults.standard.bool(forKey: "useICloudSync")
         print("[iCloud] useICloudSync =", flag)
         if flag {
@@ -85,6 +89,7 @@ final class Persistence {
 
     // MARK: - Seed mínimo
     private func seedBasicsIfNeeded(_ context: ModelContext) throws {
+        print("[Persistence][seedBasicsIfNeeded] called")
         if try context.fetch(FetchDescriptor<Settings>()).isEmpty {
             context.insert(Settings())
         }
@@ -96,6 +101,7 @@ final class Persistence {
 
     /// Inserta el catálogo base **solo si falta** (chequeo por nombre normalizado)
     private func seedExerciseCatalogIfNeeded(_ context: ModelContext) throws {
+        print("[Persistence][seedExerciseCatalogIfNeeded] called")
         guard !didSeedCatalogThisLaunch else { return }
         let iCloudOn = UserDefaults.standard.bool(forKey: "useICloudSync")
         let seedKey = "catalogSeededV1"
@@ -159,6 +165,7 @@ final class Persistence {
 
         var icloudAlreadySeeded = false
         if iCloudOn {
+            print("[Persistence][TRACE] ENTRAMOS EN iCloudOn is:", iCloudOn)
             let kv = NSUbiquitousKeyValueStore.default
             icloudAlreadySeeded = kv.bool(forKey: seedKey)
         }
@@ -168,10 +175,15 @@ final class Persistence {
         let seedNames = Set(defaults.map { norm($0.name) })
         let catalogSeemsPresent = seedNames.isSubset(of: existingNames)
 
+        print("[Seed][TRACE] localAlreadySeeded is:", localAlreadySeeded)
+        print("[Seed][TRACE] icloudAlreadySeeded is:", icloudAlreadySeeded)
+        print("[Seed][TRACE] catalogSeemsPresent is:", catalogSeemsPresent)
+        
         let shouldSeed = !(localAlreadySeeded || icloudAlreadySeeded || catalogSeemsPresent)
         if shouldSeed {
             for ex in defaults {
                 if !existingNames.contains(norm(ex.name)) {
+                    print("[Seed][TRACE] Insertando exercise base:", ex.name)
                     context.insert(ex)
                 }
             }
@@ -186,6 +198,7 @@ final class Persistence {
     }
 
     private func dedupeSingletons(_ context: ModelContext) throws {
+        print("[Persistence][dedupeSingletons] called")
         var settings = try context.fetch(FetchDescriptor<Settings>())
         if settings.count > 1 {
             settings.sort { $0.updatedAt > $1.updatedAt }
@@ -200,6 +213,7 @@ final class Persistence {
 
     /// 🔧 Dedupe por nombre “slug” (fusiona sets y borra perdedores)
     private func dedupeExercisesByNormalizedName(_ context: ModelContext) throws {
+        print("[Persistence][dedupeExercisesByNormalizedName] called")
         let allExercises: [Exercise] = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
         guard allExercises.count > 1 else { return }
 

@@ -6,6 +6,11 @@ import SwiftData
 final class CKSyncManager {
     static let shared = CKSyncManager()
     private init() {}
+    
+    
+
+
+  
 
     // MARK: - Infra
     private var container: ModelContainer!
@@ -17,6 +22,20 @@ final class CKSyncManager {
     private var loopTask: Task<Void, Never>?
     private var isEnabled: Bool { UserDefaults.standard.bool(forKey: "useICloudSync") }
 
+    
+    @discardableResult
+    private func gate(_ label: String) -> Bool {
+        guard isEnabled else {
+            // 🔒 Todo acceso a CloudKit queda bloqueado si el toggle está OFF
+            print("[iCloud BLOCKED] \(label) because useICloudSync == false")
+            // Trazas para saber quién lo llamó
+            Thread.callStackSymbols.prefix(12).forEach { print("   ", $0) }
+            return false
+        }
+        return true
+    }
+    
+    
     // Record types
     private enum RT {
         static let settings = "Settings"
@@ -44,13 +63,14 @@ final class CKSyncManager {
     // MARK: - API
     func start(using container: ModelContainer) async {
         self.container = container
+        print("[CK][START] called; isEnabled =", isEnabled)
         if !isEnabled {
                 print("[iCloud] Sync is OFF → CKSyncManager not started")
                 return
         }
         // Si el switch está OFF, no arrancamos nada
         guard isEnabled else { return }
-
+        guard gate("start(using:)") else { return }
         await ensureZone()
         await syncOnce()
 
@@ -69,6 +89,8 @@ final class CKSyncManager {
     }
 
     private func syncOnce() async {
+        print("[CK][syncOnce] called")
+        guard gate("syncOnce()") else { return }
         guard isEnabled, container != nil else { return }
 
         await pushSettingsUserGoals()
@@ -85,6 +107,8 @@ final class CKSyncManager {
 
     // MARK: - Zone
     private func ensureZone() async {
+        print("[CK][ensureZone] called")
+        guard gate("ensureZone()") else { return }
         do { try await db.modifyRecordZones(saving: [CKRecordZone(zoneID: zoneID)], deleting: []) }
         catch { /* ya existe */ }
     }
@@ -130,6 +154,7 @@ final class CKSyncManager {
 
     // MARK: - Push: Settings/User/Goals
     private func pushSettingsUserGoals() async {
+        print("[CK][pushSettingsUserGoals] called")
         if let s = ((try? ctx.fetch(FetchDescriptor<Settings>())) ?? []).first {
             await upsert(RT.settings, name: "singleton") { rec in
                 rec["updatedAt"] = s.updatedAt as CKRecordValue
@@ -169,6 +194,7 @@ final class CKSyncManager {
 
     // MARK: - Push: Runs
     private func pushRuns() async {
+        print("[CK][pushRuns] called")
         let runs: [RunningSession] = (try? ctx.fetch(FetchDescriptor<RunningSession>())) ?? []
         for r in runs {
             let name = recNameRun(r.id)
@@ -186,6 +212,7 @@ final class CKSyncManager {
 
     // MARK: - Push: Gyms & Sets
     private func pushGymsAndSets() async {
+        print("[CK][pushGymsAndSets] called")
         let gyms: [StrengthSession] = (try? ctx.fetch(FetchDescriptor<StrengthSession>())) ?? []
         for g in gyms {
             let gName = recNameGym(g.id)
@@ -219,6 +246,7 @@ final class CKSyncManager {
 
     private func pullSettingsUserGoalsAndMerge() async {
         // ... (sin cambios funcionales)
+        print("[CK][pullSettingsUserGoalsAndMerge] called")
         if let rec = await fetchOne(RT.settings, name: "singleton"),
            let s = ((try? ctx.fetch(FetchDescriptor<Settings>())) ?? []).first,
            let cloudDate = rec["updatedAt"] as? Date,
@@ -270,6 +298,7 @@ final class CKSyncManager {
     // MARK: - Pull/Merge: Runs (igual)
 
     private func pullRunsAndMerge() async {
+        print("[CK][pullRunsAndMerge] called")
         let recs = await queryAll(RT.run)
         let locals: [RunningSession] = (try? ctx.fetch(FetchDescriptor<RunningSession>())) ?? []
         var byID = Dictionary(uniqueKeysWithValues: locals.map { ($0.id, $0) })
@@ -309,6 +338,7 @@ final class CKSyncManager {
 
     // Idempotent merge: crea a lo sumo 1 Exercise por nombre normalizado (slug)
     private func pullGymsAndSetsAndMerge() async {
+        print("[CK][pullGymsAndSetsAndMerge] called")
         let gymRecs = await queryAll(RT.gym)
         let setRecs = await queryAll(RT.gymSet)
 
@@ -416,6 +446,7 @@ final class CKSyncManager {
 
     // MARK: - Borrados remotos según borrados locales (igual)
     private func propagateLocalDeletions() async {
+        print("[CK][propagateLocalDeletions] called")
         let nowRunIDs = Set(((try? ctx.fetch(FetchDescriptor<RunningSession>())) ?? []).map { $0.id.uuidString })
         let nowGymIDs = Set(((try? ctx.fetch(FetchDescriptor<StrengthSession>())) ?? []).map { $0.id.uuidString })
 
@@ -440,6 +471,7 @@ final class CKSyncManager {
     }
 
     private func snapshotLocalTrainingIDs() async {
+        print("[CK][snapshotLocalTrainingIDs] called")
         let runs: [RunningSession] = (try? ctx.fetch(FetchDescriptor<RunningSession>())) ?? []
         let gyms: [StrengthSession] = (try? ctx.fetch(FetchDescriptor<StrengthSession>())) ?? []
         UserDefaults.standard.set(runs.map { $0.id.uuidString }, forKey: lastRunIDsKey)
@@ -448,6 +480,7 @@ final class CKSyncManager {
 
     // MARK: - Dedupe por nombre normalizado (mergea sets y borra perdedores)
     private func dedupeExercisesByNormalizedName() {
+        print("[CK][dedupeExercisesByNormalizedName] called")
         let allExercises: [Exercise] = (try? ctx.fetch(FetchDescriptor<Exercise>())) ?? []
         guard allExercises.count > 1 else { return }
 

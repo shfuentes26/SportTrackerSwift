@@ -25,18 +25,22 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
     func session(_ session: WCSession,
                  didReceiveMessage message: [String : Any],
                  replyHandler: @escaping ([String : Any]) -> Void) {
+        print("[PhoneSession]session is called")
         handle(message: message, replyHandler: replyHandler)
     }
 
     // 2) SIN replyHandler
     func session(_ session: WCSession,
                  didReceiveMessage message: [String : Any]) {
+        print("[PhoneSession]session is called")
         handle(message: message, replyHandler: nil)
     }
 
     // Lógica común
     private func handle(message: [String: Any],
                         replyHandler: (([String : Any]) -> Void)?) {
+        
+        print("[PhoneSession]handle is called")
         if let type = message["type"] as? String, type == "update" {
             let hr = message["hr"] as? Int ?? 0
             let km = message["dist"] as? Double ?? 0
@@ -112,6 +116,7 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
     // MARK: - Guardado en SwiftData desde payload del Watch
     @MainActor
     private func saveWatchRunning(payload: WorkoutPayload, polyline: String?) {
+        print("[PhoneSession]saveWatchRunning is called")
         guard let container = Persistence.shared.appContainer else {
             print("[SwiftData] container missing")
             return
@@ -201,6 +206,7 @@ final class PhoneSession: NSObject, ObservableObject, WCSessionDelegate {
 
     // MARK: - Archivos desde el Watch (transferFile)
     func session(_ session: WCSession, didReceive file: WCSessionFile) {
+        print("[PhoneSession]session is called")
         let meta = file.metadata ?? [:]
         print("[WC][iOS] didReceive file: \(file.fileURL.lastPathComponent), meta:", meta)
 

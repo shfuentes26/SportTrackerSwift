@@ -34,6 +34,7 @@ final class HealthKitManager: ObservableObject {
 
     // Solicitar permisos
     func requestAuthorization() async throws {
+        print("[HealthKitManager]requestAuthorization is called")
         //HealthKitManager.requestAuthorization()
         let hasKey = Bundle.main.object(forInfoDictionaryKey: "NSHealthShareUsageDescription") != nil
         assert(hasKey, "Missing NSHealthShareUsageDescription in Info.plist")
@@ -74,6 +75,8 @@ final class HealthKitManager: ObservableObject {
 
     // Leer workouts desde la última importación
     func fetchNewWorkouts() async throws -> [ImportedWorkout] {
+        print("[HealthKitManager]fetchNewWorkouts is called")
+        print("[HEALTH][FETCH] fetchNewWorkouts() start — lastImportDate =", lastImportDate)
         try await ensureAvailability()
 
         let workoutType = HKObjectType.workoutType()
@@ -103,6 +106,7 @@ final class HealthKitManager: ObservableObject {
                         activeCalories: wk.totalEnergyBurned?.doubleValue(for: .kilocalorie())
                     )
                 }
+                print("[HEALTH][FETCH] fetched \(mapped.count) workouts; first=", mapped.first?.start as Any, "last=", mapped.last?.end as Any)
                 cont.resume(returning: mapped)
             }
             self.healthStore.execute(query)
@@ -111,6 +115,8 @@ final class HealthKitManager: ObservableObject {
     }
     
     func fetchNewHKWorkouts() async throws -> [HKWorkout] {
+        print("[HealthKitManager]fetchNewHKWorkouts is called")
+        print("[HEALTH][FETCH] fetchNewHKWorkouts() start — lastImportDate =", lastImportDate)
         try await ensureAvailability()
 
         let workoutType = HKObjectType.workoutType()
@@ -123,6 +129,8 @@ final class HealthKitManager: ObservableObject {
             let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: sort) {
                 _, results, error in
                 if let error = error { cont.resume(throwing: error); return }
+                let arr = (results as? [HKWorkout]) ?? []
+                print("[HEALTH][FETCH] fetched HKWorkout count =", arr.count, "first=", arr.first?.startDate as Any, "last=", arr.last?.endDate as Any)
                 cont.resume(returning: (results as? [HKWorkout]) ?? [])
             }
             self.healthStore.execute(query)
@@ -136,10 +144,12 @@ final class HealthKitManager: ObservableObject {
 
     // Llamar tras importar con éxito
     func markImported(upTo date: Date = Date()) {
+        print("[HealthKitManager]markImported is called")
         lastImportDate = date
     }
 
     private func ensureAvailability() async throws {
+        print("[HealthKitManager]ensureAvailability is called")
         guard HKHealthStore.isHealthDataAvailable() else {
             throw NSError(domain: "HealthKit", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "Health data is not available on this device."])

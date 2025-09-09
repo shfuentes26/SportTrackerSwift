@@ -308,6 +308,7 @@ struct NewView: View {
     // MARK: - Save
 
     private func saveTapped() {
+        print("[NewView]saveTapped is being called")
         guard let vm else { return }
 
         switch selectedType {
@@ -553,6 +554,7 @@ extension NewView {
         }
 
         private func save() {
+            print("[NewView]save is being called")
             // Mapear ExerciseCategory -> MuscleGroup del modelo
             let group: MuscleGroup = {
                 switch selectedCategory {
@@ -570,6 +572,7 @@ extension NewView {
                 isWeighted: weighted,
                 isCustom: true
             )
+            print("[INSERT][UI] Creando StrengSession al abrir vista")
             context.insert(ex)
             do { try context.save() } catch { print("Save exercise error: \(error)") }
             dismiss()

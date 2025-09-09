@@ -99,6 +99,20 @@
 			);
 			target = 2365CAEA2E5F348700CF609C /* TTWatch Watch App */;
 		};
+		23AA67FC2E70665D00E7AF01 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				PersistenceDiagnostics.swift,
+			);
+			target = 2365CAEA2E5F348700CF609C /* TTWatch Watch App */;
+		};
+		23AA67FE2E70666100E7AF01 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				PersistenceDiagnostics.swift,
+			);
+			target = A003000 /* SportTracker */;
+		};
 		23BE56D32E53A76B00600875 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -111,6 +125,7 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2365CAEC2E5F348700CF609C /* TTWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "TTWatch Watch App"; sourceTree = "<group>"; };
 		23AA64E02E6B3E7400E7AF01 /* iCloud */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = iCloud; sourceTree = "<group>"; };
+		23AA67F82E7065D400E7AF01 /* Diagnogtics */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (23AA67FE2E70666100E7AF01 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 23AA67FC2E70665D00E7AF01 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Diagnogtics; sourceTree = "<group>"; };
 		23BE56CA2E53A53800600875 /* Domain */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Domain; sourceTree = "<group>"; };
 		23BE56CB2E53A55B00600875 /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2342D5332E60D57800E696DE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
 		23BE56CC2E53A56700600875 /* Resources */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (23BE56D32E53A76B00600875 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Resources; sourceTree = "<group>"; };
@@ -208,6 +223,7 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
+				23AA67F82E7065D400E7AF01 /* Diagnogtics */,
 				23AA64E02E6B3E7400E7AF01 /* iCloud */,
 				2342D5382E60EE2E00E696DE /* WorkoutInboxView.swift */,
 				2342D5362E60EE1100E696DE /* WorkoutInbox.swift */,
@@ -256,6 +272,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				2365CAEC2E5F348700CF609C /* TTWatch Watch App */,
+				23AA67F82E7065D400E7AF01 /* Diagnogtics */,
 			);
 			name = "TTWatch Watch App";
 			packageProductDependencies = (

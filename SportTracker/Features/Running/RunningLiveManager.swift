@@ -25,6 +25,7 @@ final class RunningLiveManager: NSObject, ObservableObject {
 
     // MARK: - Authorization
     func requestAuthorization() async throws {
+        print("[RunningLiveManager]requestAuthorization is called")
         guard HKHealthStore.isHealthDataAvailable() else { return }
         let toShare: Set = [
             HKObjectType.workoutType(),
@@ -39,6 +40,7 @@ final class RunningLiveManager: NSObject, ObservableObject {
     // MARK: - Session control
     func start() {
         // Location
+        print("[RunningLiveManager]start is called")
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.activityType = .fitness

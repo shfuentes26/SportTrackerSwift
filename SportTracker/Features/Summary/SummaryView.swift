@@ -274,6 +274,7 @@ struct SummaryView: View {
     }
 
     private var pastItems: [PastItem] {
+        
         let runItems = runs.map { r in
             PastItem(id: "run-\(r.id.uuidString)",
                      date: r.date,
@@ -438,6 +439,7 @@ private struct EditRunningSheet: View {
     }
 
     private func save() {
+        print("[SummaryView]save is called")
         let dist = Double(distanceKm.replacingOccurrences(of: ",", with: ".")) ?? 0
         let H = Int(hh) ?? 0, M = Int(mm) ?? 0, S = Int(ss) ?? 0
         let sec = H*3600 + M*60 + S

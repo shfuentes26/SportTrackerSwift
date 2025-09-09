@@ -9,6 +9,8 @@ enum HealthKitImportService {
     /// Devuelve cuántos se insertaron.
     static func saveToLocal(_ workouts: [HealthKitManager.ImportedWorkout],
                             context: ModelContext) throws -> Int {
+        
+        print("[HealthKitImportService]saveToLocal is called")
         var inserted = 0
         
         // Obtener settings existentes (o crear uno si no hay)
@@ -100,6 +102,7 @@ enum HealthKitImportService {
                 distanceMeters: ss.distanceMeters,
                 notes: "Imported from Apple Health (derived from distance samples)"
             )
+            print("[HealthKitImportService]importFromDistanceSamples is called")
             context.insert(run)
             inserted += 1
         }
@@ -114,6 +117,7 @@ enum HealthKitImportService {
     }
 
     private static func fetchDistanceSamples(daysBack: Int) async throws -> [HKQuantitySample] {
+        print("[HealthKitImportService]fetchDistanceSamples is called")
         let hs = HKHealthStore()
         guard let distType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else { return [] }
         let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())!
@@ -132,6 +136,7 @@ enum HealthKitImportService {
 
     /// Agrupa muestras contiguas; si el hueco entre una y otra supera `gapSeconds`, comienza una nueva sesión.
     private static func groupSamplesIntoSessions(_ samples: [HKQuantitySample], gapSeconds: TimeInterval) -> [DistanceSession] {
+        print("[HealthKitImportService]groupSamplesIntoSessions is called")
         guard !samples.isEmpty else { return [] }
         var sessions: [DistanceSession] = []
         var curStart = samples[0].startDate
@@ -161,6 +166,8 @@ enum HealthKitImportService {
     /// Lee la(s) rutas GPS asociadas a un HKWorkout y devuelve una polyline (o nil si no hay).
     private static func fetchRoutePolyline(for workout: HKWorkout,
                                            healthStore: HKHealthStore) async -> String? {
+        
+        print("[HealthKitImportService]fetchRoutePolyline is called")
         let routeType = HKSeriesType.workoutRoute()
         // 1) Buscar todas las HKWorkoutRoute del workout
         let predicate = HKQuery.predicateForObjects(from: workout)
@@ -209,6 +216,8 @@ enum HealthKitImportService {
     static func saveHKWorkoutsToLocal(_ workouts: [HKWorkout],
                                       context: ModelContext,
                                       healthStore: HKHealthStore = HKHealthStore()) async throws -> Int {
+        
+        print("[HealthKitImportService]saveHKWorkoutsToLocal is called")
         var inserted = 0
         
         // Obtener settings existentes (o crear uno si no hay)
@@ -270,6 +279,8 @@ extension HealthKitImportService {
     /// No modifica tu BD; es solo lectura para pintar la UI.
     static func fetchRunMetrics(for session: RunningSession,
                                 healthStore: HKHealthStore = HKHealthStore()) async throws -> RunMetrics? {
+        
+        print("[HealthKitImportService]fetchRunMetrics is called")
 
         // 1) Buscar el HKWorkout que mejor coincide (por fecha y distancia)
         guard let workout = try await findMatchingWorkout(for: session, healthStore: healthStore) else {
@@ -298,6 +309,7 @@ extension HealthKitImportService {
 
     private static func findMatchingWorkout(for s: RunningSession,
                                             healthStore: HKHealthStore) async throws -> HKWorkout? {
+        print("[HealthKitImportService]findMatchingWorkout is called")
         let type = HKObjectType.workoutType()
         // ventana ±30 min respecto al inicio
         let start = s.date.addingTimeInterval(-30*60)
@@ -330,6 +342,8 @@ extension HealthKitImportService {
 
     private static func fetchRouteLocations(for workout: HKWorkout,
                                             healthStore: HKHealthStore) async throws -> [CLLocation] {
+        
+        print("[HealthKitImportService]fetchRouteLocations is called")
         // Antes: guard let routeType = HKObjectType.seriesType(forIdentifier: .workoutRoute) else { return [] }
         let routeType = HKSeriesType.workoutRoute()   // ✅ correcto
 
@@ -368,6 +382,8 @@ extension HealthKitImportService {
     private static func fetchHeartRateSeries(for workout: HKWorkout,
                                              healthStore: HKHealthStore) async throws
     -> ([(time: TimeInterval, bpm: Double)], Double?, Double?) {
+        
+        print("[HealthKitImportService]fetchHeartRateSeries is called")
 
         guard let hrType = HKObjectType.quantityType(forIdentifier: .heartRate) else { return ([], nil, nil) }
         let pred = HKQuery.predicateForObjects(from: workout)
@@ -517,6 +533,8 @@ extension HealthKitImportService {
         limit: Int? = nil,
         healthStore: HKHealthStore = HKHealthStore()
     ) async throws -> BackfillResult {
+        
+        print("[HealthKitImportService]backfillMissingRoutes is called")
 
         // 1) Buscar runs sin ruta
         let pred = #Predicate<RunningSession> { $0.routePolyline == nil || $0.routePolyline == "" }
