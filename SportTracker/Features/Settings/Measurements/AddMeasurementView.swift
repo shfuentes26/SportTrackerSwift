@@ -60,6 +60,7 @@ struct AddMeasurementView: View {
                     .frame(maxWidth: .infinity)
             }
         }
+        .brandHeaderSpacer()
         .navigationTitle("Add Measurement")
     }
 

@@ -43,6 +43,7 @@ struct MeasurementsHomeView: View {
             }
         }
         .navigationTitle("Measurements")
+        .brandHeaderSpacer()
     }
 
     private func lastValueText(_ m: BodyMeasurement?) -> String {
