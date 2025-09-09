@@ -9,6 +9,8 @@ import SwiftUI
 struct WeeklyPointsPillView: View {
     let runs: [RunningSession]
     let gyms: [StrengthSession]
+    
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -31,13 +33,19 @@ struct WeeklyPointsPillView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 2)
         .background(
-            Capsule()
-                .fill(Color(red: 230/255, green: 251/255, blue: 217/255))
+            Capsule().fill(
+                        scheme == .dark
+                        ? Color(red: 0.18, green: 0.25, blue: 0.16)   // verde oscuro para dark
+                        : Color(red: 230/255, green: 251/255, blue: 217/255) // tu verde actual
+                    )
         )
         .overlay(
-            Capsule().stroke(.black.opacity(0.05))
+            Capsule().stroke(
+                        scheme == .dark ? .white.opacity(0.08) : .black.opacity(0.05)
+                    )
         )
-        .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 1)
+        .shadow(color: (scheme == .dark ? .black.opacity(0.35) : .black.opacity(0.06)),
+                    radius: 4, x: 0, y: 1)
         .contentShape(Capsule())
         .offset(y: 1)   // ⬅️ desplaza la píldora hacia abajo
     }
