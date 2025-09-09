@@ -35,10 +35,28 @@ struct MeasurementsHomeView: View {
             }
 
             Section {
-                NavigationLink {
-                    AddMeasurementView()
-                } label: {
+                // ✅ Usa el init explícito para evitar el error de inferencia
+                NavigationLink(destination: AddMeasurementView()) {
                     Label("Add measurement", systemImage: "plus.circle.fill")
+                }
+
+                // ✅ Botón para importar peso desde Apple Health (lo mantenemos)
+                Button {
+                    Task {
+                        do {
+                            try await HealthKitManager.shared.requestAuthorization()
+                            let samples = try await HealthKitManager.shared.fetchBodyMassSamples()
+                            let count = try await MainActor.run {
+                                try HealthKitImportService
+                                    .saveBodyMassSamplesToLocal(samples, context: context)
+                            }
+                            print("[Health] imported weight samples:", count)
+                        } catch {
+                            print("[Health] weight import error:", error.localizedDescription)
+                        }
+                    }
+                } label: {
+                    Label("Import weight from Apple Health", systemImage: "arrow.down.circle")
                 }
             }
         }

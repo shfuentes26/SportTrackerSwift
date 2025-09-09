@@ -18,12 +18,13 @@ struct MeasurementHistoryView: View {
         #Predicate { $0.kindRaw == kind.rawValue }
     }
 
-    @Query(sort: [SortDescriptor(\BodyMeasurement.date, order: .forward)]) private var all: [BodyMeasurement]
+    @Query(sort: [SortDescriptor(\BodyMeasurement.date, order: .reverse)]) private var all: [BodyMeasurement]
+    
 
     init(kind: MeasurementKind) {
         self.kind = kind
         let pred: Predicate<BodyMeasurement> = #Predicate { $0.kindRaw == kind.rawValue }
-        _all = Query(filter: pred, sort: [SortDescriptor(\BodyMeasurement.date, order: .forward)])
+        _all = Query(filter: pred, sort: [SortDescriptor(\BodyMeasurement.date, order: .reverse)])
     }
 
     var body: some View {

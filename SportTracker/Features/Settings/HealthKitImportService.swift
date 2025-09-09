@@ -4,6 +4,54 @@ import HealthKit
 import CoreLocation
 
 enum HealthKitImportService {
+    
+    
+    @MainActor
+    static func saveBodyMassSamplesToLocal(
+        _ samples: [HKQuantitySample],
+        context: ModelContext
+    ) throws -> Int {
+        guard !samples.isEmpty else { return 0 }
+        var inserted = 0
+        let kgUnit = HKUnit.gramUnit(with: .kilo)
+        let weightRaw = MeasurementKind.weight.rawValue  // 👈 evita usar el enum dentro del #Predicate
+
+        for s in samples {
+            let kg = s.quantity.doubleValue(for: kgUnit)
+            guard kg > 0 else { continue }
+
+            // Ventana para dedupe
+            let minDate = s.startDate.addingTimeInterval(-30 * 60)
+            let maxDate = s.startDate.addingTimeInterval(+30 * 60)
+
+            // 👇 Predicado sencillo: solo tipo + rango de fecha
+            var fd = FetchDescriptor<BodyMeasurement>(
+                predicate: #Predicate {
+                    $0.kindRaw == weightRaw &&
+                    $0.date >= minDate && $0.date <= maxDate
+                }
+            )
+            fd.fetchLimit = 5  // pequeño límite por seguridad
+
+            let nearby = try context.fetch(fd)
+
+            // Deduplicado por valor ±0.2 kg en memoria (evita el predicado complejo)
+            let isDuplicate = nearby.contains { abs($0.value - kg) <= 0.2 }
+            if isDuplicate { continue }
+
+            // Inserta
+            context.insert(BodyMeasurement(
+                date: s.startDate,
+                kind: .weight,
+                value: kg,
+                note: "Imported from Apple Health"
+            ))
+            inserted += 1
+        }
+
+        try context.save()
+        return inserted
+    }
 
     /// Guarda en SwiftData solo entrenamientos de running (HKWorkout ya filtrado por tu manager).
     /// Devuelve cuántos se insertaron.

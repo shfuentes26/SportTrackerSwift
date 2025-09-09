@@ -29,6 +29,10 @@ final class HealthKitManager: ObservableObject {
         if let hr = HKObjectType.quantityType(forIdentifier: .heartRate) {
             set.insert(hr)
         }
+        // En readTypes, suma bodyMass
+        if let mass = HKObjectType.quantityType(forIdentifier: .bodyMass) {
+            set.insert(mass)
+        }
         return set
     }
 
@@ -60,6 +64,24 @@ final class HealthKitManager: ObservableObject {
     var lastImportDate: Date {
         get { UserDefaults.standard.object(forKey: lastImportKey) as? Date ?? Date(timeIntervalSince1970: 0) }
         set { UserDefaults.standard.set(newValue, forKey: lastImportKey) }
+    }
+    
+    func fetchBodyMassSamples(since start: Date? = nil) async throws -> [HKQuantitySample] {
+        try await ensureAvailability()
+        guard let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return [] }
+
+        let from = start ?? Date(timeIntervalSince1970: 0)
+        let pred = HKQuery.predicateForSamples(withStart: from, end: Date(), options: [])
+        let sort = [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+
+        return try await withCheckedThrowingContinuation { cont in
+            let q = HKSampleQuery(sampleType: type, predicate: pred, limit: HKObjectQueryNoLimit, sortDescriptors: sort) {
+                _, res, err in
+                if let err = err { cont.resume(throwing: err); return }
+                cont.resume(returning: (res as? [HKQuantitySample]) ?? [])
+            }
+            self.healthStore.execute(q)
+        }
     }
 
     struct ImportedWorkout: Identifiable {
