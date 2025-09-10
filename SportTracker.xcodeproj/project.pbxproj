@@ -10,6 +10,13 @@
 		235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235697172E5D0189006409D8 /* PaceHistorySection.swift */; };
 		2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */; };
 		2365CAF52E5F348900CF609C /* TTWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		23AA68C62E71A6DD00E7AF01 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 23AA68C52E71A6DD00E7AF01 /* FirebaseAnalytics */; };
+		23AA68C82E71A6DD00E7AF01 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 23AA68C72E71A6DD00E7AF01 /* FirebaseCrashlytics */; };
+		23AA68CA2E71A6DD00E7AF01 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 23AA68C92E71A6DD00E7AF01 /* FirebaseRemoteConfig */; };
+		23AA68CC2E71A82300E7AF01 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AA68CB2E71A81F00E7AF01 /* AppDelegate.swift */; };
+		23AA68CE2E71A86E00E7AF01 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AA68CD2E71A86B00E7AF01 /* AnalyticsService.swift */; };
+		23AA68D02E71A88600E7AF01 /* ScreenTrackingModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AA68CF2E71A88200E7AF01 /* ScreenTrackingModifier.swift */; };
+		23AA68D22E71AAFB00E7AF01 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 23AA68D12E71AAFA00E7AF01 /* GoogleService-Info.plist */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
@@ -55,6 +62,10 @@
 		235697172E5D0189006409D8 /* PaceHistorySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceHistorySection.swift; sourceTree = "<group>"; };
 		2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDistanceFilter.swift; sourceTree = "<group>"; };
 		2365CAEB2E5F348700CF609C /* TTWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TTWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		23AA68CB2E71A81F00E7AF01 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		23AA68CD2E71A86B00E7AF01 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
+		23AA68CF2E71A88200E7AF01 /* ScreenTrackingModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenTrackingModifier.swift; sourceTree = "<group>"; };
+		23AA68D12E71AAFA00E7AF01 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
@@ -118,6 +129,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23AA68CA2E71A6DD00E7AF01 /* FirebaseRemoteConfig in Frameworks */,
+				23AA68C62E71A6DD00E7AF01 /* FirebaseAnalytics in Frameworks */,
+				23AA68C82E71A6DD00E7AF01 /* FirebaseCrashlytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -193,6 +207,10 @@
 		A002100 /* SportTracker */ = {
 			isa = PBXGroup;
 			children = (
+				23AA68D12E71AAFA00E7AF01 /* GoogleService-Info.plist */,
+				23AA68CF2E71A88200E7AF01 /* ScreenTrackingModifier.swift */,
+				23AA68CD2E71A86B00E7AF01 /* AnalyticsService.swift */,
+				23AA68CB2E71A81F00E7AF01 /* AppDelegate.swift */,
 				23AA68C32E70CAC200E7AF01 /* Watch iOS files */,
 				23AA68C22E70CAA200E7AF01 /* Health Kit */,
 				23BE57592E5545BF00600875 /* SportTracker.entitlements */,
@@ -299,6 +317,9 @@
 				es,
 			);
 			mainGroup = A002000;
+			packageReferences = (
+				23AA68C42E71A6DC00E7AF01 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			productRefGroup = A002200 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -322,6 +343,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */,
+				23AA68D22E71AAFB00E7AF01 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,16 +367,19 @@
 				23BE56C02E53931500600875 /* GymViewModel.swift in Sources */,
 				23BE57BF2E57C3AC00600875 /* LiveRunView.swift in Sources */,
 				23BE57B22E563CA700600875 /* GymHistoryChart.swift in Sources */,
+				23AA68CE2E71A86E00E7AF01 /* AnalyticsService.swift in Sources */,
 				23BE56C12E53931500600875 /* RunningViewModel.swift in Sources */,
 				2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */,
 				A000004 /* GymView.swift in Sources */,
 				A000006 /* RunningView.swift in Sources */,
+				23AA68D02E71A88600E7AF01 /* ScreenTrackingModifier.swift in Sources */,
 				23BE56C62E53932000600875 /* RunningRepository.swift in Sources */,
 				23BE56C72E53932000600875 /* StrengthRepository.swift in Sources */,
 				235697182E5D018B006409D8 /* PaceHistorySection.swift in Sources */,
 				23BE57582E5522C700600875 /* RunningHistoryChart.swift in Sources */,
 				23BE56B62E53708D00600875 /* Models.swift in Sources */,
 				23BE57BD2E57C38300600875 /* RunningLiveManager.swift in Sources */,
+				23AA68CC2E71A82300E7AF01 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -633,6 +658,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		23AA68C42E71A6DC00E7AF01 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.2.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		23AA68C52E71A6DD00E7AF01 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 23AA68C42E71A6DC00E7AF01 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		23AA68C72E71A6DD00E7AF01 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 23AA68C42E71A6DC00E7AF01 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		23AA68C92E71A6DD00E7AF01 /* FirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 23AA68C42E71A6DC00E7AF01 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseRemoteConfig;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A000000 /* Project object */;
 }

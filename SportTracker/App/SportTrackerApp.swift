@@ -11,7 +11,7 @@ import WatchConnectivity
 
 @main
 struct SportTrackerApp: App {
-    @UIApplicationDelegateAdaptor(OrientationLockDelegate.self) var appDelegate
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var container: ModelContainer?
     @ObservedObject private var phone = PhoneSession.shared
 

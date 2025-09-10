@@ -96,6 +96,7 @@ struct NewView: View {
             }
             
             .navigationTitle("New Training")
+            .onAppear { AnalyticsService.logScreen(name: "New Training") }
             .brandHeaderSpacer()
             .alert("Training saved successfully", isPresented: $showSaved) {
                 Button("OK") {

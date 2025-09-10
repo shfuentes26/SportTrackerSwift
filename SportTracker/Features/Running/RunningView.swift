@@ -90,6 +90,7 @@ struct RunningView: View {
                 }
             }
             .navigationTitle("Running")
+            .onAppear { AnalyticsService.logScreen(name: "Running") }
             .navigationBarTitleDisplayMode(.large)          // ← nuevo
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

@@ -129,6 +129,7 @@ struct GymView: View {
             }
             .brandHeaderSpacer()
             .navigationTitle("Gym")
+            .onAppear { AnalyticsService.logScreen(name: "Gym") }
         }
         .task {
             if vm == nil {

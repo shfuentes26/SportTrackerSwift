@@ -110,6 +110,7 @@ struct SummaryView: View {
             )
             // ... dentro de var body: some View { NavigationStack { ... } }
             .navigationTitle("Summary")
+            .onAppear { AnalyticsService.logScreen(name: "Summary") }
             .navigationBarTitleDisplayMode(.large)
             .toolbar {                                   // ⬅️ NUEVO
                 ToolbarItem(placement: .topBarTrailing) {

@@ -86,6 +86,7 @@ struct SettingsView: View {
             }*/
         }
         .navigationTitle("Settings")
+        .onAppear { AnalyticsService.logScreen(name: "Settings") }
         .alert("Import", isPresented: $showImportAlert) {
             Button("OK", role: .cancel) {}
         } message: {
