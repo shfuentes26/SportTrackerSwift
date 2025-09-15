@@ -160,19 +160,32 @@ struct PointsInsightsView: View {
 
                     List {
                         ForEach(items) { it in
-                            HStack(spacing: 12) {
-                                Image(systemName: it.kind == .run ? "figure.run" : "dumbbell.fill")
-                                    .imageScale(.medium)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(it.title).font(.body)
-                                    Text(dateFormatter.string(from: it.date))
-                                        .font(.caption).foregroundStyle(.secondary)
+                            NavigationLink {
+                                if it.kind == .run {
+                                    if let run = runs.first(where: { $0.date == it.date }) {
+                                        RunningSessionDetail(session: run)
+                                    }
+                                } else {
+                                    if let gym = gyms.first(where: { $0.date == it.date }) {
+                                        GymSessionDetail(session: gym)
+                                    }
                                 }
-                                Spacer()
-                                Text("\(it.points)")
-                                    .font(.subheadline.monospacedDigit())
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: it.kind == .run ? "figure.run" : "dumbbell.fill")
+                                        .imageScale(.medium)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(it.title).font(.body)
+                                        Text(dateFormatter.string(from: it.date))
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Text("\(it.points)")
+                                        .font(.subheadline.monospacedDigit())
+                                }
                             }
                         }
+
                     }
                     .listStyle(.plain)
                 } else {
@@ -314,14 +327,41 @@ struct PointsInsightsView: View {
     // MARK: - Build list items for a DateInterval
     private func pointItems(for interval: DateInterval) -> [PointItem] {
         var items: [PointItem] = []
+
+        // RUNNING
         for r in runs where interval.contains(r.date) {
-            items.append(PointItem(date: r.date, title: "Running session", points: Int(r.totalPoints), kind: .run))
+            let km = max(r.distanceMeters / 1000.0, 0.001)
+            let distStr = String(format: "%.1f km", km)
+
+            let secPerKm = Double(r.durationSeconds) / km
+            let paceMin = Int(secPerKm) / 60
+            let paceSec = Int(secPerKm) % 60
+            let paceStr = String(format: "%d:%02dmin/km", paceMin, paceSec)
+
+            let title = "Running \(distStr) at \(paceStr)"
+            items.append(PointItem(date: r.date, title: title, points: Int(r.totalPoints), kind: .run))
         }
+
+        // GYM
         for g in gyms where interval.contains(g.date) {
-            items.append(PointItem(date: g.date, title: "Gym session", points: Int(g.totalPoints), kind: .gym))
+            if let firstSet = g.sets.first {
+                let exName = firstSet.exercise.name
+                if let wKg = firstSet.weightKg {
+                    let lbs = UnitFormatters.kgToLb(wKg)
+                    let title = "Gym – \(exName) – \(Int(lbs))lbs"
+                    items.append(PointItem(date: g.date, title: title, points: Int(g.totalPoints), kind: .gym))
+                } else {
+                    let title = "Gym – \(exName)"
+                    items.append(PointItem(date: g.date, title: title, points: Int(g.totalPoints), kind: .gym))
+                }
+            } else {
+                items.append(PointItem(date: g.date, title: "Gym session", points: Int(g.totalPoints), kind: .gym))
+            }
         }
+
         return items.sorted { $0.date > $1.date }
     }
+
 
     // MARK: - Models
     private struct PointBucket: Identifiable {
