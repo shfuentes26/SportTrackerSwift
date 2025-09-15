@@ -34,6 +34,10 @@ struct RunningSessionDetail: View {
     @State private var selPace: (t: TimeInterval, v: Double)? = nil
     @State private var selElev: (t: TimeInterval, v: Double)? = nil
     @State private var selHR:   (t: TimeInterval, v: Double)? = nil
+    
+    @Environment(\.dismiss) private var dismiss
+    @State private var showEdit = false
+    @State private var showDelete = false
 
     private struct LocalCallout: View {
         let title: String
@@ -156,6 +160,25 @@ struct RunningSessionDetail: View {
             }
             .padding(.horizontal)
             .padding(.top, 16)
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button("Edit") { showEdit = true }
+                Button(role: .destructive) { showDelete = true } label: { Text("Delete") }
+            }
+        }
+        .confirmationDialog("Delete workout?",
+                            isPresented: $showDelete,
+                            titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                context.delete(session)
+                try? context.save()
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .sheet(isPresented: $showEdit) {
+            EditRunningSheet(run: session)
         }
         .brandHeaderSpacer()
         .navigationTitle("Running")
@@ -395,4 +418,89 @@ struct RouteMapView: UIViewRepresentable {
         }
     }
 }
+
+import SwiftUI
+import SwiftData
+
+struct EditRunningSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+
+    @State var run: RunningSession
+
+    @State private var date: Date
+    @State private var distanceKm: String
+    @State private var hh: String
+    @State private var mm: String
+    @State private var ss: String
+    @State private var notes: String
+
+    init(run: RunningSession) {
+        _run = State(initialValue: run)
+        _date = State(initialValue: run.date)
+
+        // distancia con 0–2 decimales
+        let nf = NumberFormatter()
+        nf.maximumFractionDigits = 2
+        nf.minimumFractionDigits = 0
+        _distanceKm = State(initialValue: nf.string(from: NSNumber(value: run.distanceKm)) ?? String(format: "%.2f", run.distanceKm))
+
+        let total = run.durationSeconds
+        _hh = State(initialValue: String(total / 3600))
+        _mm = State(initialValue: String((total % 3600) / 60))
+        _ss = State(initialValue: String(total % 60))
+        _notes = State(initialValue: run.notes ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
+                HStack {
+                    TextField("Distance (km)", text: $distanceKm)
+                        .keyboardType(.decimalPad)
+                    Text("km").foregroundStyle(.secondary)
+                }
+                Section("Duration (hh:mm:ss)") {
+                    HStack(spacing: 6) {
+                        TextField("hh", text: $hh).keyboardType(.numberPad).frame(width: 52).multilineTextAlignment(.center)
+                        Text(":").monospacedDigit()
+                        TextField("mm", text: $mm).keyboardType(.numberPad).frame(width: 42).multilineTextAlignment(.center)
+                        Text(":").monospacedDigit()
+                        TextField("ss", text: $ss).keyboardType(.numberPad).frame(width: 42).multilineTextAlignment(.center)
+                    }
+                }
+                Section("Notes") {
+                    TextField("Optional", text: $notes, axis: .vertical)
+                }
+            }
+            .navigationTitle("Edit Running")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() } }
+            }
+        }
+    }
+
+    private func save() {
+        let dist = Double(distanceKm.replacingOccurrences(of: ",", with: ".")) ?? 0
+        let H = Int(hh) ?? 0, M = Int(mm) ?? 0, S = Int(ss) ?? 0
+        let sec = H*3600 + M*60 + S
+        guard dist > 0, sec > 0 else { return }
+
+        run.date = date
+        run.distanceMeters = dist * 1000
+        run.durationSeconds = sec
+        run.notes = notes.isEmpty ? nil : notes
+
+        // Recalcular puntos con Settings
+        let settings = (try? context.fetch(FetchDescriptor<Settings>()).first) ?? Settings()
+        if settings.persistentModelID == nil { context.insert(settings) }
+        run.totalPoints = PointsCalculator.score(running: run, settings: settings)
+
+        try? context.save()
+        dismiss()
+    }
+}
+
 
