@@ -83,6 +83,9 @@ public final class Settings: SyncTracked {
     public var runningTimeFactor: Double = 0.5            // pts per minute
     public var runningPaceBaselineSecPerKm: Double = 360  // 6:00 min/km baseline
     public var runningPaceFactor: Double = 50.0           // weight of pace score
+    // NEW – superlinear distance boost
+    public var runningEnduranceFactor: Double = 25.0      // magnitud del bonus
+    public var runningEnduranceExponent: Double = 1.20    // >1 ⇒ crece más que lineal
 
     public var gymRepsFactor: Double = 1.0                // bodyweight: pts per rep
     public var gymWeightedFactor: Double = 0.1            // weighted: (kg * reps) * factor

@@ -9,6 +9,13 @@ struct SettingsView: View {
     @State private var isImporting = false
     @State private var importResult: String?
     @State private var showImportAlert = false
+    
+    // Ahora (solo sesión)
+    @State private var devUnlocked = false
+    @State private var isRecalculating = false
+    @State private var showRecalcAlert = false
+    @State private var recalcResult: String?
+    @State private var titleTapCount = 0
 
     // 🔒 Ocultar Maintenance cuando el backfill ya se ejecutó una vez
     @AppStorage("didRunRoutesBackfillOnce") private var didRunRoutesBackfillOnce = false
@@ -64,6 +71,24 @@ struct SettingsView: View {
                 Toggle("Show miles (min/mi)", isOn: $sb.prefersMiles)
                 Toggle("Show pounds (lb)",    isOn: $sb.prefersPounds)
             }
+            
+            if devUnlocked {
+                Section("Admin") {
+                    Button {
+                        Task { await recalcAllPoints() }
+                    } label: {
+                        if isRecalculating {
+                            HStack {
+                                ProgressView()
+                                Text("Recalculate points")
+                            }
+                        } else {
+                            Text("Recalculate points")
+                        }
+                    }
+                    .disabled(isRecalculating)
+                }
+            }
 
             // 🔧 Maintenance (oculto cuando ya se ejecutó el backfill)
             /*if !didRunRoutesBackfillOnce {
@@ -86,6 +111,29 @@ struct SettingsView: View {
             }*/
         }
         .navigationTitle("Settings")
+        .toolbar {
+          ToolbarItem(placement: .principal) {
+            Button {
+              if titleTapCount == 0 {
+                // Resetea si no completa los 6 taps en 1.5s
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                  titleTapCount = 0
+                }
+              }
+              titleTapCount += 1
+              if titleTapCount >= 6 {
+                titleTapCount = 0
+                devUnlocked = true
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                AnalyticsService.log(.developerMenuUnlocked)
+              }
+            } label: {
+              Text("Settings").font(.headline)
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle()) // asegura el “hit test”
+          }
+        }
         .onAppear { AnalyticsService.logScreen(name: "Settings") }
         .alert("Import", isPresented: $showImportAlert) {
             Button("OK", role: .cancel) {}
@@ -158,5 +206,23 @@ extension SettingsView {
             importResult = "Error: \(error.localizedDescription)"
         }
         showImportAlert = true
+    }
+    
+    // MARK: - Recalculate all points (stub seguro)
+    @MainActor
+    private func recalcAllPoints() async {
+        isRecalculating = true
+        defer { isRecalculating = false }
+
+        do {
+            // ⬇️ Sustituye esta llamada por tu lógica real de recálculo
+            // por ejemplo: let (gymCount, runCount) = try await PointsRecalculator.recalculateAll(context: context)
+            let (gymCount, runCount) = try PointsRecalculator.recalculateAll(context: context)
+
+            recalcResult = "Recalculated points for \(gymCount) gym trainings and \(runCount) running trainings."
+        } catch {
+            recalcResult = "Error: \(error.localizedDescription)"
+        }
+        showRecalcAlert = true
     }
 }

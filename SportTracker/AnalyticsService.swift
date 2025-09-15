@@ -25,6 +25,8 @@ enum STEvent: String {
   case prAchieved = "pr_achieved"
   // Gamificación
   case pointsEarned = "points_earned"
+    
+  case developerMenuUnlocked = "developerMenuUnlocked"
 }
 
 enum STParam {

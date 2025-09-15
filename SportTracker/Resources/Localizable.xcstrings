@@ -198,17 +198,6 @@
         }
       }
     },
-    "Add Exercise" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir ejercicio"
-          }
-        }
-      }
-    },
     "Add measurement" : {
       "localizations" : {
         "es" : {
@@ -248,6 +237,9 @@
           }
         }
       }
+    },
+    "Admin" : {
+
     },
     "All" : {
       "localizations" : {
@@ -456,7 +448,14 @@
       }
     },
     "Core: %lld" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core: %lld"
+          }
+        }
+      }
     },
     "Create a goal" : {
       "localizations" : {
@@ -777,19 +776,15 @@
     "Inbox (Watch)" : {
 
     },
-    "Info" : {
-      "extractionState" : "stale",
+    "Insights" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Info"
+            "value" : "Insights"
           }
         }
       }
-    },
-    "Insights" : {
-
     },
     "Integrations" : {
       "localizations" : {
@@ -1289,6 +1284,9 @@
         }
       }
     },
+    "Recalculate points" : {
+
+    },
     "Records" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1737,7 +1735,14 @@
       }
     },
     "Working…" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargando…"
+          }
+        }
+      }
     },
     "Workout saved" : {
       "localizations" : {
