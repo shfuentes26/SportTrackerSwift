@@ -76,6 +76,29 @@ struct RunningSessionDetail: View {
         if !m.heartRateSeries.isEmpty { t.append(.hr) }
         return t
     }
+    
+    @ViewBuilder
+    private var splitsSection: some View {
+        if let s = metrics?.splits, !s.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Splits").font(.headline)
+                ForEach(s) { sp in
+                    HStack {
+                        Text("\(sp.km)K")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(width: 44, alignment: .leading)
+                        Spacer()
+                        Text(paceLabel(sp.seconds))        // mm:ss
+                            .font(.footnote.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+    
     private var routeCoords: [CLLocationCoordinate2D]? {
         guard let poly = session.routePolyline, !poly.isEmpty else { return nil }
         return Polyline.decode(poly)
@@ -126,8 +149,16 @@ struct RunningSessionDetail: View {
                 // Badges del propio run
                 let allRuns = fetchAllRuns()
                 let mainBadges = RunRecords.badges(for: session, among: allRuns, top: 3, minFactor: 1.0)
-                if !mainBadges.isEmpty {
+                /*if !mainBadges.isEmpty {
                     RecordBadgesRow(badges: mainBadges)
+                }*/
+                
+                if let notes = session.notes, !notes.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Notes").font(.headline)
+                        Text(notes)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 // Records (bucket principal + menores) con tiempo y pace
@@ -158,14 +189,8 @@ struct RunningSessionDetail: View {
                         }
                     }
                 }
-
-                if let notes = session.notes, !notes.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Notes").font(.headline)
-                        Text(notes)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                // 2) Añade este ViewBuilder en la vista:
+                splitsSection
 
                 analysisSection
 
