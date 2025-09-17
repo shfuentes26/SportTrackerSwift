@@ -16,6 +16,10 @@ struct SettingsView: View {
     @State private var showRecalcAlert = false
     @State private var recalcResult: String?
     @State private var titleTapCount = 0
+    
+    @State private var isReloadingHK = false
+    @State private var showReloadAlert = false
+    @State private var reloadResult: String?
 
     // 🔒 Ocultar Maintenance cuando el backfill ya se ejecutó una vez
     @AppStorage("didRunRoutesBackfillOnce") private var didRunRoutesBackfillOnce = false
@@ -87,6 +91,16 @@ struct SettingsView: View {
                         }
                     }
                     .disabled(isRecalculating)
+                    Button {
+                        Task { await reloadAllRunsFromHealth() }
+                    } label: {
+                        if isReloadingHK {
+                            HStack { ProgressView(); Text("Reload runs from Apple Health") }
+                        } else {
+                            Text("Reload runs from Apple Health")
+                        }
+                    }
+                    .disabled(isReloadingHK)
                 }
             }
 
@@ -140,12 +154,41 @@ struct SettingsView: View {
         } message: {
             Text(importResult ?? "Operation completed")
         }
+        .alert("Reload from Apple Health", isPresented: $showReloadAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(reloadResult ?? "Done")
+        }
+        .alert("Recalculate points", isPresented: $showRecalcAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(recalcResult ?? "Done")
+        }
         .brandHeaderSpacer()
     }
 }
 
 // MARK: - Apple Health Import (logs cortos + fallback de distancia)
 extension SettingsView {
+    
+    
+    private func reloadAllRunsFromHealth() async {
+        isReloadingHK = true
+        defer { isReloadingHK = false }
+        do {
+            try await HealthKitManager.shared.requestAuthorization()
+            let start = Calendar.current.date(byAdding: .year, value: -15, to: Date())! // “todo”
+            let end = Date()
+            let inserted = try await HealthKitImportService.importHKRunningWorkouts(
+                context: context, since: start, until: end
+            )
+            reloadResult = "Reloaded \(inserted) runs from Apple Health."
+        } catch {
+            reloadResult = "Error: \(error.localizedDescription)"
+        }
+        showReloadAlert = true
+    }
+
     private func importFromAppleHealth() async {
         isImporting = true
         defer { isImporting = false }

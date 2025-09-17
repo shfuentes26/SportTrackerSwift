@@ -301,6 +301,9 @@ enum HealthKitImportService {
                 routePolyline: poly
             )
             run.totalPoints = PointsCalculator.score(running: run, settings: settings)
+            let reason = explainSkipReason(for: wk, context: context)
+            print("[HK][SAVE+ROUTE][check] \(wk.startDate) \(Int(distM))m \(Int(wk.duration))s -> \(reason)")
+            if reason != "INSERT" { continue }
             context.insert(run)
             inserted += 1
         }
@@ -309,6 +312,32 @@ enum HealthKitImportService {
         if inserted > 0 { print("[HK][SAVE+ROUTE] inserted: \(inserted)") }
         return inserted
     }
+    
+    @MainActor
+    static func importHKRunningWorkouts(
+        context: ModelContext,
+        since: Date,
+        until: Date,
+        healthStore: HKHealthStore = HKHealthStore()
+    ) async throws -> Int {
+        let type = HKObjectType.workoutType()
+        let pDate = HKQuery.predicateForSamples(withStart: since, end: until, options: .strictStartDate)
+        let pRun  = HKQuery.predicateForWorkouts(with: .running)
+        let pred  = NSCompoundPredicate(andPredicateWithSubpredicates: [pDate, pRun])
+        let sort  = [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+
+        let workouts: [HKWorkout] = try await withCheckedThrowingContinuation { cont in
+            let q = HKSampleQuery(sampleType: type, predicate: pred, limit: HKObjectQueryNoLimit, sortDescriptors: sort) {
+                _, res, err in
+                if let err = err { cont.resume(throwing: err); return }
+                cont.resume(returning: (res as? [HKWorkout]) ?? [])
+            }
+            healthStore.execute(q)
+        }
+        // Reutiliza tu guardado (ya hace dedupe y añade routePolyline si existe)
+        return try await saveHKWorkoutsToLocal(workouts, context: context, healthStore: healthStore)
+    }
+
 
 
 }
@@ -377,6 +406,33 @@ extension HealthKitImportService {
     }
 
     // MARK: - Helpers
+    
+    @MainActor
+    static func explainSkipReason(for wk: HKWorkout, context: ModelContext) -> String {
+        guard wk.workoutActivityType == .running else { return "SKIP: not running" }
+        let distM = wk.totalDistance?.doubleValue(for: .meter()) ?? 0
+        guard distM > 0 else { return "SKIP: distance == 0" }
+
+        // — misma lógica de dedupe que usamos al guardar —
+        let dur = Int(wk.duration.rounded())
+        let minDate = wk.startDate.addingTimeInterval(-180)
+        let maxDate = wk.startDate.addingTimeInterval(+180)
+        let pred = #Predicate<RunningSession> { s in
+            s.date >= minDate && s.date <= maxDate &&
+            s.durationSeconds >= (dur - 20) && s.durationSeconds <= (dur + 20) &&
+            s.distanceMeters >= (distM - 80) && s.distanceMeters <= (distM + 80)
+        }
+        if let existing = try? context.fetch(FetchDescriptor<RunningSession>(predicate: pred)).first {
+            return "SKIP: dedupe matched existing run id=\(existing.id.uuidString.prefix(6)) " +
+                   "Δdate=\(Int(existing.date.timeIntervalSince(wk.startDate)))s " +
+                   "Δdur=\(existing.durationSeconds - dur)s " +
+                   "Δdist=\(Int(existing.distanceMeters - distM))m"
+        }
+        return "INSERT"
+    }
+
+    
+    
     // MARK: - DEBUG: imprimir splits por km desde la serie de distancia de HealthKit
 
     private static func dbgHMS(_ t: TimeInterval) -> String {

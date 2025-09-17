@@ -1301,6 +1301,12 @@
         }
       }
     },
+    "Reload from Apple Health" : {
+
+    },
+    "Reload runs from Apple Health" : {
+
+    },
     "reps" : {
       "localizations" : {
         "es" : {
