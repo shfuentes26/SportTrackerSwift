@@ -46,6 +46,12 @@ struct SummaryView: View {
                                             .frame(width: rowIconWidth, alignment: .leading)
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("Running • \(Self.formatDate(r.date))").font(.headline)
+                                            let badges = RunRecords.badges(for: r, among: runs, top: 3, minFactor: 1.0, preferAbsoluteOverYear: false)
+                                            if !badges.isEmpty {
+                                                    RecordBadgesRow(badges: badges)
+                                                        .padding(.leading, 4)
+                                                }
+
                                             Text("\(UnitFormatters.distance(r.distanceKm, useMiles: useMiles)) • \(UnitFormatters.pace(secondsPerKm: r.paceSecondsPerKm, useMiles: useMiles))")
                                                 .font(.subheadline).foregroundStyle(.secondary)
                                         }
@@ -246,6 +252,42 @@ struct SummaryView: View {
             }
         }
     }
+    
+    private struct RecordBadgesRow: View {
+        let badges: [RecordBadgeModel]
+        var body: some View {
+            HStack(spacing: 4) {
+                ForEach(badges) { b in
+                    ZStack {
+                        Circle()
+                            .fill(color(for: b))
+                            .frame(width: 18, height: 18)
+                        Text(text(for: b))
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+        }
+        private func color(for b: RecordBadgeModel) -> Color {
+            switch b.kind {
+            case .absolute(let rank, _), .yearly(let rank, _, _):
+                switch rank {
+                case 1: return .yellow
+                case 2: return .gray
+                case 3: return .brown
+                default: return .secondary
+                }
+            }
+        }
+        private func text(for b: RecordBadgeModel) -> String {
+            switch b.kind {
+            case .absolute:                   return "BR"
+            case .yearly(_, let year, _):    return String(year % 100)
+            }
+        }
+    }
+
 
     // MARK: - Helpers de semana/formatos
 

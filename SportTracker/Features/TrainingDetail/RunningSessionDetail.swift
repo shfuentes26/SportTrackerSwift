@@ -38,6 +38,9 @@ struct RunningSessionDetail: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showEdit = false
     @State private var showDelete = false
+    
+    // Splits/metrics para “Records” (mejor ventana contigua)
+    @State private var runMetrics: HealthKitImportService.RunMetrics? = nil
 
     private struct LocalCallout: View {
         let title: String
@@ -92,9 +95,9 @@ struct RunningSessionDetail: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(.horizontal)
                     // Mapa “deshabilitado”
-                    .grayscale(1.0)          // escala de grises
-                    .saturation(0)           // (doble seguridad para desaturar)
-                    .overlay(                 // badge sutil encima
+                    .grayscale(1.0)
+                    .saturation(0)
+                    .overlay(
                         HStack(spacing: 8) {
                             Image(systemName: "map")
                             Text("No route recorded")
@@ -106,7 +109,7 @@ struct RunningSessionDetail: View {
                         .background(.ultraThinMaterial, in: Capsule())
                         , alignment: .center
                     )
-                    .allowsHitTesting(false) // sin interacción
+                    .allowsHitTesting(false)
             }
             
 
@@ -119,6 +122,42 @@ struct RunningSessionDetail: View {
                 Text("\(Int(session.totalPoints)) pts • \(SummaryView.formatDate(session.date))")
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)
+
+                // Badges del propio run
+                let allRuns = fetchAllRuns()
+                let mainBadges = RunRecords.badges(for: session, among: allRuns, top: 3, minFactor: 1.0)
+                if !mainBadges.isEmpty {
+                    RecordBadgesRow(badges: mainBadges)
+                }
+
+                // Records (bucket principal + menores) con tiempo y pace
+                let rows = recordRows(for: session, among: allRuns, metrics: runMetrics)
+                if !rows.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Records")
+                            .font(.headline)
+                            .padding(.top, 6)
+
+                        ForEach(rows) { row in
+                            HStack(spacing: 8) {
+                                // Distancia (1K, 3K, 5K...)
+                                Text(bucketLabel(row.bucketKm))
+                                    .font(.subheadline.weight(.semibold))
+                                    .frame(width: 64, alignment: .leading)
+
+                                // Badges (BR y/o YY)
+                                RecordBadgesRow(badges: row.badges)
+
+                                Spacer()
+
+                                // Tiempo + pace para esa distancia
+                                Text("\(formatElapsed(row.durationSec)) • \(row.paceText)")
+                                    .font(.footnote.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
 
                 if let notes = session.notes, !notes.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
@@ -141,7 +180,6 @@ struct RunningSessionDetail: View {
                                 Image(systemName: "chart.xyaxis.line")
                                 Text("Insights").font(.headline)
                                 Spacer()
-                                // ← Chevron al final
                                 Image(systemName: "chevron.right")
                                     .foregroundStyle(.secondary)
                             }
@@ -190,6 +228,269 @@ struct RunningSessionDetail: View {
             metrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
             selectedIndex = 0
         }
+        .onAppear {
+            Task { // lectura “solo UI”: no modifica BD
+                runMetrics = try? await HealthKitImportService.fetchRunMetrics(for: session)
+                    print("Splits count: \(metrics?.splits.count ?? -1)")
+            }
+        }
+    }
+    
+    // MARK: - Badges UI
+    
+    // Fila para la lista de records
+    private struct RecordListItem: Identifiable {
+        let id = UUID()
+        let bucketKm: Double
+        let badges: [RecordBadgeModel]
+        let durationSec: Int
+        let paceText: String
+    }
+
+    /// Construye las filas de records para el bucket principal y los menores
+    /// - Si hay splits: usa mejor ventana contigua; si no, pace medio.
+    private func recordRows(for run: RunningSession,
+                            among runs: [RunningSession],
+                            metrics: HealthKitImportService.RunMetrics?) -> [RecordListItem] {
+        let km = run.distanceMeters / 1000.0
+        guard let mainBucket = RunRecords.assignBucketKm(for: km, minFactor: 1.0) else { return [] }
+
+        var out: [RecordListItem] = []
+
+        // 1) Bucket principal (badges reales de RunRecords) + tiempo “exacto” del bucket
+        let mainBadges = RunRecords.badges(for: run, among: runs, top: 3, minFactor: 1.0)
+        if !mainBadges.isEmpty {
+            let mainSec: Int
+            if let splits = metrics?.splits,
+               let best = bestRollingSeconds(forKilometers: Int(mainBucket.rounded()), splits: splits) {
+                mainSec = Int(best.rounded())
+            } else {
+                let sessionPace = paceSecPerKm(run)
+                mainSec = Int((sessionPace * mainBucket).rounded())
+            }
+            out.append(RecordListItem(bucketKm: mainBucket,
+                                      badges: mainBadges,
+                                      durationSec: mainSec,
+                                      paceText: formatPace(distanceMeters: mainBucket * 1000.0, durationSeconds: mainSec)))
+        }
+
+        // 2) Buckets menores (1K,3K,5K...) — splits o fallback al pace medio
+        let standards: [Double] = [1.0, 3.0, 5.0, 10.0, 21.0975, 42.195]
+        let targets = standards.filter { $0 < mainBucket }
+
+        let sessionPace = paceSecPerKm(run)
+        let splits = metrics?.splits ?? []
+
+        for b in targets {
+            let seconds: Int
+            if !splits.isEmpty, let best = bestRollingSeconds(forKilometers: Int(b.rounded()), splits: splits) {
+                seconds = Int(best.rounded())
+            } else {
+                seconds = Int((sessionPace * b).rounded())
+            }
+
+            // Badges “virtuales” usando ese tiempo para competir en el bucket b
+            let badges = subordinateBadgesUsing(seconds: seconds, bucketKm: b, for: run, among: runs)
+            if !badges.isEmpty {
+                out.append(RecordListItem(bucketKm: b,
+                                          badges: badges,
+                                          durationSec: seconds,
+                                          paceText: formatPace(distanceMeters: b * 1000.0, durationSeconds: seconds)))
+            }
+        }
+
+        // Ordena por distancia descendente: primero principal (mayor)
+        out.sort { $0.bucketKm > $1.bucketKm }
+        return out
+    }
+
+    private struct RecordBadgesRow: View {
+        let badges: [RecordBadgeModel]
+        var body: some View {
+            HStack(spacing: 4) {
+                ForEach(badges) { b in
+                    ZStack {
+                        Circle()
+                            .fill(color(for: b))
+                            .frame(width: 18, height: 18)
+                        Text(text(for: b))
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
+        }
+        private func color(for b: RecordBadgeModel) -> Color {
+            switch b.kind {
+            case .absolute(let rank, _), .yearly(let rank, _, _):
+                switch rank {
+                case 1: return .yellow   // oro
+                case 2: return .gray     // plata
+                case 3: return .brown    // bronce
+                default: return .secondary
+                }
+            }
+        }
+        private func text(for b: RecordBadgeModel) -> String {
+            switch b.kind {
+            case .absolute:               return "BR"               // Best Record absoluto
+            case .yearly(_, let y, _):    return String(y % 100)    // “25” para 2025
+            }
+        }
+    }
+
+    // MARK: - Badges helpers (data)
+    private func fetchAllRuns() -> [RunningSession] {
+        let desc = FetchDescriptor<RunningSession>(
+            sortBy: [SortDescriptor(\RunningSession.date, order: .reverse)]
+        )
+        return (try? context.fetch(desc)) ?? []
+    }
+
+    private func bucketLabel(_ km: Double) -> String {
+        switch km {
+        case 1.0: return "1K"
+        case 3.0: return "3K"
+        case 5.0: return "5K"
+        case 10.0: return "10K"
+        case 21.0975: return "Half"
+        case 42.195: return "Marathon"
+        default: return String(format: "%.1fK", km)
+        }
+    }
+
+    private func paceSecPerKm(_ r: RunningSession) -> Double {
+        let km = max(r.distanceMeters / 1000.0, 0.001)
+        return Double(r.durationSeconds) / km
+    }
+
+    // (versión previa por pace medio; la dejamos para compatibilidad si la necesitas en otro sitio)
+    private struct SubBadgeRow: Identifiable {
+        let id = UUID()
+        let bucket: Double
+        let badges: [RecordBadgeModel]
+    }
+    private func subordinateBadges(for run: RunningSession, among runs: [RunningSession]) -> [SubBadgeRow] {
+        let km = run.distanceMeters / 1000.0
+        guard let mainBucket = RunRecords.assignBucketKm(for: km, minFactor: 1.0) else { return [] }
+
+        let standards: [Double] = [1.0, 3.0, 5.0, 10.0, 21.0975, 42.195]
+        let targets = standards.filter { $0 < mainBucket }
+
+        let sessionPace = paceSecPerKm(run)
+        let year = Calendar.current.component(.year, from: run.date)
+
+        var out: [SubBadgeRow] = []
+
+        for b in targets {
+            // Todos los runs que compiten en el bucket b
+            let sameBucket = runs.filter { r in
+                let rkm = r.distanceMeters / 1000.0
+                return RunRecords.assignBucketKm(for: rkm, minFactor: 1.0) == b
+            }
+
+            // Ranking con runs reales + run actual "virtual" (pace medio)
+            struct Key { let pace: Double; let duration: Int; let date: Date; let isSession: Bool }
+            var arr: [Key] = sameBucket.map { r in
+                Key(pace: paceSecPerKm(r), duration: r.durationSeconds, date: r.date, isSession: false)
+            }
+            let virtualDuration = Int((sessionPace * b).rounded())
+            arr.append(Key(pace: sessionPace, duration: virtualDuration, date: run.date, isSession: true))
+
+            arr.sort {
+                if $0.pace != $1.pace { return $0.pace < $1.pace }
+                if $0.duration != $1.duration { return $0.duration < $1.duration }
+                return $0.date > $1.date
+            }
+
+            var badges: [RecordBadgeModel] = []
+            if let idx = arr.firstIndex(where: { $0.isSession }) {
+                let rank = idx + 1
+                if rank <= 3 { badges.append(.init(kind: .absolute(rank: rank, bucketKm: b))) }
+            }
+
+            let arrYear = arr.filter { k in
+                k.isSession || Calendar.current.component(.year, from: k.date) == year
+            }
+            if let idxY = arrYear.firstIndex(where: { $0.isSession }) {
+                let rankY = idxY + 1
+                if rankY <= 3 { badges.append(.init(kind: .yearly(rank: rankY, year: year, bucketKm: b))) }
+            }
+
+            if !badges.isEmpty {
+                out.append(SubBadgeRow(bucket: b, badges: badges))
+            }
+        }
+
+        return out
+    }
+
+    // --- Nuevos helpers para splits ---
+
+    /// Mejor ventana contigua de `k` km usando los splits de HealthKit.
+    private func bestRollingSeconds(forKilometers k: Int,
+                                    splits: [HealthKitImportService.RunMetrics.Split]) -> Double? {
+        guard k >= 1, splits.count >= k else { return nil }
+        var best = splits.prefix(k).reduce(0.0) { $0 + $1.seconds }
+        var cur = best
+        for i in k..<splits.count {
+            cur += splits[i].seconds
+            cur -= splits[i - k].seconds
+            if cur < best { best = cur }
+        }
+        print("[UI][Best] k=\(k) best=\(best)")
+        return best > 0 ? best : nil   // <-- evita 0
+    }
+
+
+    /// Calcula badges “virtuales” para el run actual compitiendo en `bucketKm` con un tiempo dado (segundos).
+    private func subordinateBadgesUsing(seconds: Int,
+                                        bucketKm b: Double,
+                                        for run: RunningSession,
+                                        among runs: [RunningSession]) -> [RecordBadgeModel] {
+        // Runs que compiten en el bucket b (regla: mayor ≤ distancia)
+        let sameBucket = runs.filter { r in
+            let rkm = r.distanceMeters / 1000.0
+            return RunRecords.assignBucketKm(for: rkm, minFactor: 1.0) == b
+        }
+
+        struct Key { let pace: Double; let duration: Int; let date: Date; let isSession: Bool }
+        var arr: [Key] = sameBucket.map { r in
+            let pace = paceSecPerKm(r)
+            return Key(pace: pace, duration: r.durationSeconds, date: r.date, isSession: false)
+        }
+
+        // run actual “como si fuera” b km con 'seconds'
+        let paceVirtual = Double(seconds) / max(b, 0.001)
+        arr.append(Key(pace: paceVirtual, duration: seconds, date: run.date, isSession: true))
+
+        // Orden: mejor pace → menor duración → fecha más reciente (igual que RunRecords)
+        arr.sort {
+            if $0.pace != $1.pace { return $0.pace < $1.pace }
+            if $0.duration != $1.duration { return $0.duration < $1.duration }
+            return $0.date > $1.date
+        }
+
+        var badges: [RecordBadgeModel] = []
+
+        // Absoluto top-3
+        if let idx = arr.firstIndex(where: { $0.isSession }) {
+            let rank = idx + 1
+            if rank <= 3 { badges.append(.init(kind: .absolute(rank: rank, bucketKm: b))) }
+        }
+
+        // Anual top-3 (año del propio run)
+        let year = Calendar.current.component(.year, from: run.date)
+        let arrYear = arr.filter { k in
+            k.isSession || Calendar.current.component(.year, from: k.date) == year
+        }
+        if let idxY = arrYear.firstIndex(where: { $0.isSession }) {
+            let rankY = idxY + 1
+            if rankY <= 3 { badges.append(.init(kind: .yearly(rank: rankY, year: year, bucketKm: b))) }
+        }
+
+        return badges
     }
 
     // MARK: helpers
@@ -417,6 +718,9 @@ struct RouteMapView: UIViewRepresentable {
             return r
         }
     }
+    
+    
+    
 }
 
 import SwiftUI
@@ -502,5 +806,3 @@ struct EditRunningSheet: View {
         dismiss()
     }
 }
-
-

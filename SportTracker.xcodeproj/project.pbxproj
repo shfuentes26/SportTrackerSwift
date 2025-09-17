@@ -17,6 +17,7 @@
 		23AA68CE2E71A86E00E7AF01 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AA68CD2E71A86B00E7AF01 /* AnalyticsService.swift */; };
 		23AA68D02E71A88600E7AF01 /* ScreenTrackingModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AA68CF2E71A88200E7AF01 /* ScreenTrackingModifier.swift */; };
 		23AA68D22E71AAFB00E7AF01 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 23AA68D12E71AAFA00E7AF01 /* GoogleService-Info.plist */; };
+		23AA68D72E79A57B00E7AF01 /* RunRecords.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AA68D62E79A57900E7AF01 /* RunRecords.swift */; };
 		23BE56B42E53706C00600875 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B32E53706C00600875 /* Persistence.swift */; };
 		23BE56B62E53708D00600875 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BE56B52E53708D00600875 /* Models.swift */; };
 		23BE56BA2E5370B800600875 /* README_LOCAL_DB.md in Resources */ = {isa = PBXBuildFile; fileRef = 23BE56B92E5370B700600875 /* README_LOCAL_DB.md */; };
@@ -66,6 +67,7 @@
 		23AA68CD2E71A86B00E7AF01 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
 		23AA68CF2E71A88200E7AF01 /* ScreenTrackingModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenTrackingModifier.swift; sourceTree = "<group>"; };
 		23AA68D12E71AAFA00E7AF01 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		23AA68D62E79A57900E7AF01 /* RunRecords.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunRecords.swift; sourceTree = "<group>"; };
 		23BE56B32E53706C00600875 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		23BE56B52E53708D00600875 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		23BE56B92E5370B700600875 /* README_LOCAL_DB.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_LOCAL_DB.md; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 		23BE56BE2E53931500600875 /* Running */ = {
 			isa = PBXGroup;
 			children = (
+				23AA68D62E79A57900E7AF01 /* RunRecords.swift */,
 				2356971C2E5DE2B0006409D8 /* RunDistanceFilter.swift */,
 				235697172E5D0189006409D8 /* PaceHistorySection.swift */,
 				23BE57BE2E57C3A100600875 /* LiveRunView.swift */,
@@ -370,6 +373,7 @@
 				23AA68CE2E71A86E00E7AF01 /* AnalyticsService.swift in Sources */,
 				23BE56C12E53931500600875 /* RunningViewModel.swift in Sources */,
 				2356971D2E5DE2B8006409D8 /* RunDistanceFilter.swift in Sources */,
+				23AA68D72E79A57B00E7AF01 /* RunRecords.swift in Sources */,
 				A000004 /* GymView.swift in Sources */,
 				A000006 /* RunningView.swift in Sources */,
 				23AA68D02E71A88600E7AF01 /* ScreenTrackingModifier.swift in Sources */,
