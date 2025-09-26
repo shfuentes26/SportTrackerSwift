@@ -86,21 +86,21 @@ struct PointsCalculator {
                 }
 
                 // 🔎 LOGS
-                print("PoinstsCalculator - weightedIntermediateTarget - ejercicio comprobado", ex.name.lowercased())
+                /*print("PoinstsCalculator - weightedIntermediateTarget - ejercicio comprobado", ex.name.lowercased())
                 print("PoinstsCalculator - score - reps =", Int(repsD), "wRaw =", wRaw, "→ wKG =", wKG)
-                print("PoinstsCalculator - score - targetWkg =", String(describing: targetWkg))
+                print("PoinstsCalculator - score - targetWkg =", String(describing: targetWkg))*/
                 if let t = targetWkg {
                     let targetVolume = t * 30.0
                     print("PoinstsCalculator - score - volume =", volume, "targetVolume =", targetVolume)
                     print("PoinstsCalculator - score - ratio", wRatioLogged)
                     print("PoinstsCalculator - score - bonusFactor", bonusFactorLogged)
                 }
-                print("PoinstsCalculator - score - minAllowed", minAllowed)
+                /*print("PoinstsCalculator - score - minAllowed", minAllowed)
                 print("PoinstsCalculator - score - weightedPoints", weightedPoints)
-
+                */
                 let sum = max(weightedPoints, minAllowed)
                 total += sum
-                print("PoinstsCalculator - score - total", total)
+                //print("PoinstsCalculator - score - total", total)
                 continue
             }
 
@@ -138,7 +138,7 @@ struct PointsCalculator {
     
     private static func weightedIntermediateTarget(for ex: Exercise) -> Double? {
         
-        print("PoinstsCalculator - weightedIntermediateTarget - ejercicio comprobado", ex.name.lowercased())
+        //print("PoinstsCalculator - weightedIntermediateTarget - ejercicio comprobado", ex.name.lowercased())
         switch ex.name.lowercased() {
         // Chest / Back
         case "bench press", "press banca": return 98
